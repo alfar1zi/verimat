@@ -140,16 +140,18 @@ export default function ScanningSection() {
           100% { transform: translateX(100%); }
         }
 
-        /* Each row: spinner first, then check */
+        /* Each row: spinner first, then check.
+           Timeline (of 7s cycle): 0-55% panel hidden, 60% panel in,
+           62-75% spinner spinning, 75-88% check shown, 95% panel out. */
         @keyframes spinner-to-check {
-          0%, 55% { opacity: 0; }
-          60%, 72% { opacity: 1; }    /* spinner showing */
-          78%, 100% { opacity: 0; }   /* spinner fades out, check takes over */
+          0%, 58%   { opacity: 0; }
+          62%, 74%  { opacity: 1; }   /* spinner visible & spinning */
+          78%, 100% { opacity: 0; }   /* spinner fades, check takes over */
         }
         @keyframes check-fade-in {
-          0%, 72% { opacity: 0; transform: scale(0.6); }
-          78%, 92% { opacity: 1; transform: scale(1); }
-          97%, 100% { opacity: 0; }
+          0%, 74%   { opacity: 0; transform: scale(0.6); }
+          78%, 90%  { opacity: 1; transform: scale(1); }
+          95%, 100% { opacity: 0; transform: scale(0.9); }
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
