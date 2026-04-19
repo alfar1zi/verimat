@@ -12,6 +12,19 @@ dist
 dist-ssr
 *.local
 
+# Python
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/**/*.pyc
+backend/verimat.db
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Bun
+bun.lock
+bun.lockb
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
