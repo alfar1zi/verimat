@@ -1,24 +1,41 @@
-# VeriMat - Secure Pharma Document Verification
+# VeriMat
 
-VeriMat is a pharmaceutical document verification system that ensures compliance with CPOB (Cara Pembuatan Obat yang Baik) regulations through automated document validation.
+**Sistem Verifikasi Otomatis Dokumen Penerimaan Bahan Baku Farmasi**
 
-## Cara Menjalankan VeriMat
+VeriMat mengotomasi verifikasi dokumen penerimaan bahan baku di industri farmasi. Upload Surat Jalan, Certificate of Analysis, dan dokumen halal - sistem mendeteksi mismatch secara instan dan menyimpan audit trail otomatis untuk kepatuhan CPOB.
 
-### Backend (Flask)
+## Tech Stack
+- Frontend: React + TypeScript + Tailwind CSS + Vite
+- Backend: Python Flask + SQLite
+- AI: Azure AI Document Intelligence + Azure OpenAI GPT-4o
+- Cloud: Microsoft Azure App Service
+
+## Cara Menjalankan
+
+### Backend
 ```bash
 cd backend
 python -m venv venv
-venv\Scripts\activate  (Windows)
+venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
 ```
+Backend berjalan di http://localhost:5000
 
-### Frontend (React)
+### Frontend
 ```bash
 npm install
 npm run dev
 ```
+Frontend berjalan di http://localhost:5173
 
-### Akses
-- Landing page: http://localhost:5173
-- Backend API: http://localhost:5000
+## Demo Credentials
+Username: admin
+Password: admin
+
+## Tema Hackathon
+Proses Verifikasi Material - Pharma/Health
+AI Impact Challenge - Microsoft Elevate Training Center 2026
+
+## Tim
+[Isi nama tim]
