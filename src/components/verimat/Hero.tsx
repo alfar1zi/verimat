@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowRightIcon } from "./icons";
 
 const headlineWords = [
@@ -143,15 +144,13 @@ export default function Hero() {
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up"
              style={{ animationDelay: "1300ms" }}>
-          <a
-            href="https://verimat.up.railway.app"
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            to="/login"
             className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-lift transition-all duration-300 hover:scale-[1.03] hover:brightness-110"
           >
             Masuk ke Sistem
             <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </a>
+          </Link>
           <a
             href="#cara-kerja"
             className="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-white px-6 py-3.5 text-sm font-semibold text-foreground transition-all duration-300 hover:border-primary hover:text-primary"

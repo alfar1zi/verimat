@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { ArrowRightIcon } from "./icons";
 
 export default function CTASection() {
@@ -21,15 +22,13 @@ export default function CTASection() {
             <p className="mt-5 text-base sm:text-lg text-white/80 max-w-xl mx-auto">
               Mulai verifikasi dokumen secara otomatis sekarang.
             </p>
-            <a
-              href="https://verimat.up.railway.app"
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/login"
               className="mt-10 inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 text-sm font-semibold text-primary shadow-lift transition-all duration-300 hover:scale-[1.04] hover:brightness-105"
             >
               Masuk ke Sistem
               <ArrowRightIcon className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
         </div>
       </div>

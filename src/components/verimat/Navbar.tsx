@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { ShieldIcon } from "./icons";
 
 const links = [
@@ -45,14 +46,12 @@ export default function Navbar() {
           ))}
         </div>
 
-        <a
-          href="https://verimat.up.railway.app"
-          target="_blank"
-          rel="noreferrer"
+        <Link
+          to="/login"
           className="ml-1 rounded-full bg-teal px-4 py-2 text-xs sm:text-sm font-semibold text-surface-deep transition-all duration-300 hover:brightness-110 hover:scale-[1.03] active:scale-[0.98]"
         >
           Masuk ke Sistem
-        </a>
+        </Link>
       </nav>
     </header>
   );
