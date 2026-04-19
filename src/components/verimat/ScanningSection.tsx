@@ -128,6 +128,36 @@ export default function ScanningSection() {
         }
         .check-row { animation: check-pop var(--cycle) ease-out infinite both; }
 
+        /* Loading dots inside processing panel */
+        @keyframes loading-dot {
+          0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+          40% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Sweeping progress bar */
+        @keyframes progress-sweep {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+        /* Each row: spinner first, then check */
+        @keyframes spinner-to-check {
+          0%, 55% { opacity: 0; }
+          60%, 72% { opacity: 1; }    /* spinner showing */
+          78%, 100% { opacity: 0; }   /* spinner fades out, check takes over */
+        }
+        @keyframes check-fade-in {
+          0%, 72% { opacity: 0; transform: scale(0.6); }
+          78%, 92% { opacity: 1; transform: scale(1); }
+          97%, 100% { opacity: 0; }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .row-spinner { animation: spinner-to-check var(--cycle) ease-out infinite both; }
+        .row-spinner-icon { animation: spin 0.8s linear infinite; }
+        .row-check { animation: check-fade-in var(--cycle) var(--ease-out) infinite both; }
+
         @keyframes pass-reveal {
           0%, 82% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
           88%, 96% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -135,6 +165,7 @@ export default function ScanningSection() {
         }
         .scan-pass { animation: pass-reveal var(--cycle) var(--ease-out) infinite; }
       `}</style>
+
     </section>
   );
 }
