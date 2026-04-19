@@ -11,21 +11,41 @@ const headlineWords = [
   { text: "Gudang.", color: "teal" },
 ] as const;
 
-function useCountUp(target: number, duration = 1400, start: boolean) {
+function useCountUp(target: number, duration = 1400, start: boolean, loop = false, pause = 1800) {
   const [val, setVal] = useState(0);
   useEffect(() => {
     if (!start) return;
     let raf = 0;
-    const t0 = performance.now();
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - t0) / duration);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setVal(Math.round(target * eased));
-      if (p < 1) raf = requestAnimationFrame(tick);
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+
+    const run = () => {
+      const t0 = performance.now();
+      const tick = (t: number) => {
+        if (cancelled) return;
+        const p = Math.min(1, (t - t0) / duration);
+        const eased = 1 - Math.pow(1 - p, 3);
+        setVal(Math.max(1, Math.round(target * eased)));
+        if (p < 1) {
+          raf = requestAnimationFrame(tick);
+        } else if (loop) {
+          timeoutId = setTimeout(() => {
+            if (cancelled) return;
+            setVal(0);
+            run();
+          }, pause);
+        }
+      };
+      raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration, start]);
+
+    run();
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [target, duration, start, loop, pause]);
   return val;
 }
 
