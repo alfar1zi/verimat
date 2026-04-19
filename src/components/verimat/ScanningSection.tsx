@@ -191,13 +191,13 @@ function CheckRow({ label, delay }: { label: string; delay: string }) {
       <div className="relative h-4 w-4 shrink-0">
         <div
           className="row-spinner absolute inset-0 grid place-items-center"
-          style={{ animationDelay: `calc(2.8s + ${delay})` }}
+          style={{ animationDelay: delay }}
         >
-          <div className="row-spinner-icon h-3.5 w-3.5 rounded-full border-[1.5px] border-teal/20 border-t-teal" />
+          <div className="row-spinner-icon h-3.5 w-3.5 rounded-full border-2 border-white/15 border-t-teal" />
         </div>
         <div
           className="row-check absolute inset-0 grid place-items-center rounded-full bg-success"
-          style={{ animationDelay: `calc(3.6s + ${delay})` }}
+          style={{ animationDelay: delay }}
         >
           <CheckIcon className="h-2.5 w-2.5 text-white" strokeWidth={3} />
         </div>
