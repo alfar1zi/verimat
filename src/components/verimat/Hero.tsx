@@ -77,9 +77,9 @@ export default function Hero() {
     return () => io.disconnect();
   }, []);
 
-  const c1 = useCountUp(20, 1500, statsIn);
-  const c2 = useCountUp(60, 1500, statsIn);
-  const c3 = useCountUp(100, 1500, statsIn);
+  const c1 = useCountUp(20, 1800, statsIn, true, 2000);
+  const c2 = useCountUp(60, 1800, statsIn, true, 2000);
+  const c3 = useCountUp(100, 1800, statsIn, true, 2000);
 
   return (
     <section id="top" className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28">
