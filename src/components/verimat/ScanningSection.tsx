@@ -55,13 +55,25 @@ export default function ScanningSection() {
             </div>
 
             {/* Validation checks panel — appears after scan */}
-            <div className="scan-validation absolute right-4 sm:right-6 top-4 sm:top-6 w-44 sm:w-56 rounded-xl border border-white/10 bg-white/5 backdrop-blur p-3 sm:p-4 opacity-0">
-              <div className="text-[10px] font-bold tracking-wider text-teal mb-2">VALIDASI PO</div>
+            <div className="scan-validation absolute right-4 sm:right-6 top-4 sm:top-6 w-48 sm:w-60 rounded-xl border border-teal/30 bg-surface-deep p-3 sm:p-4 opacity-0 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.6)]">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-[10px] font-bold tracking-wider text-teal">VALIDASI PO</div>
+                <div className="processing-dot flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-teal" style={{ animation: "loading-dot 1.2s ease-in-out infinite", animationDelay: "0s" }} />
+                  <span className="h-1.5 w-1.5 rounded-full bg-teal" style={{ animation: "loading-dot 1.2s ease-in-out infinite", animationDelay: "0.2s" }} />
+                  <span className="h-1.5 w-1.5 rounded-full bg-teal" style={{ animation: "loading-dot 1.2s ease-in-out infinite", animationDelay: "0.4s" }} />
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="processing-bar mb-3 h-0.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="h-full w-full bg-gradient-to-r from-transparent via-teal to-transparent" style={{ animation: "progress-sweep 1.4s ease-in-out infinite" }} />
+              </div>
               <CheckRow label="Batch valid" delay="0.0s" />
               <CheckRow label="Exp date OK" delay="0.3s" />
               <CheckRow label="Supplier match" delay="0.6s" />
               <CheckRow label="Halal verified" delay="0.9s" />
             </div>
+
 
             {/* Final PASS badge */}
             <div className="scan-pass absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0">
