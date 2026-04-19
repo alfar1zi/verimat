@@ -55,13 +55,25 @@ export default function ScanningSection() {
             </div>
 
             {/* Validation checks panel — appears after scan */}
-            <div className="scan-validation absolute right-4 sm:right-6 top-4 sm:top-6 w-44 sm:w-56 rounded-xl border border-white/10 bg-white/5 backdrop-blur p-3 sm:p-4 opacity-0">
-              <div className="text-[10px] font-bold tracking-wider text-teal mb-2">VALIDASI PO</div>
+            <div className="scan-validation absolute right-4 sm:right-6 top-4 sm:top-6 w-48 sm:w-60 rounded-xl border border-teal/30 bg-surface-deep p-3 sm:p-4 opacity-0 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.6)]">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-[10px] font-bold tracking-wider text-teal">VALIDASI PO</div>
+                <div className="processing-dot flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-teal" style={{ animation: "loading-dot 1.2s ease-in-out infinite", animationDelay: "0s" }} />
+                  <span className="h-1.5 w-1.5 rounded-full bg-teal" style={{ animation: "loading-dot 1.2s ease-in-out infinite", animationDelay: "0.2s" }} />
+                  <span className="h-1.5 w-1.5 rounded-full bg-teal" style={{ animation: "loading-dot 1.2s ease-in-out infinite", animationDelay: "0.4s" }} />
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="processing-bar mb-3 h-0.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="h-full w-full bg-gradient-to-r from-transparent via-teal to-transparent" style={{ animation: "progress-sweep 1.4s ease-in-out infinite" }} />
+              </div>
               <CheckRow label="Batch valid" delay="0.0s" />
               <CheckRow label="Exp date OK" delay="0.3s" />
               <CheckRow label="Supplier match" delay="0.6s" />
               <CheckRow label="Halal verified" delay="0.9s" />
             </div>
+
 
             {/* Final PASS badge */}
             <div className="scan-pass absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0">
@@ -116,6 +128,36 @@ export default function ScanningSection() {
         }
         .check-row { animation: check-pop var(--cycle) ease-out infinite both; }
 
+        /* Loading dots inside processing panel */
+        @keyframes loading-dot {
+          0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+          40% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Sweeping progress bar */
+        @keyframes progress-sweep {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+        /* Each row: spinner first, then check */
+        @keyframes spinner-to-check {
+          0%, 55% { opacity: 0; }
+          60%, 72% { opacity: 1; }    /* spinner showing */
+          78%, 100% { opacity: 0; }   /* spinner fades out, check takes over */
+        }
+        @keyframes check-fade-in {
+          0%, 72% { opacity: 0; transform: scale(0.6); }
+          78%, 92% { opacity: 1; transform: scale(1); }
+          97%, 100% { opacity: 0; }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .row-spinner { animation: spinner-to-check var(--cycle) ease-out infinite both; }
+        .row-spinner-icon { animation: spin 0.8s linear infinite; }
+        .row-check { animation: check-fade-in var(--cycle) var(--ease-out) infinite both; }
+
         @keyframes pass-reveal {
           0%, 82% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
           88%, 96% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -123,6 +165,7 @@ export default function ScanningSection() {
         }
         .scan-pass { animation: pass-reveal var(--cycle) var(--ease-out) infinite; }
       `}</style>
+
     </section>
   );
 }
@@ -142,9 +185,20 @@ function Field({ label, value, delay }: { label: string; value: string; delay: s
 
 function CheckRow({ label, delay }: { label: string; delay: string }) {
   return (
-    <div className="check-row flex items-center gap-2 py-1" style={{ animationDelay: `calc(3.6s + ${delay})` }}>
-      <div className="grid h-4 w-4 place-items-center rounded-full bg-success">
-        <CheckIcon className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+    <div className="flex items-center gap-2 py-1">
+      <div className="relative h-4 w-4 shrink-0">
+        <div
+          className="row-spinner absolute inset-0 grid place-items-center"
+          style={{ animationDelay: `calc(2.8s + ${delay})` }}
+        >
+          <div className="row-spinner-icon h-3.5 w-3.5 rounded-full border-[1.5px] border-teal/20 border-t-teal" />
+        </div>
+        <div
+          className="row-check absolute inset-0 grid place-items-center rounded-full bg-success"
+          style={{ animationDelay: `calc(3.6s + ${delay})` }}
+        >
+          <CheckIcon className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+        </div>
       </div>
       <span className="text-[11px] sm:text-xs text-white/85">{label}</span>
     </div>
