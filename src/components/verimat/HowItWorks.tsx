@@ -64,11 +64,8 @@ export default function HowItWorks() {
                   </div>
                 </div>
 
-                {/* Text reveal */}
-                <div
-                  className="hiw-text mt-5"
-                  style={{ animationDelay: `calc(${stepDelay} + 0.45s)` }}
-                >
+                {/* Text — tampil permanen, tidak ikut loop */}
+                <div className="mt-5">
                   <h3 className="font-display text-lg font-bold text-foreground">{s.title}</h3>
                   <p className="mt-2 text-sm text-muted-foreground max-w-[220px] mx-auto">{s.body}</p>
                 </div>
