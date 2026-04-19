@@ -185,9 +185,20 @@ function Field({ label, value, delay }: { label: string; value: string; delay: s
 
 function CheckRow({ label, delay }: { label: string; delay: string }) {
   return (
-    <div className="check-row flex items-center gap-2 py-1" style={{ animationDelay: `calc(3.6s + ${delay})` }}>
-      <div className="grid h-4 w-4 place-items-center rounded-full bg-success">
-        <CheckIcon className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+    <div className="flex items-center gap-2 py-1">
+      <div className="relative h-4 w-4 shrink-0">
+        <div
+          className="row-spinner absolute inset-0 grid place-items-center"
+          style={{ animationDelay: `calc(2.8s + ${delay})` }}
+        >
+          <div className="row-spinner-icon h-3.5 w-3.5 rounded-full border-[1.5px] border-teal/20 border-t-teal" />
+        </div>
+        <div
+          className="row-check absolute inset-0 grid place-items-center rounded-full bg-success"
+          style={{ animationDelay: `calc(3.6s + ${delay})` }}
+        >
+          <CheckIcon className="h-2.5 w-2.5 text-white" strokeWidth={3} />
+        </div>
       </div>
       <span className="text-[11px] sm:text-xs text-white/85">{label}</span>
     </div>
