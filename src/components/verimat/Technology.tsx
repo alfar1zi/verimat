@@ -47,16 +47,6 @@ export default function Technology() {
             );
           })}
         </div>
-
-        <div className="reveal mt-16 text-center">
-          <div className="inline-flex items-center gap-2 text-sm text-white/50">
-            <span className="h-1 w-8 rounded-full bg-gradient-to-r from-transparent to-teal/60" />
-            <span className="font-semibold tracking-wider text-white/80" style={{ textShadow: "0 0 24px hsl(172 66% 50% / 0.5)" }}>
-              Powered by Microsoft Azure
-            </span>
-            <span className="h-1 w-8 rounded-full bg-gradient-to-l from-transparent to-teal/60" />
-          </div>
-        </div>
       </div>
     </section>
   );

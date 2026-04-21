@@ -1,13 +1,14 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ShieldCheckIcon } from "@heroicons/react/24/outline";
 
 const AppNavbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
     localStorage.removeItem("verimat_auth");
-    window.location.href = "/login";
+    navigate("/login", { replace: true });
   };
 
   return (

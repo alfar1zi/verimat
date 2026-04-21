@@ -53,6 +53,7 @@ function useCountUp(target: number, duration = 1400, start: boolean, loop = fals
 export default function Hero() {
   const dotRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
+  const hasAnimated = useRef(false);
   const [statsIn, setStatsIn] = useState(false);
 
   useEffect(() => {
@@ -71,16 +72,23 @@ export default function Hero() {
     const el = statsRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && setStatsIn(true)),
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting && !hasAnimated.current) {
+            hasAnimated.current = true;
+            setStatsIn(true);
+          }
+        });
+      },
       { threshold: 0.4 }
     );
     io.observe(el);
     return () => io.disconnect();
   }, []);
 
-  const c1 = useCountUp(20, 1800, statsIn, true, 2000);
-  const c2 = useCountUp(60, 1800, statsIn, true, 2000);
-  const c3 = useCountUp(100, 1800, statsIn, true, 2000);
+  const c1 = useCountUp(20, 1800, statsIn, false, 2000);
+  const c2 = useCountUp(30, 1800, statsIn, false, 2000);
+  const c3 = useCountUp(100, 1800, statsIn, false, 2000);
 
   return (
     <section id="top" className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28">
@@ -139,7 +147,7 @@ export default function Hero() {
         <p className="mx-auto mt-7 max-w-2xl text-center text-base sm:text-lg text-muted-foreground animate-fade-up"
            style={{ animationDelay: "1100ms" }}>
           Verifikasi otomatis Surat Jalan, Certificate of Analysis, dan dokumen halal —
-          ditenagai Microsoft Azure AI. Dari 20 menit menjadi kurang dari 60 detik.
+          ditenagai Microsoft Azure AI. Dari 20 menit menjadi kurang dari 30 detik.
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up"
@@ -163,14 +171,14 @@ export default function Hero() {
         <div ref={statsRef} className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
           <StatCard
             tone="dark"
-            value={`${c1}-${c1 + 5} mnt`}
+            value={`${c1}-${c1 + 5} menit`}
             label="Waktu verifikasi manual"
             sub="Per pengiriman"
             delay={1500}
           />
           <StatCard
             tone="white"
-            value={`< ${c2} dtk`}
+            value={`< ${c2} detik`}
             label="Verifikasi dengan VeriMat"
             badge="↓95% lebih cepat"
             delay={1650}

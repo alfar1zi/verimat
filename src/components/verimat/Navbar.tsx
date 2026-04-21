@@ -18,6 +18,17 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const handleNavClick = (e: React.MouseEvent, targetId: string) => {
+    e.preventDefault();
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   return (
     <header className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 animate-slide-down">
       <nav
@@ -27,7 +38,7 @@ export default function Navbar() {
             : "bg-surface-dark"
         }`}
       >
-        <a href="#top" className="flex items-center gap-2 pl-2 pr-1 sm:pr-3">
+        <a href="#top" onClick={(e) => handleNavClick(e, 'top')} className="flex items-center gap-2 pl-2 pr-1 sm:pr-3">
           <span className="grid h-7 w-7 place-items-center rounded-lg bg-teal/15 text-teal">
             <ShieldIcon className="h-4 w-4" />
           </span>
@@ -39,6 +50,7 @@ export default function Navbar() {
             <a
               key={l.href}
               href={l.href}
+              onClick={(e) => handleNavClick(e, l.href.substring(1))}
               className="rounded-full px-3 py-1.5 text-sm text-white/70 transition-colors hover:text-white hover:bg-white/5"
             >
               {l.label}
