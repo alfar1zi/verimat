@@ -8,9 +8,9 @@ const steps = [
 ];
 
 // Total cycle duration & per-step timing
-const CYCLE = 8; // seconds
+const CYCLE = 16; // seconds (slowed down by 2x)
 const STEP_COUNT = steps.length;
-const STEP_WINDOW = CYCLE / STEP_COUNT; // 2s per step
+const STEP_WINDOW = CYCLE / STEP_COUNT; // 4s per step
 
 export default function HowItWorks() {
   return (
@@ -31,6 +31,7 @@ export default function HowItWorks() {
           <div
             aria-hidden
             className="hidden md:block absolute left-[12.5%] right-[12.5%] top-7 h-[2px] pointer-events-none rounded-full bg-primary/15"
+            style={{ borderTop: '2px dashed #2DD4BF' }}
           >
             <div className="hiw-progress h-full w-0 rounded-full bg-primary" />
           </div>
@@ -53,9 +54,6 @@ export default function HowItWorks() {
                     style={{ animationDelay: stepDelay }}
                   >
                     <Icon className="h-6 w-6" />
-                    <span className="absolute -top-2 -right-2 grid h-6 w-6 place-items-center rounded-full bg-accent-teal text-[11px] font-bold text-surface-deep border-2 border-background">
-                      {i + 1}
-                    </span>
                     {/* Active pulse dot */}
                     <span
                       className="hiw-pulse absolute -bottom-1 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-accent-teal"
