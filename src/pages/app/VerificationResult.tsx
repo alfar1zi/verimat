@@ -14,6 +14,7 @@ interface VerificationData {
 }
 
 const VerificationResult = () => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [data, setData] = useState<VerificationData | null>(null);
@@ -26,7 +27,7 @@ const VerificationResult = () => {
 
   const fetchVerificationData = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/verification/${id}`);
+      const response = await fetch(`${API_URL}/api/verification/${id}`);
       if (!response.ok) throw new Error("Server error");
       const result = await response.json();
       setData(result);

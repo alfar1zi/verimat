@@ -12,6 +12,7 @@ interface AuditRecord {
 }
 
 const AuditTrail = () => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const navigate = useNavigate();
   const [records, setRecords] = useState<AuditRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +36,7 @@ const AuditTrail = () => {
       if (filters.doc_type) params.append("doc_type", filters.doc_type);
       if (filters.status) params.append("status", filters.status);
 
-      const response = await fetch(`http://localhost:5000/api/audit/list?${params.toString()}`);
+      const response = await fetch(`${API_URL}/api/audit/list?${params.toString()}`);
       if (!response.ok) throw new Error("Server error");
       const data = await response.json();
       setRecords(data);

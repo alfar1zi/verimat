@@ -15,6 +15,7 @@ interface Stats {
 }
 
 const Dashboard = () => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [poList, setPoList] = useState<PO[]>([]);
@@ -33,7 +34,7 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/audit/list");
+      const response = await fetch(`${API_URL}/api/audit/list`);
       if (response.ok) {
         const data = await response.json();
         const total = data.length;
@@ -48,7 +49,7 @@ const Dashboard = () => {
 
   const fetchPOList = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/po/list");
+      const response = await fetch(`${API_URL}/api/po/list`);
       if (!response.ok) throw new Error("Server error");
       const data = await response.json();
       setPoList(data);
@@ -102,7 +103,7 @@ const Dashboard = () => {
     formData.append("doc_type", docType);
 
     try {
-      const response = await fetch("http://localhost:5000/api/upload/verify", {
+      const response = await fetch(`${API_URL}/api/upload/verify`, {
         method: "POST",
         body: formData,
       });
