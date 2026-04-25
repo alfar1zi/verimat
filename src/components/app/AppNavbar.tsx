@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShieldCheckIcon } from "@heroicons/react/24/outline";
+import MedicineLogo from "./MedicineLogo";
 
 const AppNavbar = () => {
   const location = useLocation();
@@ -15,7 +15,17 @@ const AppNavbar = () => {
     <nav className="bg-white border-b border-[#E5E7EB] h-16 px-8 flex items-center justify-between">
       {/* Left - Logo */}
       <div className="flex items-center gap-2">
-        <ShieldCheckIcon className="h-6 w-6 text-[#0D4B3B]" />
+        <div style={{
+          width: '36px',
+          height: '36px',
+          background: 'rgba(13,75,59,0.1)',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <MedicineLogo size={20} color="#0D4B3B" />
+        </div>
         <span className="font-bold text-[20px] text-[#0D4B3B]">VeriMat</span>
       </div>
 

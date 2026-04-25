@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpTrayIcon, DocumentIcon, XMarkIcon, ShieldCheckIcon, DocumentTextIcon, CheckCircleIcon, ExclamationCircleIcon, ArrowRightCircleIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowUpTrayIcon, DocumentIcon, XMarkIcon, ShieldCheckIcon, DocumentTextIcon, CheckCircleIcon, ExclamationCircleIcon, ArrowRightCircleIcon, ChevronLeftIcon, CheckIcon } from "@heroicons/react/24/outline";
 import AppNavbar from "../../components/app/AppNavbar";
 
 interface Stats {
@@ -15,30 +15,65 @@ interface POSuggestion {
   display: string;
 }
 
+const STORAGE_KEY = 'verimat_form_draft';
+
 const Dashboard = () => {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const navigate = useNavigate();
   
-  // Step management
-  const [currentStep, setCurrentStep] = useState(1);
+  // Step management with persistence
+  const [currentStep, setCurrentStep] = useState(() => {
+    return parseInt(sessionStorage.getItem(STORAGE_KEY + '_step') || '1');
+  });
   
-  // Step 1 fields
-  const [referenceNumber, setReferenceNumber] = useState("");
-  const [vendorName, setVendorName] = useState("");
-  const [materialName, setMaterialName] = useState("");
-  const [batchNumber, setBatchNumber] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [unit, setUnit] = useState("kg");
-  const [documentDate, setDocumentDate] = useState(new Date().toISOString().split('T')[0]);
-  const [packagingCondition, setPackagingCondition] = useState("");
-  const [storageCondition, setStorageCondition] = useState("Normal (15-30°C)");
-  const [temperature, setTemperature] = useState("");
-  const [notes, setNotes] = useState("");
+  // Step 1 fields with persistence
+  const [formState, setFormState] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : {
+        referenceNumber: '',
+        vendorName: '',
+        materialName: '',
+        batchNumber: '',
+        quantity: '',
+        unit: 'kg',
+        documentDate: new Date().toISOString().split('T')[0],
+        packagingCondition: '',
+        storageCondition: 'Tidak Diperlukan',
+        temperature: '',
+        notes: '',
+      };
+    } catch {
+      return {
+        referenceNumber: '',
+        vendorName: '',
+        materialName: '',
+        batchNumber: '',
+        quantity: '',
+        unit: 'kg',
+        documentDate: new Date().toISOString().split('T')[0],
+        packagingCondition: '',
+        storageCondition: 'Tidak Diperlukan',
+        temperature: '',
+        notes: '',
+      };
+    }
+  });
   
-  // Search suggestions
-  const [poSuggestions, setPoSuggestions] = useState<POSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+  // File names persistence (can't store File objects in sessionStorage)
+  const [fileNames, setFileNames] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY + '_files');
+      return saved ? JSON.parse(saved) : {
+        suratJalan: null,
+        coa: null,
+        faktur: null,
+        dokumenLain: []
+      };
+    } catch {
+      return { suratJalan: null, coa: null, faktur: null, dokumenLain: [] };
+    }
+  });
   
   // Step 2 files
   const [suratJalan, setSuratJalan] = useState<File | null>(null);
@@ -46,11 +81,31 @@ const Dashboard = () => {
   const [faktur, setFaktur] = useState<File | null>(null);
   const [dokumenLain, setDokumenLain] = useState<File[]>([]);
   
+  // Search suggestions
+  const [poSuggestions, setPoSuggestions] = useState<POSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [stats, setStats] = useState<Stats>({ total: 0, pass: 0, failed: 0 });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Persist form state
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formState));
+  }, [formState]);
+  
+  // Persist file names
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY + '_files', JSON.stringify(fileNames));
+  }, [fileNames]);
+  
+  // Persist step
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY + '_step', currentStep.toString());
+  }, [currentStep]);
 
   useEffect(() => {
     fetchStats();
@@ -100,35 +155,65 @@ const Dashboard = () => {
   };
 
   const handleReferenceChange = (value: string) => {
-    setReferenceNumber(value);
+    setFormState({ ...formState, referenceNumber: value });
     handleSearchPO(value);
   };
 
   const selectSuggestion = (suggestion: POSuggestion) => {
-    setReferenceNumber(suggestion.po_number);
-    setMaterialName(suggestion.material_name);
+    setFormState({ ...formState, referenceNumber: suggestion.po_number, materialName: suggestion.material_name });
     setShowSuggestions(false);
   };
 
   const validateStep1 = () => {
     const errors: Record<string, string> = {};
     
-    if (!referenceNumber.trim()) errors.referenceNumber = "Nomor referensi wajib diisi";
-    if (!vendorName.trim()) errors.vendorName = "Nama vendor wajib diisi";
-    if (!materialName.trim()) errors.materialName = "Nama bahan baku wajib diisi";
-    if (!batchNumber.trim()) errors.batchNumber = "Nomor batch wajib diisi";
-    if (!quantity.trim()) errors.quantity = "Jumlah wajib diisi";
-    if (!documentDate) errors.documentDate = "Tanggal dokumen wajib diisi";
-    if (!packagingCondition) errors.packagingCondition = "Kondisi kemasan wajib dipilih";
+    if (!formState.referenceNumber.trim()) errors.referenceNumber = "Nomor referensi wajib diisi";
+    if (!formState.vendorName.trim()) errors.vendorName = "Nama vendor wajib diisi";
+    if (!formState.materialName.trim()) errors.materialName = "Nama bahan baku wajib diisi";
+    if (!formState.batchNumber.trim()) errors.batchNumber = "Nomor batch wajib diisi";
+    if (!formState.quantity || parseFloat(formState.quantity) <= 0) errors.quantity = "Jumlah wajib diisi";
+    if (!formState.documentDate) errors.documentDate = "Tanggal wajib diisi";
+    if (!formState.packagingCondition) errors.packagingCondition = "Kondisi kemasan wajib dipilih";
     
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
+    return errors;
   };
 
   const handleNextStep = () => {
-    if (validateStep1()) {
-      setCurrentStep(2);
-      setError("");
+    const errors = validateStep1();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      const firstError = document.querySelector('[data-error]');
+      firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setCurrentStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const clearDraft = () => {
+    if (window.confirm('Hapus semua isian?')) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY + '_files');
+      sessionStorage.removeItem(STORAGE_KEY + '_step');
+      setFormState({
+        referenceNumber: '',
+        vendorName: '',
+        materialName: '',
+        batchNumber: '',
+        quantity: '',
+        unit: 'kg',
+        documentDate: new Date().toISOString().split('T')[0],
+        packagingCondition: '',
+        storageCondition: 'Tidak Diperlukan',
+        temperature: '',
+        notes: '',
+      });
+      setFileNames({ suratJalan: null, coa: null, faktur: null, dokumenLain: [] });
+      setSuratJalan(null);
+      setCoa(null);
+      setFaktur(null);
+      setDokumenLain([]);
+      setCurrentStep(1);
     }
   };
 
@@ -137,25 +222,45 @@ const Dashboard = () => {
       setError("File size exceeds 10MB limit");
       return;
     }
-    if (type === 'surat_jalan') setSuratJalan(file);
-    else if (type === 'coa') setCoa(file);
-    else if (type === 'faktur') setFaktur(file);
+    if (type === 'surat_jalan') {
+      setSuratJalan(file);
+      setFileNames({ ...fileNames, suratJalan: file.name });
+    }
+    else if (type === 'coa') {
+      setCoa(file);
+      setFileNames({ ...fileNames, coa: file.name });
+    }
+    else if (type === 'faktur') {
+      setFaktur(file);
+      setFileNames({ ...fileNames, faktur: file.name });
+    }
     setError("");
   };
 
   const handleDokumenLainSelect = (files: FileList) => {
     const newFiles = Array.from(files).slice(0, 3 - dokumenLain.length);
     setDokumenLain([...dokumenLain, ...newFiles]);
+    setFileNames({ ...fileNames, dokumenLain: [...fileNames.dokumenLain, ...newFiles.map(f => f.name)] });
   };
 
   const removeFile = (type: 'surat_jalan' | 'coa' | 'faktur', index?: number) => {
-    if (type === 'surat_jalan') setSuratJalan(null);
-    else if (type === 'coa') setCoa(null);
-    else if (type === 'faktur') setFaktur(null);
+    if (type === 'surat_jalan') {
+      setSuratJalan(null);
+      setFileNames({ ...fileNames, suratJalan: null });
+    }
+    else if (type === 'coa') {
+      setCoa(null);
+      setFileNames({ ...fileNames, coa: null });
+    }
+    else if (type === 'faktur') {
+      setFaktur(null);
+      setFileNames({ ...fileNames, faktur: null });
+    }
   };
 
   const removeDokumenLain = (index: number) => {
     setDokumenLain(dokumenLain.filter((_, i) => i !== index));
+    setFileNames({ ...fileNames, dokumenLain: fileNames.dokumenLain.filter((_, i) => i !== index) });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -174,17 +279,17 @@ const Dashboard = () => {
     if (faktur) formData.append("faktur", faktur);
     dokumenLain.forEach((file) => formData.append("dokumen_lain", file));
     
-    formData.append("reference_number", referenceNumber);
-    formData.append("vendor_name", vendorName);
-    formData.append("material_name", materialName);
-    formData.append("batch_number", batchNumber);
-    formData.append("quantity", quantity);
-    formData.append("unit", unit);
-    formData.append("document_date", documentDate);
-    formData.append("packaging_condition", packagingCondition);
-    formData.append("storage_condition", storageCondition);
-    if (temperature) formData.append("temperature", temperature);
-    if (notes) formData.append("notes", notes);
+    formData.append("reference_number", formState.referenceNumber);
+    formData.append("vendor_name", formState.vendorName);
+    formData.append("material_name", formState.materialName);
+    formData.append("batch_number", formState.batchNumber);
+    formData.append("quantity", formState.quantity);
+    formData.append("unit", formState.unit);
+    formData.append("document_date", formState.documentDate);
+    formData.append("packaging_condition", formState.packagingCondition);
+    formData.append("storage_condition", formState.storageCondition);
+    if (formState.temperature) formData.append("temperature", formState.temperature);
+    if (formState.notes) formData.append("notes", formState.notes);
 
     try {
       const response = await fetch(`${API_URL}/api/upload/verify`, {
@@ -192,11 +297,24 @@ const Dashboard = () => {
         body: formData,
       });
 
-      if (!response.ok) throw new Error("Server error");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      }
       const data = await response.json();
+      
+      // Clear session on success
+      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY + '_files');
+      sessionStorage.removeItem(STORAGE_KEY + '_step');
+      
       navigate(`/verification/${data.session_id}`);
-    } catch (err) {
-      setError("Gagal mengupload dokumen. Pastikan server berjalan.");
+    } catch (error: any) {
+      if (error.message.includes('fetch')) {
+        setError('Tidak dapat terhubung ke server. Pastikan backend berjalan di ' + API_URL);
+      } else {
+        setError(error.message || 'Terjadi kesalahan saat memproses dokumen.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -247,20 +365,52 @@ const Dashboard = () => {
         </div>
 
         {/* Step Indicator */}
-        <div className="flex items-center justify-center mt-8 mb-6">
-          <div className="flex items-center gap-4">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', gap: '0' }}>
+          <div className="flex items-center gap-0">
             <div className="flex flex-col items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${currentStep >= 1 ? 'bg-[#0D4B3B] text-white' : 'bg-[#E5E7EB] text-[#9CA3AF]'}`}>
-                1
+              <div 
+                onClick={() => currentStep === 2 && setCurrentStep(1)}
+                style={{
+                  width: '36px', height: '36px', borderRadius: '50%',
+                  background: currentStep >= 1 ? '#0D4B3B' : '#E5E7EB',
+                  color: currentStep >= 1 ? 'white' : '#9CA3AF',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '14px', fontWeight: '700',
+                  boxShadow: currentStep >= 1 ? '0 0 0 4px rgba(13,75,59,0.15)' : 'none',
+                  position: 'relative', zIndex: 1,
+                  cursor: currentStep === 2 ? 'pointer' : 'default'
+                }}
+              >
+                {currentStep > 1 ? <CheckIcon className="h-4 w-4" /> : '1'}
               </div>
-              <span className="text-[12px] mt-1 font-medium text-[#6B7280]">Informasi</span>
+              <span style={{
+                fontSize: '11px', fontWeight: currentStep === 1 ? '600' : '400',
+                color: currentStep === 1 ? '#0D4B3B' : '#9CA3AF',
+                marginTop: '6px', textAlign: 'center'
+              }}>Informasi</span>
             </div>
-            <div className={`w-16 h-0.5 ${currentStep >= 2 ? 'bg-[#0D4B3B]' : 'bg-[#E5E7EB]'}`} />
+            <div style={{
+              height: '2px', width: '80px',
+              background: currentStep > 1 ? '#16A34A' : '#E5E7EB',
+              transition: 'background 0.3s ease'
+            }} />
             <div className="flex flex-col items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${currentStep >= 2 ? 'bg-[#0D4B3B] text-white' : 'bg-[#E5E7EB] text-[#9CA3AF]'}`}>
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: currentStep >= 2 ? '#0D4B3B' : '#E5E7EB',
+                color: currentStep >= 2 ? 'white' : '#9CA3AF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '14px', fontWeight: '700',
+                boxShadow: currentStep >= 2 ? '0 0 0 4px rgba(13,75,59,0.15)' : 'none',
+                position: 'relative', zIndex: 1
+              }}>
                 2
               </div>
-              <span className="text-[12px] mt-1 font-medium text-[#6B7280]">Dokumen</span>
+              <span style={{
+                fontSize: '11px', fontWeight: currentStep === 2 ? '600' : '400',
+                color: currentStep === 2 ? '#0D4B3B' : '#9CA3AF',
+                marginTop: '6px', textAlign: 'center'
+              }}>Dokumen</span>
             </div>
           </div>
         </div>
@@ -273,19 +423,28 @@ const Dashboard = () => {
               
               {/* Row 1 */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="relative" ref={searchRef}>
-                  <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
-                    Nomor Referensi Dokumen <span className="text-red-500">*</span>
+                <div className="relative" ref={searchRef} data-error={fieldErrors.referenceNumber ? 'true' : undefined}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    Nomor Referensi Dokumen <span style={{color: '#DC2626'}}>*</span>
                   </label>
-                  <p className="text-[12px] text-[#6B7280] mb-1.5">Nomor PO, Kontrak, Berita Acara, atau Invoice dari supplier</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Nomor PO, Kontrak, Berita Acara, atau Invoice dari supplier</p>
                   <input
                     type="text"
-                    value={referenceNumber}
+                    value={formState.referenceNumber}
                     onChange={(e) => handleReferenceChange(e.target.value)}
                     placeholder="Contoh: PO-2024-001 atau INV-KF-20240419"
-                    className={`w-full px-3.5 py-2.5 border-[1.5px] rounded-lg text-[15px] bg-white focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all ${fieldErrors.referenceNumber ? 'border-[#DC2626]' : 'border-[#E5E7EB] focus:border-[#0D4B3B]'}`}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: fieldErrors.referenceNumber ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
+                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
+                      backgroundColor: 'white', outline: 'none',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = fieldErrors.referenceNumber ? '#DC2626' : '#E5E7EB'}
                   />
-                  {fieldErrors.referenceNumber && <p className="text-[12px] text-[#DC2626] mt-1">{fieldErrors.referenceNumber}</p>}
+                  {fieldErrors.referenceNumber && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.referenceNumber}</p>}
                   {showSuggestions && poSuggestions.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                       {poSuggestions.map((suggestion, index) => (
@@ -300,76 +459,120 @@ const Dashboard = () => {
                     </div>
                   )}
                 </div>
-                <div>
-                  <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
-                    Nama Vendor / Supplier <span className="text-red-500">*</span>
+                <div data-error={fieldErrors.vendorName ? 'true' : undefined}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    Nama Vendor / Supplier <span style={{color: '#DC2626'}}>*</span>
                   </label>
                   <input
                     type="text"
-                    value={vendorName}
-                    onChange={(e) => setVendorName(e.target.value)}
+                    value={formState.vendorName}
+                    onChange={(e) => setFormState({ ...formState, vendorName: e.target.value })}
                     placeholder="PT Kimia Farma, PT Brataco, dll"
-                    className={`w-full px-3.5 py-2.5 border-[1.5px] rounded-lg text-[15px] bg-white focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all ${fieldErrors.vendorName ? 'border-[#DC2626]' : 'border-[#E5E7EB] focus:border-[#0D4B3B]'}`}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: fieldErrors.vendorName ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
+                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
+                      backgroundColor: 'white', outline: 'none',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = fieldErrors.vendorName ? '#DC2626' : '#E5E7EB'}
                   />
-                  {fieldErrors.vendorName && <p className="text-[12px] text-[#DC2626] mt-1">{fieldErrors.vendorName}</p>}
+                  {fieldErrors.vendorName && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.vendorName}</p>}
                 </div>
               </div>
 
               {/* Row 2 */}
               <div className="grid grid-cols-2 gap-4 mt-5">
-                <div>
-                  <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
-                    Nama Bahan Baku <span className="text-red-500">*</span>
+                <div data-error={fieldErrors.materialName ? 'true' : undefined}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    Nama Bahan Baku <span style={{color: '#DC2626'}}>*</span>
                   </label>
                   <input
                     type="text"
-                    value={materialName}
-                    onChange={(e) => setMaterialName(e.target.value)}
+                    value={formState.materialName}
+                    onChange={(e) => setFormState({ ...formState, materialName: e.target.value })}
                     placeholder="Paracetamol, Ascorbic Acid, dll"
-                    className={`w-full px-3.5 py-2.5 border-[1.5px] rounded-lg text-[15px] bg-white focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all ${fieldErrors.materialName ? 'border-[#DC2626]' : 'border-[#E5E7EB] focus:border-[#0D4B3B]'}`}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: fieldErrors.materialName ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
+                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
+                      backgroundColor: 'white', outline: 'none',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = fieldErrors.materialName ? '#DC2626' : '#E5E7EB'}
                   />
-                  {fieldErrors.materialName && <p className="text-[12px] text-[#DC2626] mt-1">{fieldErrors.materialName}</p>}
+                  {fieldErrors.materialName && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.materialName}</p>}
                 </div>
-                <div>
-                  <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
-                    Nomor Batch Supplier <span className="text-red-500">*</span>
+                <div data-error={fieldErrors.batchNumber ? 'true' : undefined}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    Nomor Batch Supplier <span style={{color: '#DC2626'}}>*</span>
                   </label>
-                  <p className="text-[12px] text-[#6B7280] mb-1.5">Sesuai yang tertera di Surat Jalan dan CoA</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Sesuai yang tertera di Surat Jalan dan CoA</p>
                   <input
                     type="text"
-                    value={batchNumber}
-                    onChange={(e) => setBatchNumber(e.target.value)}
+                    value={formState.batchNumber}
+                    onChange={(e) => setFormState({ ...formState, batchNumber: e.target.value })}
                     placeholder="Contoh: BTX-2024-091"
-                    className={`w-full px-3.5 py-2.5 border-[1.5px] rounded-lg text-[15px] bg-white focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all ${fieldErrors.batchNumber ? 'border-[#DC2626]' : 'border-[#E5E7EB] focus:border-[#0D4B3B]'}`}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: fieldErrors.batchNumber ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
+                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
+                      backgroundColor: 'white', outline: 'none',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = fieldErrors.batchNumber ? '#DC2626' : '#E5E7EB'}
                   />
-                  {fieldErrors.batchNumber && <p className="text-[12px] text-[#DC2626] mt-1">{fieldErrors.batchNumber}</p>}
+                  {fieldErrors.batchNumber && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.batchNumber}</p>}
                 </div>
               </div>
 
               {/* Row 3 */}
               <div className="grid grid-cols-2 gap-4 mt-5">
-                <div>
-                  <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
-                    Jumlah Diterima <span className="text-red-500">*</span>
+                <div data-error={fieldErrors.quantity ? 'true' : undefined}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    Jumlah Diterima <span style={{color: '#DC2626'}}>*</span>
                   </label>
                   <input
                     type="number"
                     min="0"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                    value={formState.quantity}
+                    onChange={(e) => setFormState({ ...formState, quantity: e.target.value })}
                     placeholder="0"
-                    className={`w-full px-3.5 py-2.5 border-[1.5px] rounded-lg text-[15px] bg-white focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all ${fieldErrors.quantity ? 'border-[#DC2626]' : 'border-[#E5E7EB] focus:border-[#0D4B3B]'}`}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: fieldErrors.quantity ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
+                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
+                      backgroundColor: 'white', outline: 'none',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = fieldErrors.quantity ? '#DC2626' : '#E5E7EB'}
                   />
-                  {fieldErrors.quantity && <p className="text-[12px] text-[#DC2626] mt-1">{fieldErrors.quantity}</p>}
+                  {fieldErrors.quantity && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.quantity}</p>}
                 </div>
                 <div>
-                  <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
                     Satuan
                   </label>
                   <select
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border-[1.5px] border-[#E5E7EB] rounded-lg text-[15px] bg-white focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                    value={formState.unit}
+                    onChange={(e) => setFormState({ ...formState, unit: e.target.value })}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: '1.5px solid #E5E7EB', borderRadius: '8px',
+                      fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
+                      outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
                   >
                     <option value="kg">kg</option>
                     <option value="gram">gram</option>
@@ -386,26 +589,44 @@ const Dashboard = () => {
 
               {/* Row 4 */}
               <div className="grid grid-cols-2 gap-4 mt-5">
-                <div>
-                  <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
-                    Tanggal Dokumen / Pengiriman <span className="text-red-500">*</span>
+                <div data-error={fieldErrors.documentDate ? 'true' : undefined}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    Tanggal Dokumen / Pengiriman <span style={{color: '#DC2626'}}>*</span>
                   </label>
                   <input
                     type="date"
-                    value={documentDate}
-                    onChange={(e) => setDocumentDate(e.target.value)}
-                    className={`w-full px-3.5 py-2.5 border-[1.5px] rounded-lg text-[15px] bg-white focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all ${fieldErrors.documentDate ? 'border-[#DC2626]' : 'border-[#E5E7EB] focus:border-[#0D4B3B]'}`}
+                    value={formState.documentDate}
+                    onChange={(e) => setFormState({ ...formState, documentDate: e.target.value })}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: fieldErrors.documentDate ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
+                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
+                      backgroundColor: 'white', outline: 'none',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = fieldErrors.documentDate ? '#DC2626' : '#E5E7EB'}
                   />
-                  {fieldErrors.documentDate && <p className="text-[12px] text-[#DC2626] mt-1">{fieldErrors.documentDate}</p>}
+                  {fieldErrors.documentDate && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.documentDate}</p>
                 </div>
-                <div>
-                  <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
-                    Kondisi Kemasan Fisik <span className="text-red-500">*</span>
+                <div data-error={fieldErrors.packagingCondition ? 'true' : undefined}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    Kondisi Kemasan Fisik <span style={{color: '#DC2626'}}>*</span>
                   </label>
                   <select
-                    value={packagingCondition}
-                    onChange={(e) => setPackagingCondition(e.target.value)}
-                    className={`w-full px-3.5 py-2.5 border-[1.5px] rounded-lg text-[15px] bg-white focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all ${fieldErrors.packagingCondition ? 'border-[#DC2626]' : 'border-[#E5E7EB] focus:border-[#0D4B3B]'}`}
+                    value={formState.packagingCondition}
+                    onChange={(e) => setFormState({ ...formState, packagingCondition: e.target.value })}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: fieldErrors.packagingCondition ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
+                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
+                      backgroundColor: 'white', outline: 'none',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = fieldErrors.packagingCondition ? '#DC2626' : '#E5E7EB'}
                   >
                     <option value="">Pilih kondisi</option>
                     <option value="Baik">Baik — Kemasan utuh dan tidak ada kerusakan</option>
@@ -413,28 +634,44 @@ const Dashboard = () => {
                     <option value="Rusak">Rusak — Kemasan bocor atau rusak signifikan</option>
                     <option value="Perlu Dicek">Perlu Dicek — Kondisi meragukan</option>
                   </select>
-                  {fieldErrors.packagingCondition && <p className="text-[12px] text-[#DC2626] mt-1">{fieldErrors.packagingCondition}</p>}
+                  {fieldErrors.packagingCondition && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.packagingCondition}</p>}
                 </div>
               </div>
 
               {/* Row 5 */}
               <div className="mt-5">
-                <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
+                <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
                   Kondisi Penyimpanan / Suhu
                 </label>
-                <p className="text-[12px] text-[#6B7280] mb-1.5">Isi jika bahan memerlukan cold chain</p>
+                <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Isi jika bahan memerlukan cold chain</p>
                 <div className="flex gap-4">
                   <input
                     type="number"
-                    value={temperature}
-                    onChange={(e) => setTemperature(e.target.value)}
+                    value={formState.temperature}
+                    onChange={(e) => setFormState({ ...formState, temperature: e.target.value })}
                     placeholder="Suhu saat datang (°C)"
-                    className="flex-1 px-3.5 py-2.5 border-[1.5px] border-[#E5E7EB] rounded-lg text-[15px] bg-white focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                    style={{
+                      flex: 1, padding: '10px 14px',
+                      border: '1.5px solid #E5E7EB', borderRadius: '8px',
+                      fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
+                      outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
                   />
                   <select
-                    value={storageCondition}
-                    onChange={(e) => setStorageCondition(e.target.value)}
-                    className="flex-1 px-3.5 py-2.5 border-[1.5px] border-[#E5E7EB] rounded-lg text-[15px] bg-white focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                    value={formState.storageCondition}
+                    onChange={(e) => setFormState({ ...formState, storageCondition: e.target.value })}
+                    style={{
+                      flex: 1, padding: '10px 14px',
+                      border: '1.5px solid #E5E7EB', borderRadius: '8px',
+                      fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
+                      outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
                   >
                     <option value="Normal (15-30°C)">Normal (15-30°C)</option>
                     <option value="Dingin (2-8°C)">Dingin (2-8°C)</option>
@@ -446,15 +683,23 @@ const Dashboard = () => {
 
               {/* Row 6 */}
               <div className="mt-5">
-                <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
+                <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
                   Catatan Tambahan
                 </label>
                 <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  value={formState.notes}
+                  onChange={(e) => setFormState({ ...formState, notes: e.target.value })}
                   placeholder="Catatan khusus tentang pengiriman ini (opsional)"
                   rows={3}
-                  className="w-full px-3.5 py-2.5 border-[1.5px] border-[#E5E7EB] rounded-lg text-[15px] bg-white focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all resize-none"
+                  style={{
+                    width: '100%', padding: '10px 14px',
+                    border: '1.5px solid #E5E7EB', borderRadius: '8px',
+                    fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
+                    outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+                    boxSizing: 'border-box', minHeight: '80px', resize: 'vertical', fontFamily: 'inherit'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                  onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
                 />
               </div>
 
@@ -462,9 +707,31 @@ const Dashboard = () => {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="w-full h-[48px] bg-[#0D4B3B] text-white rounded-lg font-semibold text-[16px] mt-6 hover:bg-[#0a3d30] hover:-translate-y-0.5 transition-all"
+                style={{
+                  width: '100%', height: '48px',
+                  background: '#0D4B3B', color: 'white',
+                  borderRadius: '8px', fontWeight: '600', fontSize: '16px',
+                  marginTop: '24px', cursor: 'pointer', border: 'none',
+                  transition: 'background 0.2s, transform 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = '#0a3d30'}
+                onMouseOut={(e) => e.currentTarget.style.background = '#0D4B3B'}
               >
                 Lanjut ke Upload Dokumen →
+              </button>
+
+              {/* Clear Draft Button */}
+              <button
+                type="button"
+                onClick={clearDraft}
+                style={{
+                  width: '100', height: 'auto',
+                  background: 'none', color: '#9CA3AF',
+                  fontSize: '13px', marginTop: '12px', cursor: 'pointer',
+                  border: 'none', padding: 0
+                }}
+              >
+                Hapus draft dan mulai ulang
               </button>
             </>
           ) : (
@@ -472,10 +739,14 @@ const Dashboard = () => {
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="text-[14px] text-[#6B7280] hover:text-[#0D4B3B] flex items-center gap-1 mb-4"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  background: 'none', border: 'none',
+                  color: '#0D4B3B', fontSize: '14px', fontWeight: '500',
+                  cursor: 'pointer', padding: '0', marginBottom: '20px'
+                }}
               >
-                <ChevronLeftIcon className="h-4 w-4" />
-                Kembali ke Informasi
+                ← Kembali ke Informasi Pengiriman
               </button>
               
               <h2 className="text-[18px] font-bold text-[#0F1A16] mb-1">Upload Dokumen Pengiriman</h2>
@@ -522,12 +793,23 @@ const Dashboard = () => {
                 />
 
                 {/* Slot 4 - Dokumen Lain */}
-                <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
+                <div style={{
+                  background: 'white', border: '1.5px solid #E5E7EB',
+                  borderRadius: '12px', padding: '20px',
+                  transition: 'border-color 0.2s, box-shadow 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#0D4B3B'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E5E7EB'}
+                >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F3F4F6] text-[#6B7280]">OPSIONAL</span>
-                    <h3 className="text-[15px] font-semibold text-[#0F1A16]">Sertifikat Halal / MSDS / Dokumen Lain</h3>
+                    <span style={{
+                      padding: '2px 8px', borderRadius: '4px',
+                      fontSize: '11px', fontWeight: '600',
+                      background: '#F3F4F6', color: '#6B7280'
+                    }}>OPSIONAL</span>
+                    <h3 style={{fontSize: '15px', fontWeight: '600', color: '#0F1A16'}}>Sertifikat Halal / MSDS / Dokumen Lain</h3>
                   </div>
-                  <p className="text-[13px] text-[#6B7280] mb-3">Sertifikat halal, MSDS untuk B3, atau dokumen pendukung lainnya (max 3 file)</p>
+                  <p style={{fontSize: '13px', color: '#6B7280', marginBottom: '12px'}}>Sertifikat halal, MSDS untuk B3, atau dokumen pendukung lainnya (max 3 file)</p>
                   
                   <input
                     type="file"
@@ -536,32 +818,51 @@ const Dashboard = () => {
                     onChange={(e) => {
                       if (e.target.files) handleDokumenLainSelect(e.target.files);
                     }}
-                    className="hidden"
+                    style={{display: 'none'}}
                     id="dokumen-lain-input"
                   />
                   <label
                     htmlFor="dokumen-lain-input"
-                    className="flex items-center justify-center gap-2 border-2 border-dashed border-[#0D4B3B30] rounded-lg p-4 cursor-pointer hover:border-[#0D4B3B] hover:bg-[#F0FAF7] transition-all"
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      border: '2px dashed rgba(13,75,59,0.2)', borderRadius: '8px',
+                      padding: '16px', cursor: 'pointer',
+                      transition: 'border-color 0.2s, background 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#0D4B3B';
+                      e.currentTarget.style.background = '#F0FAF7';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(13,75,59,0.2)';
+                      e.currentTarget.style.background = 'white';
+                    }}
                   >
-                    <ArrowUpTrayIcon className="h-5 w-5 text-[#0D4B3B]" />
-                    <span className="text-[14px] text-[#6B7280]">Pilih file atau drag & drop</span>
+                    <ArrowUpTrayIcon style={{height: '20px', width: '20px', color: '#0D4B3B'}} />
+                    <span style={{fontSize: '14px', color: '#6B7280'}}>Pilih file atau drag & drop</span>
                   </label>
                   
                   {dokumenLain.length > 0 && (
-                    <div className="mt-3 space-y-2">
+                    <div style={{marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px'}}>
                       {dokumenLain.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between bg-[#DCFCE7] border border-[#16A34A] rounded-lg px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <DocumentIcon className="h-4 w-4 text-[#16A34A]" />
-                            <span className="text-[13px] text-[#0F1A16]">{file.name}</span>
-                            <span className="text-[11px] text-[#6B7280]">({(file.size / 1024).toFixed(1)} KB)</span>
+                        <div key={index} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          background: '#DCFCE7', border: '1px solid #16A34A', borderRadius: '8px',
+                          padding: '8px 12px'
+                        }}>
+                          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                            <DocumentIcon style={{height: '16px', width: '16px', color: '#16A34A'}} />
+                            <span style={{fontSize: '13px', color: '#0F1A16'}}>{file.name}</span>
+                            <span style={{fontSize: '11px', color: '#6B7280'}}>({(file.size / 1024).toFixed(1)} KB)</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => removeDokumenLain(index)}
-                            className="text-[#DC2626] hover:text-[#991B1B]"
+                            style={{background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', padding: 0}}
+                            onMouseEnter={(e) => e.currentTarget.style.color = '#991B1B'}
+                            onMouseLeave={(e) => e.currentTarget.style.color = '#DC2626'}
                           >
-                            <XMarkIcon className="h-4 w-4" />
+                            <XMarkIcon style={{height: '16px', width: '16px'}} />
                           </button>
                         </div>
                       ))}
@@ -576,27 +877,27 @@ const Dashboard = () => {
                 <div className="space-y-2 text-[13px]">
                   <div className="flex justify-between">
                     <span className="text-[#6B7280]">Nomor Referensi:</span>
-                    <span className="text-[#0F1A16] font-medium">{referenceNumber}</span>
+                    <span className="text-[#0F1A16] font-medium">{formState.referenceNumber}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#6B7280]">Vendor:</span>
-                    <span className="text-[#0F1A16] font-medium">{vendorName}</span>
+                    <span className="text-[#0F1A16] font-medium">{formState.vendorName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#6B7280]">Bahan Baku:</span>
-                    <span className="text-[#0F1A16] font-medium">{materialName}</span>
+                    <span className="text-[#0F1A16] font-medium">{formState.materialName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#6B7280]">Nomor Batch:</span>
-                    <span className="text-[#0F1A16] font-medium">{batchNumber}</span>
+                    <span className="text-[#0F1A16] font-medium">{formState.batchNumber}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#6B7280]">Jumlah:</span>
-                    <span className="text-[#0F1A16] font-medium">{quantity} {unit}</span>
+                    <span className="text-[#0F1A16] font-medium">{formState.quantity} {formState.unit}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#6B7280]">Kondisi Kemasan:</span>
-                    <span className="text-[#0F1A16] font-medium">{packagingCondition}</span>
+                    <span className="text-[#0F1A16] font-medium">{formState.packagingCondition}</span>
                   </div>
                   <div className="border-t border-[#E5E7EB] pt-2 mt-2">
                     <span className="text-[#6B7280]">Dokumen:</span>
@@ -615,19 +916,33 @@ const Dashboard = () => {
                 type="submit"
                 onClick={handleSubmit}
                 disabled={!suratJalan || isLoading}
-                className="w-full h-[52px] bg-[#0D4B3B] text-white rounded-lg font-bold text-[16px] mt-6 hover:bg-[#0a3d30] hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+                style={{
+                  width: '100%', height: '52px',
+                  background: '#0D4B3B', color: 'white',
+                  borderRadius: '8px', fontWeight: '700', fontSize: '16px',
+                  marginTop: '24px', cursor: (!suratJalan || isLoading) ? 'not-allowed' : 'pointer',
+                  border: 'none', opacity: (!suratJalan || isLoading) ? 0.6 : 1,
+                  transition: 'background 0.2s, transform 0.2s, opacity 0.2s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                }}
+                onMouseOver={(e) => {
+                  if (suratJalan && !isLoading) e.currentTarget.style.background = '#0a3d30';
+                }}
+                onMouseOut={(e) => e.currentTarget.style.background = '#0D4B3B'}
               >
                 {isLoading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Memproses dokumen...
+                    <div style={{
+                      width: '20px', height: '20px',
+                      border: '2px solid white', borderTopColor: 'transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite'
+                    }} />
+                    Sedang Memproses...
                   </>
                 ) : (
                   <>
-                    Mulai Verifikasi Otomatis
+                    Submit untuk Verifikasi
                     <ArrowRightCircleIcon className="h-5 w-5" />
                   </>
                 )}
