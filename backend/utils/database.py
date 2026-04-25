@@ -39,6 +39,62 @@ def init_db():
         )
     ''')
     
+    # Add new columns to verification_sessions if they don't exist
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN reference_number TEXT')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN vendor_name TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN material_name TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN batch_number TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN quantity REAL')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN unit TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN document_date TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN packaging_condition TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN storage_condition TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN temperature REAL')
+    except sqlite3.OperationalError:
+        pass
+    
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN notes TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
     # Verification logs table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS verification_logs (
