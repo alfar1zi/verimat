@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from models.purchase_order import get_all_purchase_orders
+from utils.database import get_db_connection
 
 po_bp = Blueprint('po', __name__)
 
@@ -27,5 +28,38 @@ def get_po_list():
                 'unit': unit
             })
         return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@po_bp.route('/search', methods=['GET'])
+def search_po():
+    """Search purchase orders by PO number or material name"""
+    try:
+        query = request.args.get('q', '')
+        if not query or len(query) < 2:
+            return jsonify([]), 200
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT po_number, material_name, supplier_name, quantity, unit
+            FROM purchase_orders
+            WHERE po_number LIKE ? OR material_name LIKE ?
+            LIMIT 5
+        ''', (f'%{query}%', f'%{query}%'))
+        
+        results = cursor.fetchall()
+        conn.close()
+        
+        formatted_results = []
+        for row in results:
+            formatted_results.append({
+                'po_number': row['po_number'],
+                'material_name': row['material_name'],
+                'display': f"{row['po_number']} — {row['material_name']}"
+            })
+        
+        return jsonify(formatted_results), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500

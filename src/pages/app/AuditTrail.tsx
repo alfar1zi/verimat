@@ -6,6 +6,7 @@ import AppNavbar from "../../components/app/AppNavbar";
 interface AuditRecord {
   session_id: string;
   po_number: string;
+  material_name?: string;
   doc_type: string;
   status: "PASS" | "MISMATCH" | "INCOMPLETE";
   verification_time: string;
@@ -193,7 +194,10 @@ const AuditTrail = () => {
                     Session ID
                   </th>
                   <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
-                    Nomor PO
+                    Nomor Referensi
+                  </th>
+                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
+                    Bahan Baku
                   </th>
                   <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
                     Jenis Dokumen
@@ -220,6 +224,9 @@ const AuditTrail = () => {
                     </td>
                     <td className="px-5 py-4 font-medium text-[#0F1A16]">
                       {record.po_number}
+                    </td>
+                    <td className="px-5 py-4 text-[#4A5568]">
+                      {record.material_name || '-'}
                     </td>
                     <td className="px-5 py-4 text-[#4A5568]">
                       {getDocTypeLabel(record.doc_type)}

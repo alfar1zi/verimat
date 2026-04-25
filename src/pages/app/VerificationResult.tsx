@@ -5,6 +5,17 @@ import AppNavbar from "../../components/app/AppNavbar";
 
 interface VerificationData {
   po_number: string;
+  reference_number?: string;
+  vendor_name?: string;
+  material_name?: string;
+  batch_number?: string;
+  quantity?: number;
+  unit?: string;
+  document_date?: string;
+  packaging_condition?: string;
+  storage_condition?: string;
+  temperature?: number;
+  notes?: string;
   doc_type: string;
   verification_time: string;
   session_id: string;
@@ -151,13 +162,49 @@ const VerificationResult = () => {
           {/* Info Section */}
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Nomor PO</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{data.po_number}</p>
+              <p className="text-[13px] text-[#6B7280] mb-1">Nomor Referensi</p>
+              <p className="text-[15px] font-medium text-[#0F1A16]">{data.reference_number || data.po_number}</p>
             </div>
             <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Jenis Dokumen</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{getDocTypeLabel(data.doc_type)}</p>
+              <p className="text-[13px] text-[#6B7280] mb-1">Nama Vendor</p>
+              <p className="text-[15px] font-medium text-[#0F1A16]">{data.vendor_name || '-'}</p>
             </div>
+            <div>
+              <p className="text-[13px] text-[#6B7280] mb-1">Bahan Baku</p>
+              <p className="text-[15px] font-medium text-[#0F1A16]">{data.material_name || '-'}</p>
+            </div>
+            <div>
+              <p className="text-[13px] text-[#6B7280] mb-1">Nomor Batch</p>
+              <p className="text-[15px] font-medium text-[#0F1A16]">{data.batch_number || '-'}</p>
+            </div>
+            <div>
+              <p className="text-[13px] text-[#6B7280] mb-1">Jumlah</p>
+              <p className="text-[15px] font-medium text-[#0F1A16]">{data.quantity ? `${data.quantity} ${data.unit || ''}` : '-'}</p>
+            </div>
+            <div>
+              <p className="text-[13px] text-[#6B7280] mb-1">Kondisi Kemasan</p>
+              <p className="text-[15px] font-medium text-[#0F1A16]">{data.packaging_condition || '-'}</p>
+            </div>
+            <div>
+              <p className="text-[13px] text-[#6B7280] mb-1">Tanggal Dokumen</p>
+              <p className="text-[15px] font-medium text-[#0F1A16]">{data.document_date || '-'}</p>
+            </div>
+            <div>
+              <p className="text-[13px] text-[#6B7280] mb-1">Kondisi Penyimpanan</p>
+              <p className="text-[15px] font-medium text-[#0F1A16]">{data.storage_condition || '-'}</p>
+            </div>
+            {data.temperature && (
+              <div>
+                <p className="text-[13px] text-[#6B7280] mb-1">Suhu</p>
+                <p className="text-[15px] font-medium text-[#0F1A16]">{data.temperature}°C</p>
+              </div>
+            )}
+            {data.notes && (
+              <div className="col-span-2">
+                <p className="text-[13px] text-[#6B7280] mb-1">Catatan</p>
+                <p className="text-[15px] font-medium text-[#0F1A16]">{data.notes}</p>
+              </div>
+            )}
             <div>
               <p className="text-[13px] text-[#6B7280] mb-1">Waktu Verifikasi</p>
               <p className="text-[15px] font-medium text-[#0F1A16]">{formatDate(data.verification_time)}</p>
