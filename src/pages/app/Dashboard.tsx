@@ -423,11 +423,11 @@ const Dashboard = () => {
               
               {/* Row 1 */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="relative" ref={searchRef} data-error={fieldErrors.referenceNumber ? 'true' : undefined}>
+                <div className="relative" ref={searchRef} data-error={fieldErrors.referenceNumber ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nomor Referensi Dokumen <span style={{color: '#DC2626'}}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Nomor PO, Kontrak, Berita Acara, atau Invoice dari supplier</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Nomor PO, Kontrak, Berita Acara, atau Invoice dari supplier</p>
                   <input
                     type="text"
                     value={formState.referenceNumber}
@@ -459,11 +459,11 @@ const Dashboard = () => {
                     </div>
                   )}
                 </div>
-                <div data-error={fieldErrors.vendorName ? 'true' : undefined}>
+                <div data-error={fieldErrors.vendorName ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nama Vendor / Supplier <span style={{color: '#DC2626'}}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Nama perusahaan supplier pengirim</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Nama perusahaan supplier pengirim</p>
                   <input
                     type="text"
                     value={formState.vendorName}
@@ -486,11 +486,11 @@ const Dashboard = () => {
 
               {/* Row 2 */}
               <div className="grid grid-cols-2 gap-4 mt-5">
-                <div data-error={fieldErrors.materialName ? 'true' : undefined}>
+                <div data-error={fieldErrors.materialName ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nama Bahan Baku <span style={{color: '#DC2626'}}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Nama bahan baku yang diterima</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Nama bahan baku yang diterima</p>
                   <input
                     type="text"
                     value={formState.materialName}
@@ -509,11 +509,11 @@ const Dashboard = () => {
                   />
                   {fieldErrors.materialName && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.materialName}</p>}
                 </div>
-                <div data-error={fieldErrors.batchNumber ? 'true' : undefined}>
+                <div data-error={fieldErrors.batchNumber ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nomor Batch Supplier <span style={{color: '#DC2626'}}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Sesuai yang tertera di Surat Jalan dan CoA</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Sesuai yang tertera di Surat Jalan dan CoA</p>
                   <input
                     type="text"
                     value={formState.batchNumber}
@@ -536,11 +536,11 @@ const Dashboard = () => {
 
               {/* Row 3 */}
               <div className="grid grid-cols-2 gap-4 mt-5">
-                <div data-error={fieldErrors.quantity ? 'true' : undefined}>
+                <div data-error={fieldErrors.quantity ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Jumlah Diterima <span style={{color: '#DC2626'}}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Jumlah bahan baku yang diterima</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Jumlah bahan baku yang diterima</p>
                   <input
                     type="number"
                     min="0"
@@ -560,11 +560,11 @@ const Dashboard = () => {
                   />
                   {fieldErrors.quantity && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.quantity}</p>}
                 </div>
-                <div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
                     Satuan
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Satuan pengukuran jumlah</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Satuan pengukuran jumlah</p>
                   <select
                     value={formState.unit}
                     onChange={(e) => setFormState({ ...formState, unit: e.target.value })}
@@ -593,11 +593,11 @@ const Dashboard = () => {
 
               {/* Row 4 */}
               <div className="grid grid-cols-2 gap-4 mt-5">
-                <div data-error={fieldErrors.documentDate ? 'true' : undefined}>
+                <div data-error={fieldErrors.documentDate ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Tanggal Dokumen / Pengiriman <span style={{color: '#DC2626'}}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Tanggal pada dokumen atau tanggal pengiriman</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Tanggal pada dokumen atau tanggal pengiriman</p>
                   <input
                     type="date"
                     value={formState.documentDate}
@@ -615,11 +615,11 @@ const Dashboard = () => {
                   />
                   {fieldErrors.documentDate && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.documentDate}</p>
                 </div>
-                <div data-error={fieldErrors.packagingCondition ? 'true' : undefined}>
+                <div data-error={fieldErrors.packagingCondition ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Kondisi Kemasan Fisik <span style={{color: '#DC2626'}}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Kondisi fisik kemasan saat penerimaan</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Kondisi fisik kemasan saat penerimaan</p>
                   <select
                     value={formState.packagingCondition}
                     onChange={(e) => setFormState({ ...formState, packagingCondition: e.target.value })}
