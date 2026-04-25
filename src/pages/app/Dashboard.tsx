@@ -22,6 +22,10 @@ const Dashboard = () => {
   const [selectedPO, setSelectedPO] = useState("");
   const [docType, setDocType] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [vendorName, setVendorName] = useState("");
+  const [documentDate, setDocumentDate] = useState("");
+  const [quantityReceived, setQuantityReceived] = useState("");
+  const [unit, setUnit] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -64,6 +68,10 @@ const Dashboard = () => {
       setError("File size exceeds 10MB limit");
       return;
     }
+    if (selectedFile.type !== "application/pdf" && !selectedFile.name.endsWith(".pdf")) {
+      setError("Hanya file PDF yang diterima. Silakan scan dokumen ke format PDF.");
+      return;
+    }
     setFile(selectedFile);
     setError("");
   };
@@ -89,7 +97,7 @@ const Dashboard = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPO || !file || !docType) {
+    if (!selectedPO || !file || !docType || !vendorName || !documentDate) {
       setError("Please fill in all required fields");
       return;
     }
@@ -101,6 +109,10 @@ const Dashboard = () => {
     formData.append("file", file);
     formData.append("po_number", selectedPO);
     formData.append("doc_type", docType);
+    formData.append("vendor_name", vendorName);
+    formData.append("document_date", documentDate);
+    if (quantityReceived) formData.append("quantity_received", quantityReceived);
+    if (unit) formData.append("unit", unit);
 
     try {
       const response = await fetch(`${API_URL}/api/upload/verify`, {
@@ -171,17 +183,17 @@ const Dashboard = () => {
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-[#E5E7EB] p-8 mt-6 shadow-sm">
           {/* Row 1: PO Number & Document Type */}
           <div className="grid grid-cols-2 gap-4">
-            {/* PO Number */}
+            {/* Reference Number */}
             <div>
               <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
-                Nomor Purchase Order
+                Nomor Referensi (PO / Kontrak / Berita Acara / Invoice)
               </label>
               <select
                 value={selectedPO}
                 onChange={(e) => setSelectedPO(e.target.value)}
                 className="w-full px-3.5 py-2.5 border-[1.5px] border-[#E5E7EB] rounded-lg text-[15px] bg-white focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
               >
-                <option value="">Pilih Nomor PO</option>
+                <option value="">Pilih Nomor Referensi</option>
                 {poList.map((po: any) => (
                   <option key={po.po_number || po.id} value={po.po_number || po.id}>
                     {po.display || `${po.po_number} - ${po.material_name}`}
@@ -202,13 +214,81 @@ const Dashboard = () => {
               >
                 <option value="">Pilih Jenis Dokumen</option>
                 <option value="surat_jalan">Surat Jalan</option>
-                <option value="coa">Certificate of Analysis (CoA)</option>
+                <option value="tanda_terima">Tanda Terima Barang / Delivery Order</option>
+                <option value="faktur_pajak">Faktur Pajak</option>
+                <option value="invoice">Faktur Penjualan / Invoice</option>
+                <option value="kwitansi">Kwitansi</option>
+                <option value="coa">CoA (Certificate of Analysis)</option>
                 <option value="halal">Dokumen Halal</option>
+                <option value="lainnya">Dokumen Pendukung Lainnya</option>
               </select>
             </div>
           </div>
 
-          {/* Row 2: Upload Area */}
+          {/* Row 2: Vendor & Document Date */}
+          <div className="grid grid-cols-2 gap-4 mt-5">
+            {/* Vendor Name */}
+            <div>
+              <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
+                Nama Vendor / Supplier <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={vendorName}
+                onChange={(e) => setVendorName(e.target.value)}
+                placeholder="Masukkan nama vendor atau supplier"
+                className="w-full px-3.5 py-2.5 border-[1.5px] border-[#E5E7EB] rounded-lg text-[15px] bg-white focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                required
+              />
+            </div>
+
+            {/* Document Date */}
+            <div>
+              <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
+                Tanggal Dokumen <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={documentDate}
+                onChange={(e) => setDocumentDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 border-[1.5px] border-[#E5E7EB] rounded-lg text-[15px] bg-white focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Row 3: Quantity & Unit */}
+          <div className="grid grid-cols-2 gap-4 mt-5">
+            {/* Quantity Received */}
+            <div>
+              <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
+                Jumlah Barang Diterima
+              </label>
+              <input
+                type="number"
+                value={quantityReceived}
+                onChange={(e) => setQuantityReceived(e.target.value)}
+                placeholder="0"
+                className="w-full px-3.5 py-2.5 border-[1.5px] border-[#E5E7EB] rounded-lg text-[15px] bg-white focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+              />
+            </div>
+
+            {/* Unit */}
+            <div>
+              <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
+                Satuan
+              </label>
+              <input
+                type="text"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="kg, liter, pcs, dll"
+                className="w-full px-3.5 py-2.5 border-[1.5px] border-[#E5E7EB] rounded-lg text-[15px] bg-white focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Row 4: Upload Area */}
           <div className="mt-5">
             <label className="block text-[13px] font-medium text-[#374151] mb-1.5">
               File Dokumen
@@ -227,7 +307,7 @@ const Dashboard = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept=".pdf"
                 onChange={(e) => {
                   const selectedFile = e.target.files?.[0];
                   if (selectedFile) handleFileSelect(selectedFile);
@@ -257,17 +337,17 @@ const Dashboard = () => {
                     Pilih File atau Drag & Drop
                   </p>
                   <p className="text-[13px] text-[#9CA3AF] mt-1">
-                    PDF, JPG, PNG maksimum 10MB
+                    PDF maksimum 10MB
                   </p>
                 </>
               )}
             </div>
           </div>
 
-          {/* Row 3: Submit Button */}
+          {/* Row 5: Submit Button */}
           <button
             type="submit"
-            disabled={!selectedPO || !file || !docType || isLoading}
+            disabled={!selectedPO || !file || !docType || !vendorName || !documentDate || isLoading}
             className="w-full h-[52px] bg-[#0D4B3B] text-white rounded-lg font-semibold text-[16px] mt-6 hover:bg-[#0a3d30] hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             {isLoading ? (
@@ -283,7 +363,7 @@ const Dashboard = () => {
             )}
           </button>
 
-          {/* Row 4: Info Note */}
+          {/* Row 6: Info Note */}
           <div className="flex items-center gap-2 mt-4">
             <ShieldCheckIcon className="h-4 w-4 text-[#0D4B3B]" />
             <p className="text-[13px] text-[#6B7280]">
