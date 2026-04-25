@@ -7,8 +7,9 @@ interface AuditRecord {
   session_id: string;
   po_number: string;
   material_name?: string;
+  vendor_name?: string;
   doc_type: string;
-  status: "PASS" | "MISMATCH" | "INCOMPLETE";
+  status: "PASS" | "MISMATCH" | "INCOMPLETE" | "QUARANTINE";
   verification_time: string;
 }
 
@@ -20,6 +21,8 @@ const AuditTrail = () => {
   const [error, setError] = useState("");
   const [filters, setFilters] = useState({
     po_number: "",
+    material_name: "",
+    vendor_name: "",
     doc_type: "",
     status: "",
   });
@@ -34,6 +37,8 @@ const AuditTrail = () => {
     try {
       const params = new URLSearchParams();
       if (filters.po_number) params.append("po_number", filters.po_number);
+      if (filters.material_name) params.append("material_name", filters.material_name);
+      if (filters.vendor_name) params.append("vendor_name", filters.vendor_name);
       if (filters.doc_type) params.append("doc_type", filters.doc_type);
       if (filters.status) params.append("status", filters.status);
 
@@ -68,8 +73,14 @@ const AuditTrail = () => {
   const getDocTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       surat_jalan: "Surat Jalan",
-      coa: "Certificate of Analysis",
-      halal: "Dokumen Halal",
+      coa: "Certificate of Analysis (CoA)",
+      faktur_pajak: "Faktur Pajak",
+      invoice: "Invoice / Faktur Penjualan",
+      kwitansi: "Kwitansi",
+      halal: "Sertifikat Halal",
+      tanda_terima: "Tanda Terima / Delivery Order",
+      lainnya: "Dokumen Lainnya",
+      multi: "Multi-Dokumen",
     };
     return labels[type] || type;
   };
@@ -79,6 +90,7 @@ const AuditTrail = () => {
       PASS: "bg-[#DCFCE7] text-[#166534]",
       MISMATCH: "bg-[#FEE2E2] text-[#991B1B]",
       INCOMPLETE: "bg-[#FEF9C3] text-[#854D0E]",
+      QUARANTINE: "bg-[#FEF3C7] text-[#92400E]",
     };
     return badges[status as keyof typeof badges] || "";
   };
@@ -99,56 +111,80 @@ const AuditTrail = () => {
         {/* Filter Card */}
         <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 mt-6">
           <div className="flex justify-between items-center mb-4">
-            <div className="grid grid-cols-3 gap-4 flex-1">
-            {/* Filter 1 - PO Number */}
-            <div>
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Cari nomor PO..."
-                  value={filters.po_number}
-                  onChange={(e) => setFilters({ ...filters, po_number: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                />
+            <div className="flex-1">
+              {/* Row 1: Nomor Referensi + Status + Refresh */}
+              <div className="flex gap-4 mb-4">
+                <div className="relative flex-2">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Cari nomor referensi..."
+                    value={filters.po_number}
+                    onChange={(e) => setFilters({ ...filters, po_number: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                  />
+                </div>
+                <div className="flex-1">
+                  <select
+                    value={filters.status}
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                  >
+                    <option value="">Semua Status</option>
+                    <option value="PASS">PASS</option>
+                    <option value="MISMATCH">MISMATCH</option>
+                    <option value="INCOMPLETE">INCOMPLETE</option>
+                    <option value="QUARANTINE">KARANTINA</option>
+                  </select>
+                </div>
+                <button
+                  onClick={fetchAuditData}
+                  className="flex items-center gap-2 border border-[#E5E7EB] rounded-lg px-4 py-2.5 text-sm hover:bg-[#F9FAFB] transition"
+                >
+                  <ArrowPathIcon className="h-4 w-4" />
+                  Refresh
+                </button>
+              </div>
+              {/* Row 2: Bahan Baku + Vendor + Jenis Dokumen */}
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Cari nama bahan baku..."
+                    value={filters.material_name}
+                    onChange={(e) => setFilters({ ...filters, material_name: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                  />
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Cari nama vendor..."
+                    value={filters.vendor_name}
+                    onChange={(e) => setFilters({ ...filters, vendor_name: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                  />
+                </div>
+                <div className="flex-1">
+                  <select
+                    value={filters.doc_type}
+                    onChange={(e) => setFilters({ ...filters, doc_type: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                  >
+                    <option value="">Semua Jenis</option>
+                    <option value="surat_jalan">Surat Jalan</option>
+                    <option value="coa">Certificate of Analysis (CoA)</option>
+                    <option value="faktur_pajak">Faktur Pajak</option>
+                    <option value="invoice">Invoice / Faktur Penjualan</option>
+                    <option value="kwitansi">Kwitansi</option>
+                    <option value="halal">Sertifikat Halal</option>
+                    <option value="tanda_terima">Tanda Terima / Delivery Order</option>
+                    <option value="lainnya">Dokumen Lainnya</option>
+                    <option value="multi">Multi-Dokumen</option>
+                  </select>
+                </div>
               </div>
             </div>
-
-            {/* Filter 2 - Document Type */}
-            <div>
-              <select
-                value={filters.doc_type}
-                onChange={(e) => setFilters({ ...filters, doc_type: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-              >
-                <option value="">Semua Jenis</option>
-                <option value="surat_jalan">Surat Jalan</option>
-                <option value="coa">Certificate of Analysis</option>
-                <option value="halal">Dokumen Halal</option>
-              </select>
-            </div>
-
-            {/* Filter 3 - Status */}
-            <div>
-              <select
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-              >
-                <option value="">Semua Status</option>
-                <option value="PASS">PASS</option>
-                <option value="MISMATCH">MISMATCH</option>
-                <option value="INCOMPLETE">INCOMPLETE</option>
-              </select>
-            </div>
-            </div>
-            <button
-              onClick={fetchAuditData}
-              className="flex items-center gap-2 border border-[#E5E7EB] rounded-lg px-4 py-2.5 text-sm hover:bg-[#F9FAFB] transition ml-4"
-            >
-              <ArrowPathIcon className="h-4 w-4" />
-              Refresh
-            </button>
           </div>
         </div>
 
@@ -190,7 +226,7 @@ const AuditTrail = () => {
               {/* Table Header */}
               <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
                 <tr>
-                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
+                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase hidden md:table-cell">
                     Session ID
                   </th>
                   <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
@@ -198,6 +234,9 @@ const AuditTrail = () => {
                   </th>
                   <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
                     Bahan Baku
+                  </th>
+                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase hidden md:table-cell">
+                    Vendor
                   </th>
                   <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
                     Jenis Dokumen
@@ -219,14 +258,19 @@ const AuditTrail = () => {
                     onClick={() => navigate(`/verification/${record.session_id}`)}
                     className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] cursor-pointer transition"
                   >
-                    <td className="px-5 py-4 font-mono text-[13px] text-[#374151]">
+                    <td className="px-5 py-4 font-mono text-[13px] text-[#374151] hidden md:table-cell">
                       {record.session_id.slice(0, 8)}...
                     </td>
                     <td className="px-5 py-4 font-medium text-[#0F1A16]">
                       {record.po_number}
                     </td>
                     <td className="px-5 py-4 text-[#4A5568]">
-                      {record.material_name || '-'}
+                      {record.material_name || <span style={{color: '#9CA3AF'}}>-</span>}
+                    </td>
+                    <td className="px-5 py-4 text-[#4A5568] hidden md:table-cell">
+                      {record.vendor_name ? (record.vendor_name.length > 20 ? (
+                        <span title={record.vendor_name}>{record.vendor_name.slice(0, 20)}...</span>
+                      ) : record.vendor_name) : <span style={{color: '#9CA3AF'}}>-</span>}
                     </td>
                     <td className="px-5 py-4 text-[#4A5568]">
                       {getDocTypeLabel(record.doc_type)}

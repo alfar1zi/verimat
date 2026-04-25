@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldIcon } from "./icons";
+import MedicineLogo from "../app/MedicineLogo";
 
 const links = [
   { href: "#fitur", label: "Fitur" },
@@ -40,7 +40,7 @@ export default function Navbar() {
       >
         <a href="#top" onClick={(e) => handleNavClick(e, 'top')} className="flex items-center gap-2 pl-2 pr-1 sm:pr-3">
           <span className="grid h-7 w-7 place-items-center rounded-lg bg-teal/15 text-teal">
-            <ShieldIcon className="h-4 w-4" />
+            <MedicineLogo size={16} color="#2DD4BF" />
           </span>
           <span className="text-sm font-bold tracking-tight text-white">VeriMat</span>
         </a>

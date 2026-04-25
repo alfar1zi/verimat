@@ -29,7 +29,7 @@ def get_verification_session(session_id):
     
     return dict(row) if row else None
 
-def get_all_verification_sessions(po_number=None, doc_type=None, status=None):
+def get_all_verification_sessions(po_number=None, material_name=None, vendor_name=None, doc_type=None, status=None):
     """Get all verification sessions with optional filters"""
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -40,6 +40,14 @@ def get_all_verification_sessions(po_number=None, doc_type=None, status=None):
     if po_number:
         query += ' AND po_number = ?'
         params.append(po_number)
+    
+    if material_name:
+        query += ' AND material_name LIKE ?'
+        params.append(f'%{material_name}%')
+    
+    if vendor_name:
+        query += ' AND vendor_name LIKE ?'
+        params.append(f'%{vendor_name}%')
     
     if doc_type:
         query += ' AND doc_type = ?'

@@ -27,11 +27,15 @@ def get_audit_list():
     """Get audit list with optional filters - returns simplified format"""
     try:
         po_number = request.args.get('po_number')
+        material_name = request.args.get('material_name')
+        vendor_name = request.args.get('vendor_name')
         doc_type = request.args.get('doc_type')
         status = request.args.get('status')
         
         sessions = get_all_verification_sessions(
             po_number=po_number,
+            material_name=material_name,
+            vendor_name=vendor_name,
             doc_type=doc_type,
             status=status
         )
@@ -42,9 +46,11 @@ def get_audit_list():
             result.append({
                 'session_id': session.get('session_id'),
                 'po_number': session.get('po_number'),
+                'material_name': session.get('material_name'),
+                'vendor_name': session.get('vendor_name'),
                 'doc_type': session.get('doc_type'),
                 'status': session.get('validation_status'),
-                'created_at': session.get('created_at')
+                'verification_time': session.get('created_at')
             })
         
         return jsonify(result), 200
