@@ -43,7 +43,6 @@ def get_verification(session_id):
             'doc_type': session.get('doc_type'),
             'status': session.get('validation_status'),
             'explanation': session.get('explanation', ''),
-            'verification_time': session.get('created_at'),
             'created_at': session.get('created_at'),
             'validation_result': {
                 'validation_results': logs
