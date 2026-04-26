@@ -64,3 +64,19 @@ def get_all_verification_sessions(po_number=None, material_name=None, vendor_nam
     conn.close()
     
     return [dict(row) for row in rows]
+
+def clear_all_audit_data():
+    """Clear all verification sessions and logs"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Delete all logs first (due to foreign key)
+    cursor.execute('DELETE FROM verification_logs')
+    
+    # Delete all sessions
+    cursor.execute('DELETE FROM verification_sessions')
+    
+    conn.commit()
+    conn.close()
+    
+    return True
