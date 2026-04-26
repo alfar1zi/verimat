@@ -86,6 +86,12 @@ const Dashboard = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   
+  // Camera capture
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraTarget, setCameraTarget] = useState<'surat_jalan' | 'coa' | 'faktur' | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -162,6 +168,60 @@ const Dashboard = () => {
   const selectSuggestion = (suggestion: POSuggestion) => {
     setFormState({ ...formState, referenceNumber: suggestion.po_number, materialName: suggestion.material_name });
     setShowSuggestions(false);
+  };
+
+  const openCamera = async (target: 'surat_jalan' | 'coa' | 'faktur') => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      streamRef.current = stream;
+      setCameraTarget(target);
+      setShowCamera(true);
+      // Set video srcObject setelah modal render
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      setError('Izin kamera ditolak atau tidak tersedia. Gunakan upload file sebagai alternatif.');
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !cameraTarget) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(videoRef.current, 0, 0);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const timestamp = new Date().getTime();
+      const file = new File([blob], `foto_dokumen_${timestamp}.jpg`, { type: 'image/jpeg' });
+      if (cameraTarget === 'surat_jalan') {
+        setSuratJalan(file);
+        setFileNames({ ...fileNames, suratJalan: file.name });
+      } else if (cameraTarget === 'coa') {
+        setCoa(file);
+        setFileNames({ ...fileNames, coa: file.name });
+      } else if (cameraTarget === 'faktur') {
+        setFaktur(file);
+        setFileNames({ ...fileNames, faktur: file.name });
+      }
+      closeCamera();
+    }, 'image/jpeg', 0.9);
+  };
+
+  const closeCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setShowCamera(false);
+    setCameraTarget(null);
   };
 
   const validateStep1 = () => {
@@ -773,6 +833,25 @@ const Dashboard = () => {
                   onRemove={() => removeFile('surat_jalan')}
                   accept=".pdf,.jpg,.jpeg,.png"
                 />
+                {!suratJalan && typeof navigator !== 'undefined' && navigator.mediaDevices && (
+                  <button
+                    type="button"
+                    onClick={() => openCamera('surat_jalan')}
+                    style={{
+                      marginTop: '8px', width: '100%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      background: 'transparent', border: '1.5px solid #0D4B3B',
+                      color: '#0D4B3B', borderRadius: '8px', padding: '8px 16px',
+                      fontSize: '13px', fontWeight: '500', cursor: 'pointer'
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                    </svg>
+                    Ambil Foto dengan Kamera
+                  </button>
+                )}
 
                 {/* Slot 2 - CoA */}
                 <DocumentSlot
@@ -972,6 +1051,51 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      
+      {showCamera && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.92)', zIndex: 1000,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: '20px'
+        }}>
+          <p style={{ color: 'white', fontSize: '15px', fontWeight: '600' }}>
+            Ambil foto dokumen
+          </p>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            style={{
+              maxWidth: '500px', width: '100%', borderRadius: '12px',
+              border: '2px solid #2DD4BF'
+            }}
+          />
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={capturePhoto}
+              style={{
+                background: '#0D4B3B', color: 'white', border: 'none',
+                borderRadius: '8px', padding: '12px 28px',
+                fontSize: '15px', fontWeight: '600', cursor: 'pointer'
+              }}
+            >
+              Ambil Gambar
+            </button>
+            <button
+              onClick={closeCamera}
+              style={{
+                background: 'transparent', color: 'white',
+                border: '1.5px solid rgba(255,255,255,0.4)',
+                borderRadius: '8px', padding: '12px 28px',
+                fontSize: '15px', cursor: 'pointer'
+              }}
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
