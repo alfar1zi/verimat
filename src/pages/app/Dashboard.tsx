@@ -9,6 +9,12 @@ interface Stats {
   failed: number;
 }
 
+interface TrendData {
+  total: { value: number; trend: 'up' | 'down' | 'same' };
+  pass: { value: number; trend: 'up' | 'down' | 'same' };
+  failed: { value: number; trend: 'up' | 'down' | 'same' };
+}
+
 interface POSuggestion {
   po_number: string;
   material_name: string;
@@ -96,6 +102,11 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [stats, setStats] = useState<Stats>({ total: 0, pass: 0, failed: 0 });
+  const [trends, setTrends] = useState<TrendData>({
+    total: { value: 0, trend: 'same' },
+    pass: { value: 0, trend: 'same' },
+    failed: { value: 0, trend: 'same' }
+  });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Persist form state
@@ -132,10 +143,44 @@ const Dashboard = () => {
       const response = await fetch(`${API_URL}/api/audit/list`);
       if (response.ok) {
         const data = await response.json();
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const todayRecords = data.filter((r: any) => {
+          const recordDate = new Date(r.verification_time);
+          return recordDate.toDateString() === today.toDateString();
+        });
+
+        const yesterdayRecords = data.filter((r: any) => {
+          const recordDate = new Date(r.verification_time);
+          return recordDate.toDateString() === yesterday.toDateString();
+        });
+
         const total = data.length;
         const pass = data.filter((r: any) => r.status === "PASS").length;
         const failed = data.filter((r: any) => r.status === "MISMATCH" || r.status === "INCOMPLETE").length;
+
+        const todayTotal = todayRecords.length;
+        const todayPass = todayRecords.filter((r: any) => r.status === "PASS").length;
+        const todayFailed = todayRecords.filter((r: any) => r.status === "MISMATCH" || r.status === "INCOMPLETE").length;
+
+        const yesterdayTotal = yesterdayRecords.length;
+        const yesterdayPass = yesterdayRecords.filter((r: any) => r.status === "PASS").length;
+        const yesterdayFailed = yesterdayRecords.filter((r: any) => r.status === "MISMATCH" || r.status === "INCOMPLETE").length;
+
+        const getTrend = (today: number, yesterday: number): 'up' | 'down' | 'same' => {
+          if (today > yesterday) return 'up';
+          if (today < yesterday) return 'down';
+          return 'same';
+        };
+
         setStats({ total, pass, failed });
+        setTrends({
+          total: { value: Math.abs(todayTotal - yesterdayTotal), trend: getTrend(todayTotal, yesterdayTotal) },
+          pass: { value: Math.abs(todayPass - yesterdayPass), trend: getTrend(todayPass, yesterdayPass) },
+          failed: { value: Math.abs(todayFailed - yesterdayFailed), trend: getTrend(todayFailed, yesterdayFailed) }
+        });
       }
     } catch (err) {
       console.error("Failed to fetch stats:", err);
@@ -395,31 +440,153 @@ const Dashboard = () => {
 
         {/* Stats Bar */}
         <div className="flex gap-4 mt-6">
-          <div className="flex-1 bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#0D4B3B]">
-            <div className="flex items-center justify-between">
+          {/* Total Card */}
+          <div style={{
+            flex: 1, background: 'white', borderRadius: '12px',
+            padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            borderLeft: '4px solid #0D4B3B',
+            display: 'flex', flexDirection: 'column', gap: '4px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <p className="text-[28px] font-bold text-[#0F1A16]">{stats.total}</p>
-                <p className="text-[13px] text-[#6B7280] mt-0.5">Total Verifikasi</p>
+                <p style={{ fontSize: '30px', fontWeight: '700', color: '#0F1A16', lineHeight: 1 }}>
+                  {stats.total}
+                </p>
+                <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '4px' }}>Total Verifikasi</p>
               </div>
-              <DocumentTextIcon className="h-6 w-6 text-[#0D4B3B]" />
+              <div style={{
+                width: '40px', height: '40px', borderRadius: '10px',
+                background: 'rgba(13,75,59,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <DocumentTextIcon style={{ width: '20px', height: '20px', color: '#0D4B3B' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
+              {trends.total.trend === 'up' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#16A34A">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                  </svg>
+                  <span style={{ fontSize: '12px', color: '#16A34A' }}>↑ {trends.total.value} lebih banyak dari kemarin</span>
+                </>
+              )}
+              {trends.total.trend === 'down' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#DC2626">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+                  </svg>
+                  <span style={{ fontSize: '12px', color: '#DC2626' }}>↓ {trends.total.value} lebih sedikit dari kemarin</span>
+                </>
+              )}
+              {trends.total.trend === 'same' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#9CA3AF">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                  </svg>
+                  <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Sama seperti kemarin</span>
+                </>
+              )}
             </div>
           </div>
-          <div className="flex-1 bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#16A34A]">
-            <div className="flex items-center justify-between">
+
+          {/* Pass Card */}
+          <div style={{
+            flex: 1, background: 'white', borderRadius: '12px',
+            padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            borderLeft: '4px solid #16A34A',
+            display: 'flex', flexDirection: 'column', gap: '4px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <p className="text-[28px] font-bold text-[#0F1A16]">{stats.pass}</p>
-                <p className="text-[13px] text-[#6B7280] mt-0.5">Dokumen Lolos</p>
+                <p style={{ fontSize: '30px', fontWeight: '700', color: '#0F1A16', lineHeight: 1 }}>
+                  {stats.pass}
+                </p>
+                <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '4px' }}>Dokumen Lolos</p>
               </div>
-              <CheckCircleIcon className="h-6 w-6 text-[#16A34A]" />
+              <div style={{
+                width: '40px', height: '40px', borderRadius: '10px',
+                background: 'rgba(22,163,74,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <CheckCircleIcon style={{ width: '20px', height: '20px', color: '#16A34A' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
+              {trends.pass.trend === 'up' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#16A34A">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                  </svg>
+                  <span style={{ fontSize: '12px', color: '#16A34A' }}>↑ {trends.pass.value} lebih banyak dari kemarin</span>
+                </>
+              )}
+              {trends.pass.trend === 'down' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#DC2626">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+                  </svg>
+                  <span style={{ fontSize: '12px', color: '#DC2626' }}>↓ {trends.pass.value} lebih sedikit dari kemarin</span>
+                </>
+              )}
+              {trends.pass.trend === 'same' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#9CA3AF">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                  </svg>
+                  <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Sama seperti kemarin</span>
+                </>
+              )}
             </div>
           </div>
-          <div className="flex-1 bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#DC2626]">
-            <div className="flex items-center justify-between">
+
+          {/* Failed Card */}
+          <div style={{
+            flex: 1, background: 'white', borderRadius: '12px',
+            padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            borderLeft: '4px solid #DC2626',
+            display: 'flex', flexDirection: 'column', gap: '4px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <p className="text-[28px] font-bold text-[#0F1A16]">{stats.failed}</p>
-                <p className="text-[13px] text-[#6B7280] mt-0.5">Perlu Perhatian</p>
+                <p style={{ fontSize: '30px', fontWeight: '700', color: '#0F1A16', lineHeight: 1 }}>
+                  {stats.failed}
+                </p>
+                <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '4px' }}>Perlu Perhatian</p>
               </div>
-              <ExclamationCircleIcon className="h-6 w-6 text-[#DC2626]" />
+              <div style={{
+                width: '40px', height: '40px', borderRadius: '10px',
+                background: 'rgba(220,38,38,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <ExclamationCircleIcon style={{ width: '20px', height: '20px', color: '#DC2626' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
+              {trends.failed.trend === 'up' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#16A34A">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                  </svg>
+                  <span style={{ fontSize: '12px', color: '#16A34A' }}>↑ {trends.failed.value} lebih banyak dari kemarin</span>
+                </>
+              )}
+              {trends.failed.trend === 'down' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#DC2626">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+                  </svg>
+                  <span style={{ fontSize: '12px', color: '#DC2626' }}>↓ {trends.failed.value} lebih sedikit dari kemarin</span>
+                </>
+              )}
+              {trends.failed.trend === 'same' && (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#9CA3AF">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                  </svg>
+                  <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Sama seperti kemarin</span>
+                </>
+              )}
             </div>
           </div>
         </div>
