@@ -160,58 +160,58 @@ const VerificationResult = () => {
           </div>
 
           {/* Info Section */}
-          <div className="mt-6 grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Nomor Referensi</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{data.reference_number || data.po_number}</p>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Nomor Referensi</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.reference_number || data.po_number}</p>
             </div>
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Nama Vendor</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{data.vendor_name || '-'}</p>
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Nama Vendor</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.vendor_name || '-'}</p>
             </div>
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Bahan Baku</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{data.material_name || '-'}</p>
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Bahan Baku</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.material_name || '-'}</p>
             </div>
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Nomor Batch</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{data.batch_number || '-'}</p>
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Nomor Batch</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.batch_number || '-'}</p>
             </div>
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Jumlah</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{data.quantity ? `${data.quantity} ${data.unit || ''}` : '-'}</p>
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Jumlah</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.quantity ? `${data.quantity} ${data.unit || ''}` : '-'}</p>
             </div>
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Kondisi Kemasan</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{data.packaging_condition || '-'}</p>
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Kondisi Kemasan</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.packaging_condition || '-'}</p>
             </div>
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Tanggal Dokumen</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{data.document_date || '-'}</p>
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Tanggal Dokumen</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.document_date || '-'}</p>
             </div>
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Kondisi Penyimpanan</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{data.storage_condition || '-'}</p>
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Kondisi Penyimpanan</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.storage_condition || '-'}</p>
             </div>
             {data.temperature && (
-              <div>
-                <p className="text-[13px] text-[#6B7280] mb-1">Suhu</p>
-                <p className="text-[15px] font-medium text-[#0F1A16]">{data.temperature}°C</p>
+              <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+                <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Suhu</p>
+                <p className="text-[15px] font-semibold text-[#0F1A16]">{data.temperature}°C</p>
               </div>
             )}
             {data.notes && (
-              <div className="col-span-2">
-                <p className="text-[13px] text-[#6B7280] mb-1">Catatan</p>
-                <p className="text-[15px] font-medium text-[#0F1A16]">{data.notes}</p>
+              <div className="col-span-1 sm:col-span-2 bg-[#F9FAFB] rounded-lg px-4 py-3">
+                <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Catatan</p>
+                <p className="text-[15px] font-semibold text-[#0F1A16]">{data.notes}</p>
               </div>
             )}
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Waktu Verifikasi</p>
-              <p className="text-[15px] font-medium text-[#0F1A16]">{formatDate(data.verification_time)}</p>
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Waktu Verifikasi</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{formatDate(data.verification_time)}</p>
             </div>
-            <div>
-              <p className="text-[13px] text-[#6B7280] mb-1">Session ID</p>
-              <p className="text-[15px] font-medium text-[#0F1A16] font-mono">
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Session ID</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16] font-mono">
                 {data.session_id.slice(0, 8)}...
               </p>
             </div>

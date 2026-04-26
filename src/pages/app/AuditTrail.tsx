@@ -133,44 +133,36 @@ const AuditTrail = () => {
 
         {/* Filter Card */}
         <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex-1">
-              {/* Row 1: Nomor Referensi + Status + Refresh */}
-              <div className="flex gap-4 mb-4">
-                <div className="relative flex-2">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Cari nomor referensi..."
-                    value={filters.po_number}
-                    onChange={(e) => setFilters({ ...filters, po_number: e.target.value })}
-                    className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                  />
-                </div>
-                <div className="flex-1">
-                  <select
-                    value={filters.status}
-                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                  >
-                    <option value="">Semua Status</option>
-                    <option value="PASS">PASS</option>
-                    <option value="MISMATCH">MISMATCH</option>
-                    <option value="INCOMPLETE">INCOMPLETE</option>
-                    <option value="QUARANTINE">KARANTINA</option>
-                  </select>
-                </div>
+          <div className="flex flex-col gap-4">
+            {/* Row 1: Nomor Referensi + Status + Buttons */}
+            <div className="flex flex-col lg:flex-row gap-3">
+              <div className="relative flex-1 lg:flex-[2]">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Cari nomor referensi..."
+                  value={filters.po_number}
+                  onChange={(e) => setFilters({ ...filters, po_number: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                />
+              </div>
+              <div className="flex-1">
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white"
+                >
+                  <option value="">Semua Status</option>
+                  <option value="PASS">PASS</option>
+                  <option value="MISMATCH">MISMATCH</option>
+                  <option value="INCOMPLETE">INCOMPLETE</option>
+                  <option value="QUARANTINE">KARANTINA</option>
+                </select>
+              </div>
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={fetchAuditData}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    border: '1px solid #E5E7EB', borderRadius: '8px',
-                    padding: '8px 14px', background: 'white',
-                    fontSize: '13px', color: '#4A5568', cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                  onMouseOver={e => (e.currentTarget.style.background = '#F9FAFB')}
-                  onMouseOut={e => (e.currentTarget.style.background = 'white')}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#4A5568] font-medium hover:bg-[#F9FAFB] transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -180,26 +172,14 @@ const AuditTrail = () => {
                 {Object.values(filters).some(v => v) && (
                   <button
                     onClick={() => setFilters({ po_number: '', material_name: '', vendor_name: '', doc_type: '', status: '' })}
-                    style={{
-                      border: '1px solid #E5E7EB', borderRadius: '8px',
-                      padding: '8px 14px', background: 'white',
-                      fontSize: '13px', color: '#6B7280', cursor: 'pointer'
-                    }}
+                    className="px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#6B7280] font-medium hover:bg-[#F9FAFB] transition-colors"
                   >
                     Reset Filter
                   </button>
                 )}
                 <button
                   onClick={handleClearHistory}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    border: '1px solid #FEE2E2', borderRadius: '8px',
-                    padding: '8px 14px', background: 'white',
-                    fontSize: '13px', color: '#DC2626',
-                    cursor: 'pointer', whiteSpace: 'nowrap'
-                  }}
-                  onMouseOver={e => (e.currentTarget.style.background = '#FFF5F5')}
-                  onMouseOut={e => (e.currentTarget.style.background = 'white')}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[#FEE2E2] rounded-lg bg-white text-[13px] text-[#DC2626] font-medium hover:bg-[#FFF5F5] transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
                     fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -209,44 +189,44 @@ const AuditTrail = () => {
                   Clear History
                 </button>
               </div>
-              {/* Row 2: Bahan Baku + Vendor + Jenis Dokumen */}
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="Cari nama bahan baku..."
-                    value={filters.material_name}
-                    onChange={(e) => setFilters({ ...filters, material_name: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                  />
-                </div>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="Cari nama vendor..."
-                    value={filters.vendor_name}
-                    onChange={(e) => setFilters({ ...filters, vendor_name: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                  />
-                </div>
-                <div className="flex-1">
-                  <select
-                    value={filters.doc_type}
-                    onChange={(e) => setFilters({ ...filters, doc_type: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                  >
-                    <option value="">Semua Jenis</option>
-                    <option value="surat_jalan">Surat Jalan</option>
-                    <option value="coa">Certificate of Analysis (CoA)</option>
-                    <option value="faktur_pajak">Faktur Pajak</option>
-                    <option value="invoice">Invoice / Faktur Penjualan</option>
-                    <option value="kwitansi">Kwitansi</option>
-                    <option value="halal">Sertifikat Halal</option>
-                    <option value="tanda_terima">Tanda Terima / Delivery Order</option>
-                    <option value="lainnya">Dokumen Lainnya</option>
-                    <option value="multi">Multi-Dokumen</option>
-                  </select>
-                </div>
+            </div>
+            {/* Row 2: Bahan Baku + Vendor + Jenis Dokumen */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Cari nama bahan baku..."
+                  value={filters.material_name}
+                  onChange={(e) => setFilters({ ...filters, material_name: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                />
+              </div>
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Cari nama vendor..."
+                  value={filters.vendor_name}
+                  onChange={(e) => setFilters({ ...filters, vendor_name: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                />
+              </div>
+              <div className="flex-1">
+                <select
+                  value={filters.doc_type}
+                  onChange={(e) => setFilters({ ...filters, doc_type: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white"
+                >
+                  <option value="">Semua Jenis</option>
+                  <option value="surat_jalan">Surat Jalan</option>
+                  <option value="coa">Certificate of Analysis (CoA)</option>
+                  <option value="faktur_pajak">Faktur Pajak</option>
+                  <option value="invoice">Invoice / Faktur Penjualan</option>
+                  <option value="kwitansi">Kwitansi</option>
+                  <option value="halal">Sertifikat Halal</option>
+                  <option value="tanda_terima">Tanda Terima / Delivery Order</option>
+                  <option value="lainnya">Dokumen Lainnya</option>
+                  <option value="multi">Multi-Dokumen</option>
+                </select>
               </div>
             </div>
           </div>
