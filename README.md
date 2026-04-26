@@ -38,6 +38,6 @@ Proses Verifikasi Material - Pharma/Health
 AI Impact Challenge - Microsoft Elevate Training Center 2026
 
 ## Tim
-Aldi Syarif Alhakim
-Fadhlurrahman Alfarisi
-Muhammad Regno Schefendi
+Aldi Syarif Alhakim  
+Fadhlurrahman Alfarisi  
+Muhammad Regno Schefendi  
