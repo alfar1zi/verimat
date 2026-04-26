@@ -170,9 +170,12 @@ const Login = () => {
             )}
           </form>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-sm text-gray-600 text-center">
-              <span className="font-medium">Demo credentials:</span> admin / admin
+          <div className="mt-6 p-4 bg-[#F0FAF7] rounded-lg border border-[#0D4B3B]/20">
+            <p className="text-sm text-[#0D4B3B] text-center">
+              <span className="font-semibold">Demo credentials:</span>{' '}
+              <code className="bg-white px-2 py-0.5 rounded text-[#0D4B3B] font-mono text-xs border border-[#0D4B3B]/10">admin</code>
+              <span className="mx-1 text-[#0D4B3B]/60">/</span>
+              <code className="bg-white px-2 py-0.5 rounded text-[#0D4B3B] font-mono text-xs border border-[#0D4B3B]/10">admin</code>
             </p>
           </div>
         </div>
