@@ -744,7 +744,7 @@ const Dashboard = () => {
             <>
               <button
                 type="button"
-                onClick={() => setCurrentStep(1)}
+                onClick={() => { setError(""); setCurrentStep(1); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
                   background: 'none', border: 'none',
