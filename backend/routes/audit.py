@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.verification_session import get_all_verification_sessions
+from models.verification_session import get_all_verification_sessions, clear_all_audit_data
 from models.verification_log import get_verification_logs
 
 audit_bp = Blueprint('audit', __name__)
@@ -63,5 +63,17 @@ def get_session_logs(session_id):
     try:
         logs = get_verification_logs(session_id)
         return jsonify(logs), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@audit_bp.route('/clear', methods=['DELETE'])
+def clear_audit():
+    """Clear all audit history"""
+    try:
+        clear_all_audit_data()
+        return jsonify({
+            'success': True,
+            'message': 'Semua riwayat verifikasi telah dihapus'
+        }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500

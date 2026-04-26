@@ -215,7 +215,7 @@ const Dashboard = () => {
     setShowSuggestions(false);
   };
 
-  const openCamera = async (target: 'surat_jalan' | 'coa' | 'faktur') => {
+  const openCamera = async (target: 'surat_jalan' | 'coa' | 'faktur' | 'dokumen_lain') => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } 
@@ -448,48 +448,28 @@ const Dashboard = () => {
             flex: 1, background: 'white', borderRadius: '12px',
             padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             borderLeft: '4px solid #0D4B3B',
-            display: 'flex', flexDirection: 'column', gap: '4px'
+            display: 'flex', justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <p style={{ fontSize: '30px', fontWeight: '700', color: '#0F1A16', lineHeight: 1 }}>
-                  {stats.total}
-                </p>
-                <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '4px' }}>Total Verifikasi</p>
-              </div>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '10px',
-                background: 'rgba(13,75,59,0.08)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
+            <div>
+              <p style={{
+                fontSize: '32px', fontWeight: '700',
+                color: '#0F1A16', lineHeight: 1
               }}>
-                <DocumentTextIcon style={{ width: '20px', height: '20px', color: '#0D4B3B' }} />
-              </div>
+                {stats.total}
+              </p>
+              <p style={{
+                fontSize: '13px', color: '#6B7280', marginTop: '6px'
+              }}>
+                Total Verifikasi
+              </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
-              {trends.total.trend === 'up' && (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#16A34A">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
-                  </svg>
-                  <span style={{ fontSize: '12px', color: '#16A34A' }}>↑ {trends.total.value} lebih banyak dari kemarin</span>
-                </>
-              )}
-              {trends.total.trend === 'down' && (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#DC2626">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
-                  </svg>
-                  <span style={{ fontSize: '12px', color: '#DC2626' }}>↓ {trends.total.value} lebih sedikit dari kemarin</span>
-                </>
-              )}
-              {trends.total.trend === 'same' && (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#9CA3AF">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                  </svg>
-                  <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Sama seperti kemarin</span>
-                </>
-              )}
+            <div style={{
+              width: '44px', height: '44px', borderRadius: '10px',
+              background: 'rgba(13,75,59,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <DocumentTextIcon style={{ width: '22px', height: '22px', color: '#0D4B3B' }} />
             </div>
           </div>
 
@@ -498,48 +478,28 @@ const Dashboard = () => {
             flex: 1, background: 'white', borderRadius: '12px',
             padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             borderLeft: '4px solid #16A34A',
-            display: 'flex', flexDirection: 'column', gap: '4px'
+            display: 'flex', justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <p style={{ fontSize: '30px', fontWeight: '700', color: '#0F1A16', lineHeight: 1 }}>
-                  {stats.pass}
-                </p>
-                <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '4px' }}>Dokumen Lolos</p>
-              </div>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '10px',
-                background: 'rgba(22,163,74,0.08)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
+            <div>
+              <p style={{
+                fontSize: '32px', fontWeight: '700',
+                color: '#0F1A16', lineHeight: 1
               }}>
-                <CheckCircleIcon style={{ width: '20px', height: '20px', color: '#16A34A' }} />
-              </div>
+                {stats.pass}
+              </p>
+              <p style={{
+                fontSize: '13px', color: '#6B7280', marginTop: '6px'
+              }}>
+                Dokumen Lolos
+              </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
-              {trends.pass.trend === 'up' && (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#16A34A">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
-                  </svg>
-                  <span style={{ fontSize: '12px', color: '#16A34A' }}>↑ {trends.pass.value} lebih banyak dari kemarin</span>
-                </>
-              )}
-              {trends.pass.trend === 'down' && (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#DC2626">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
-                  </svg>
-                  <span style={{ fontSize: '12px', color: '#DC2626' }}>↓ {trends.pass.value} lebih sedikit dari kemarin</span>
-                </>
-              )}
-              {trends.pass.trend === 'same' && (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#9CA3AF">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                  </svg>
-                  <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Sama seperti kemarin</span>
-                </>
-              )}
+            <div style={{
+              width: '44px', height: '44px', borderRadius: '10px',
+              background: 'rgba(22,163,74,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <CheckCircleIcon style={{ width: '22px', height: '22px', color: '#16A34A' }} />
             </div>
           </div>
 
@@ -548,48 +508,28 @@ const Dashboard = () => {
             flex: 1, background: 'white', borderRadius: '12px',
             padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             borderLeft: '4px solid #DC2626',
-            display: 'flex', flexDirection: 'column', gap: '4px'
+            display: 'flex', justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <p style={{ fontSize: '30px', fontWeight: '700', color: '#0F1A16', lineHeight: 1 }}>
-                  {stats.failed}
-                </p>
-                <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '4px' }}>Perlu Perhatian</p>
-              </div>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '10px',
-                background: 'rgba(220,38,38,0.08)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
+            <div>
+              <p style={{
+                fontSize: '32px', fontWeight: '700',
+                color: '#0F1A16', lineHeight: 1
               }}>
-                <ExclamationCircleIcon style={{ width: '20px', height: '20px', color: '#DC2626' }} />
-              </div>
+                {stats.failed}
+              </p>
+              <p style={{
+                fontSize: '13px', color: '#6B7280', marginTop: '6px'
+              }}>
+                Perlu Perhatian
+              </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '8px' }}>
-              {trends.failed.trend === 'up' && (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#16A34A">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
-                  </svg>
-                  <span style={{ fontSize: '12px', color: '#16A34A' }}>↑ {trends.failed.value} lebih banyak dari kemarin</span>
-                </>
-              )}
-              {trends.failed.trend === 'down' && (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#DC2626">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
-                  </svg>
-                  <span style={{ fontSize: '12px', color: '#DC2626' }}>↓ {trends.failed.value} lebih sedikit dari kemarin</span>
-                </>
-              )}
-              {trends.failed.trend === 'same' && (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#9CA3AF">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                  </svg>
-                  <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Sama seperti kemarin</span>
-                </>
-              )}
+            <div style={{
+              width: '44px', height: '44px', borderRadius: '10px',
+              background: 'rgba(220,38,38,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <ExclamationCircleIcon style={{ width: '22px', height: '22px', color: '#DC2626' }} />
             </div>
           </div>
         </div>
