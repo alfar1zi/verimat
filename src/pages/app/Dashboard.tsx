@@ -613,7 +613,7 @@ const Dashboard = () => {
                     onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
                     onBlur={(e) => e.target.style.borderColor = fieldErrors.documentDate ? '#DC2626' : '#E5E7EB'}
                   />
-                  {fieldErrors.documentDate && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.documentDate}</p>
+                  {fieldErrors.documentDate && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.documentDate}</p>}
                 </div>
                 <div data-error={fieldErrors.packagingCondition ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
