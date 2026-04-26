@@ -535,7 +535,7 @@ const Dashboard = () => {
         </div>
 
         {/* Step Indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '32px', gap: '0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '80px', marginBottom: '32px', gap: '0' }}>
           <div className="flex items-center gap-0">
             <div className="flex flex-col items-center">
               <div 
