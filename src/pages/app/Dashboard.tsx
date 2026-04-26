@@ -94,7 +94,7 @@ const Dashboard = () => {
   
   // Camera capture
   const [showCamera, setShowCamera] = useState(false);
-  const [cameraTarget, setCameraTarget] = useState<'surat_jalan' | 'coa' | 'faktur' | null>(null);
+  const [cameraTarget, setCameraTarget] = useState<'surat_jalan' | 'coa' | 'faktur' | 'dokumen_lain' | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
@@ -255,6 +255,9 @@ const Dashboard = () => {
       } else if (cameraTarget === 'faktur') {
         setFaktur(file);
         setFileNames({ ...fileNames, faktur: file.name });
+      } else if (cameraTarget === 'dokumen_lain') {
+        setDokumenLain(prev => [...prev, file]);
+        setFileNames(prev => ({ ...prev, dokumenLain: [...prev.dokumenLain, file.name] }));
       }
       closeCamera();
     }, 'image/jpeg', 0.9);
@@ -1031,6 +1034,25 @@ const Dashboard = () => {
                   onRemove={() => removeFile('coa')}
                   accept=".pdf,.jpg,.jpeg,.png"
                 />
+                {!coa && typeof navigator !== 'undefined' && navigator.mediaDevices && (
+                  <button
+                    type="button"
+                    onClick={() => openCamera('coa')}
+                    style={{
+                      marginTop: '8px', width: '100%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      background: 'transparent', border: '1.5px solid #0D4B3B',
+                      color: '#0D4B3B', borderRadius: '8px', padding: '8px 16px',
+                      fontSize: '13px', fontWeight: '500', cursor: 'pointer'
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                    </svg>
+                    Ambil Foto dengan Kamera
+                  </button>
+                )}
 
                 {/* Slot 3 - Faktur */}
                 <DocumentSlot
@@ -1043,6 +1065,25 @@ const Dashboard = () => {
                   onRemove={() => removeFile('faktur')}
                   accept=".pdf,.jpg,.jpeg,.png"
                 />
+                {!faktur && typeof navigator !== 'undefined' && navigator.mediaDevices && (
+                  <button
+                    type="button"
+                    onClick={() => openCamera('faktur')}
+                    style={{
+                      marginTop: '8px', width: '100%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      background: 'transparent', border: '1.5px solid #0D4B3B',
+                      color: '#0D4B3B', borderRadius: '8px', padding: '8px 16px',
+                      fontSize: '13px', fontWeight: '500', cursor: 'pointer'
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                    </svg>
+                    Ambil Foto dengan Kamera
+                  </button>
+                )}
 
                 {/* Slot 4 - Dokumen Lain */}
                 <div style={{
@@ -1093,6 +1134,26 @@ const Dashboard = () => {
                     <ArrowUpTrayIcon style={{height: '20px', width: '20px', color: '#0D4B3B'}} />
                     <span style={{fontSize: '14px', color: '#6B7280'}}>Pilih file atau drag & drop</span>
                   </label>
+                  
+                  {dokumenLain.length < 3 && typeof navigator !== 'undefined' && navigator.mediaDevices && (
+                    <button
+                      type="button"
+                      onClick={() => openCamera('dokumen_lain')}
+                      style={{
+                        marginTop: '8px', width: '100%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                        background: 'transparent', border: '1.5px solid #0D4B3B',
+                        color: '#0D4B3B', borderRadius: '8px', padding: '8px 16px',
+                        fontSize: '13px', fontWeight: '500', cursor: 'pointer'
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                      </svg>
+                      Ambil Foto dengan Kamera
+                    </button>
+                  )}
                   
                   {dokumenLain.length > 0 && (
                     <div style={{marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px'}}>
