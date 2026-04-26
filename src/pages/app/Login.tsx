@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LockClosedIcon, UserIcon } from "@heroicons/react/24/outline";
 
@@ -9,11 +9,32 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
+
+  useEffect(() => {
+    if (!lockoutUntil) return;
+    const interval = setInterval(() => {
+      const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setLockoutUntil(null);
+        setLockoutRemaining(0);
+        setFailedAttempts(0);
+        clearInterval(interval);
+      } else {
+        setLockoutRemaining(remaining);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutUntil]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    if (lockoutUntil && Date.now() < lockoutUntil) return;
 
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -28,9 +49,18 @@ const Login = () => {
 
       if (response.ok) {
         localStorage.setItem("verimat_auth", JSON.stringify(data));
+        localStorage.setItem("verimat_login_time", Date.now().toString());
+        setFailedAttempts(0);
         navigate("/dashboard");
       } else {
-        setError(data.message || "Login failed");
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        if (newAttempts >= 5) {
+          setLockoutUntil(Date.now() + 5 * 60 * 1000);
+          setError("Terlalu banyak percobaan login. Silakan tunggu 5 menit.");
+        } else {
+          setError(`Username atau password salah. (${5 - newAttempts} percobaan tersisa)`);
+        }
       }
     } catch (err) {
       setError("Connection error. Please check if the backend is running.");
@@ -128,11 +158,16 @@ const Login = () => {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || (lockoutUntil !== null && Date.now() < lockoutUntil)}
               className="w-full bg-[#0D4B3B] text-white py-3 rounded-lg font-medium hover:bg-[#0a3d30] transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? "Signing in..." : "Sign In"}
             </button>
+            {lockoutRemaining > 0 && (
+              <p style={{ textAlign: 'center', fontSize: '13px', color: '#DC2626', marginTop: '8px' }}>
+                Coba lagi dalam {Math.floor(lockoutRemaining / 60)}:{String(lockoutRemaining % 60).padStart(2, '0')}
+              </p>
+            )}
           </form>
 
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">

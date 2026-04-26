@@ -8,6 +8,7 @@ const AppNavbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("verimat_auth");
+    localStorage.removeItem("verimat_login_time");
     navigate("/login", { replace: true });
   };
 
