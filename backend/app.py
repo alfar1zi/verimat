@@ -8,7 +8,7 @@ from routes.auth import auth_bp
 from utils.database import init_db
 
 app = Flask(__name__)
-CORS(app, origins="*", methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
+CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
 # Register blueprints
 app.register_blueprint(upload_bp, url_prefix='/api/upload')
