@@ -10,12 +10,19 @@ const links = [
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const handleNavClick = (e: React.MouseEvent, targetId: string) => {
@@ -60,9 +67,13 @@ export default function Navbar() {
 
         <Link
           to="/login"
-          className="ml-1 rounded-full bg-teal px-4 py-2 text-xs sm:text-sm font-semibold text-surface-deep transition-all duration-300 hover:brightness-110 hover:scale-[1.03] active:scale-[0.98]"
+          className="ml-1 rounded-full bg-teal font-semibold text-surface-deep transition-all duration-300 hover:brightness-110 hover:scale-[1.03] active:scale-[0.98]"
+          style={{
+            padding: isMobile ? '6px 14px' : '8px 18px',
+            fontSize: isMobile ? '13px' : '14px',
+          }}
         >
-          Masuk ke Sistem
+          {isMobile ? 'Masuk' : 'Masuk ke Sistem'}
         </Link>
       </nav>
     </header>

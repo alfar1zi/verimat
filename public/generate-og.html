@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1200px; height: 630px; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; }
+  .bg { width: 1200px; height: 630px; background: #0D4B3B; position: relative; }
+  .dots { position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px); background-size: 40px 40px; }
+  .pill-tr { position: absolute; top: 80px; right: 60px; width: 320px; height: 110px; border-radius: 55px; background: rgba(255,255,255,0.06); }
+  .pill-bl { position: absolute; bottom: 130px; left: 60px; width: 280px; height: 90px; border-radius: 45px; background: rgba(255,255,255,0.05); }
+  .content { position: relative; z-index: 2; padding: 80px; }
+  .logo-row { display: flex; align-items: center; gap: 16px; margin-bottom: 48px; }
+  .logo-box { width: 90px; height: 90px; border-radius: 20px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
+  .logo-box svg { width: 52px; height: 52px; }
+  .logo-text { font-size: 52px; font-weight: 800; color: white; letter-spacing: -1px; }
+  .tagline { font-size: 44px; font-weight: 700; color: white; line-height: 1.2; margin-bottom: 24px; }
+  .desc { font-size: 22px; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 40px; max-width: 900px; }
+  .badges { display: flex; gap: 16px; margin-bottom: 48px; }
+  .badge { padding: 12px 24px; border-radius: 100px; background: rgba(255,255,255,0.15); color: white; font-size: 17px; }
+  .url { font-size: 20px; color: rgba(255,255,255,0.45); }
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="dots"></div>
+  <div class="pill-tr"></div>
+  <div class="pill-bl"></div>
+  <div class="content">
+    <div class="logo-row">
+      <div class="logo-box">
+        <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="18" width="48" height="16" rx="8" fill="white" opacity="0.15"/>
+          <rect x="2" y="18" width="24" height="16" rx="8" fill="white" opacity="0.9"/>
+          <rect x="26" y="18" width="24" height="16" rx="8" fill="white" opacity="0.4"/>
+          <line x1="26" y1="18" x2="26" y2="34" stroke="#0D4B3B" stroke-width="2" opacity="0.5"/>
+          <line x1="26" y1="6" x2="26" y2="14" stroke="white" stroke-width="3" stroke-linecap="round"/>
+          <line x1="22" y1="10" x2="30" y2="10" stroke="white" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="18" cy="44" r="3" fill="white" opacity="0.6"/>
+          <circle cx="26" cy="46" r="3" fill="white" opacity="0.6"/>
+          <circle cx="34" cy="44" r="3" fill="white" opacity="0.6"/>
+        </svg>
+      </div>
+      <div class="logo-text">VeriMat</div>
+    </div>
+    <div class="tagline">Stop bahan baku salah<br>sebelum masuk gudang.</div>
+    <div class="desc">Verifikasi otomatis dokumen penerimaan bahan baku farmasi<br>dengan Azure AI. PASS / MISMATCH / INCOMPLETE dalam &lt; 30 detik.</div>
+    <div class="badges">
+      <div class="badge">Sesuai Standar CPOB · PerBPOM No. 7/2025</div>
+      <div class="badge">Powered by Microsoft Azure</div>
+    </div>
+    <div class="url">verimat.vercel.app</div>
+  </div>
+</div>
+</body>
+</html>
