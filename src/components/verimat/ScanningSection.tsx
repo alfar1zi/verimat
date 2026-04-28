@@ -17,7 +17,7 @@ export default function ScanningSection() {
             DEMO LIVE
           </span>
           <h2 className="mt-5 font-display text-4xl sm:text-5xl font-extrabold tracking-tight">
-            Verifikasi dalam <span className="text-teal">&lt; 60 Detik</span>
+            Verifikasi dalam <span className="text-teal">&lt; 30 Detik</span>
           </h2>
           <p className="mt-4 text-primary-foreground/70 text-lg">
             Upload. Scan. Validasi. Selesai.

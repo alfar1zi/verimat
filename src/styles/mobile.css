@@ -1,0 +1,75 @@
+/* ============================================
+   VERIMAT MOBILE RESPONSIVE OVERRIDES
+   Hanya berlaku untuk layar <= 768px
+   Tidak mengubah tampilan desktop
+   ============================================ */
+
+@media (max-width: 768px) {
+
+  /* ---- NAVBAR ---- */
+  /* Navbar landing page: floating pill */
+  /* Ubah dari pill lebar menjadi compact di mobile */
+  nav, [class*="navbar"], [class*="nav-container"] {
+    /* Override akan ditangani via komponen */
+  }
+
+  /* ---- GENERAL SPACING ---- */
+  section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* ---- HERO SECTION ---- */
+  /* Stats cards row: stack vertikal di mobile */
+  [class*="stats"], [class*="stat-card"] {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* Heading font size scaling */
+  h1 {
+    font-size: clamp(28px, 8vw, 48px) !important;
+    line-height: 1.15 !important;
+  }
+
+  h2 {
+    font-size: clamp(22px, 6vw, 36px) !important;
+  }
+
+  /* ---- GRID LAYOUTS ---- */
+  /* 3-col grids → 1 col di mobile */
+  [class*="grid-3"], [class*="grid-cols-3"],
+  [style*="grid-template-columns: repeat(3"],
+  [style*="gridTemplateColumns: '1fr 1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 2-col grids → 1 col di mobile */
+  [class*="grid-2"], [class*="grid-cols-2"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- WORKFLOW / HOW IT WORKS ---- */
+  /* Horizontal stepper → vertical di mobile */
+  [class*="workflow"], [class*="steps-container"],
+  [class*="how-it-works"] {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  /* Connector line di antara steps: hide di mobile */
+  [class*="connector"], [class*="step-connector"] {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens */
+  h1 {
+    font-size: 26px !important;
+  }
+  
+  h2 {
+    font-size: 22px !important;
+  }
+}
