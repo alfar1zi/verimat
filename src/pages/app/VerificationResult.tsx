@@ -22,6 +22,15 @@ interface VerificationData {
   status: "PASS" | "MISMATCH" | "INCOMPLETE";
   explanation: string;
   mismatched_fields?: string[];
+  validation_result?: {
+    validation_results?: Array<{
+      field_name: string;
+      status: string;
+      explanation: string;
+      expected_value?: string;
+      actual_value?: string;
+    }>;
+  };
 }
 
 const VerificationResult = () => {
@@ -217,25 +226,40 @@ const VerificationResult = () => {
             </div>
           </div>
 
-          {/* Penjelasan Section */}
+          {/* Detail Verifikasi Section */}
           <div className="mt-6 bg-[#F9FAFB] rounded-xl p-5">
             <h3 className="font-semibold text-[#0F1A16] mb-3">Detail Verifikasi</h3>
-            {data.status === "MISMATCH" && data.mismatched_fields && data.mismatched_fields.length > 0 ? (
-              <ul className="space-y-2">
-                {data.mismatched_fields.map((field, index) => (
-                  <li key={index} className="flex items-center gap-2 text-[15px] text-[#374151]">
-                    <XMarkIcon className="h-5 w-5 text-[#DC2626]" />
-                    <span>{field}</span>
+            
+            {data.status === "PASS" ? (
+              <div className="flex items-center gap-2 text-[15px] text-[#374151]">
+                <CheckIcon className="h-5 w-5 text-[#16A34A] flex-shrink-0" />
+                <span>Semua field dokumen telah diverifikasi dan sesuai dengan data Purchase Order internal.</span>
+              </div>
+            ) : data.validation_result?.validation_results && data.validation_result.validation_results.length > 0 ? (
+              <ul className="space-y-3">
+                {data.validation_result.validation_results.map((log, index) => (
+                  <li key={index} className="flex items-start gap-3 p-3 rounded-lg" style={{
+                    background: log.status === 'MISMATCH' ? '#FEF2F2' : log.status === 'INCOMPLETE' ? '#FFFBEB' : '#F0FDF4',
+                    border: `1px solid ${log.status === 'MISMATCH' ? '#FECACA' : log.status === 'INCOMPLETE' ? '#FDE68A' : '#BBF7D0'}` 
+                  }}>
+                    {log.status === 'MISMATCH' ? (
+                      <XMarkIcon className="h-5 w-5 text-[#DC2626] flex-shrink-0 mt-0.5" />
+                    ) : log.status === 'INCOMPLETE' ? (
+                      <ExclamationTriangleIcon className="h-5 w-5 text-[#D97706] flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <CheckIcon className="h-5 w-5 text-[#16A34A] flex-shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <p className="text-[14px] font-medium text-[#0F1A16] capitalize">
+                        {log.field_name.replace(/_/g, ' ')}
+                      </p>
+                      <p className="text-[13px] text-[#4A5568] mt-0.5">{log.explanation}</p>
+                    </div>
                   </li>
                 ))}
               </ul>
-            ) : data.status === "PASS" ? (
-              <div className="flex items-center gap-2 text-[15px] text-[#374151]">
-                <CheckIcon className="h-5 w-5 text-[#16A34A]" />
-                <span>Semua field dokumen telah diverifikasi dan sesuai</span>
-              </div>
             ) : (
-              <p className="text-[15px] text-[#374151]">{data.explanation}</p>
+              <p className="text-[15px] text-[#374151]">{data.explanation || 'Tidak ada detail tersedia.'}</p>
             )}
           </div>
 
