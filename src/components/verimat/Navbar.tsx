@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import MedicineLogo from "../app/MedicineLogo";
 
 const links = [
-  { href: "#fitur", label: "Fitur" },
   { href: "#cara-kerja", label: "Cara Kerja" },
+  { href: "#fitur", label: "Fitur" },
   { href: "#teknologi", label: "Teknologi" },
 ];
 
