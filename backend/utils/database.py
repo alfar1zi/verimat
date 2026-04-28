@@ -95,6 +95,11 @@ def init_db():
     except sqlite3.OperationalError:
         pass
     
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN explanation TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
     # Verification logs table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS verification_logs (

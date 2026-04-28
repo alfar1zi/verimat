@@ -44,15 +44,28 @@ def upload_document():
             validation_status=validation_result['status']
         )
         
-        # Create verification log
-        create_verification_log(
-            session_id=session_id,
-            field_name='all',
-            expected_value='',
-            actual_value=str(extracted_data),
-            status=validation_result['status'],
-            explanation=validation_result.get('explanation', '')
-        )
+        # Create per-field verification logs
+        validation_results_list = validation_result.get('validation_results', [])
+        if validation_results_list:
+            for field_result in validation_results_list:
+                create_verification_log(
+                    session_id=session_id,
+                    field_name=field_result.get('field', 'unknown'),
+                    expected_value=str(field_result.get('expected', '')),
+                    actual_value=str(field_result.get('actual', '')),
+                    status=field_result.get('status', validation_result['status']),
+                    explanation=field_result.get('message', '')
+                )
+        else:
+            # Create a single summary log if no field-level results
+            create_verification_log(
+                session_id=session_id,
+                field_name='summary',
+                expected_value='',
+                actual_value='',
+                status=validation_result['status'],
+                explanation=validation_result.get('explanation', '')
+            )
         
         return jsonify({
             'session_id': session_id,
@@ -122,6 +135,24 @@ def verify_document():
         # Extract document data from Surat Jalan
         extracted_data = extract_document_data(surat_jalan_path, 'surat_jalan', reference_number)
         
+        # Merge form data as fallback for fields Azure couldn't extract
+        # If Azure extracted a field: use Azure's result (document is authoritative)
+        # If Azure returned empty for a field: use form data (user manually verified from document)
+        form_fallback = {
+            'supplier_name': vendor_name,
+            'material_name': material_name,
+            'batch_number': batch_number,
+            'quantity': quantity,
+            'po_number': reference_number,
+        }
+
+        for field, form_value in form_fallback.items():
+            if form_value and (field not in extracted_data or not extracted_data.get(field)):
+                extracted_data[field] = form_value
+
+        # Ensure doc_type is always set
+        extracted_data['doc_type'] = 'surat_jalan'
+        
         # Validate against PO/reference
         validation_result = validate_document(extracted_data, reference_number)
         
@@ -137,29 +168,43 @@ def verify_document():
             INSERT INTO verification_sessions (
                 session_id, po_number, doc_type, file_path, validation_status, created_at,
                 reference_number, vendor_name, material_name, batch_number, quantity, unit,
-                document_date, packaging_condition, storage_condition, temperature, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                document_date, packaging_condition, storage_condition, temperature, notes, explanation
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             session_id, reference_number, 'surat_jalan', surat_jalan_path,
             validation_result['status'], datetime.now().isoformat(),
             reference_number, vendor_name, material_name, batch_number,
             float(quantity) if quantity else 0, unit, document_date,
             packaging_condition, storage_condition,
-            float(temperature) if temperature else None, notes
+            float(temperature) if temperature else None, notes,
+            validation_result.get('explanation', '')
         ))
         
         conn.commit()
         conn.close()
         
-        # Create verification log
-        create_verification_log(
-            session_id=session_id,
-            field_name='all',
-            expected_value='',
-            actual_value=str(extracted_data),
-            status=validation_result['status'],
-            explanation=validation_result.get('explanation', '')
-        )
+        # Create per-field verification logs
+        validation_results_list = validation_result.get('validation_results', [])
+        if validation_results_list:
+            for field_result in validation_results_list:
+                create_verification_log(
+                    session_id=session_id,
+                    field_name=field_result.get('field', 'unknown'),
+                    expected_value=str(field_result.get('expected', '')),
+                    actual_value=str(field_result.get('actual', '')),
+                    status=field_result.get('status', validation_result['status']),
+                    explanation=field_result.get('message', '')
+                )
+        else:
+            # Create a single summary log if no field-level results
+            create_verification_log(
+                session_id=session_id,
+                field_name='summary',
+                expected_value='',
+                actual_value='',
+                status=validation_result['status'],
+                explanation=validation_result.get('explanation', '')
+            )
         
         return jsonify({
             'session_id': session_id,

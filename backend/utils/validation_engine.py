@@ -1,5 +1,35 @@
 from datetime import datetime
+import re
 from models.purchase_order import get_purchase_order
+
+def _normalize_string(s):
+    """Normalize string for comparison: lowercase, strip whitespace, remove common legal suffixes."""
+    if not s:
+        return ''
+    s = str(s).lower().strip()
+    # Remove common legal suffixes
+    s = re.sub(r'\b(tbk|pt|cv|ud|co|ltd|inc)\b\.?', '', s)
+    # Collapse multiple spaces
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
+
+def _strings_match(a, b):
+    """Case-insensitive, normalized string comparison."""
+    return _normalize_string(a) == _normalize_string(b)
+
+def _safe_float(val):
+    """Safely convert value to float, extracting digits only if needed."""
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        # Try extracting digits only (handles "100 kg" → 100.0)
+        digits = re.sub(r'[^\d.]', '', str(val))
+        try:
+            return float(digits) if digits else None
+        except ValueError:
+            return None
 
 def validate_document(extracted_data, po_number):
     """
@@ -30,11 +60,13 @@ def validate_document(extracted_data, po_number):
                 'status': 'INCOMPLETE',
                 'message': 'Supplier name not found in document'
             })
-        elif extracted_data['supplier_name'] != po['supplier_name']:
+        elif not _strings_match(extracted_data['supplier_name'], po['supplier_name']):
             validation_results.append({
                 'field': 'supplier_name',
                 'status': 'MISMATCH',
-                'message': f"Supplier mismatch: expected '{po['supplier_name']}', got '{extracted_data['supplier_name']}'"
+                'message': f"Supplier mismatch: expected '{po['supplier_name']}', got '{extracted_data['supplier_name']}'",
+                'expected': po['supplier_name'],
+                'actual': extracted_data['supplier_name']
             })
         
         if 'material_name' not in extracted_data or not extracted_data['material_name']:
@@ -44,11 +76,13 @@ def validate_document(extracted_data, po_number):
                 'status': 'INCOMPLETE',
                 'message': 'Material name not found in document'
             })
-        elif extracted_data['material_name'] != po['material_name']:
+        elif not _strings_match(extracted_data['material_name'], po['material_name']):
             validation_results.append({
                 'field': 'material_name',
                 'status': 'MISMATCH',
-                'message': f"Material mismatch: expected '{po['material_name']}', got '{extracted_data['material_name']}'"
+                'message': f"Material mismatch: expected '{po['material_name']}', got '{extracted_data['material_name']}'",
+                'expected': po['material_name'],
+                'actual': extracted_data['material_name']
             })
         
         if 'batch_number' not in extracted_data or not extracted_data['batch_number']:
@@ -66,12 +100,17 @@ def validate_document(extracted_data, po_number):
                 'status': 'INCOMPLETE',
                 'message': 'Quantity not found in document'
             })
-        elif float(extracted_data['quantity']) != po['quantity']:
-            validation_results.append({
-                'field': 'quantity',
-                'status': 'MISMATCH',
-                'message': f"Quantity mismatch: expected {po['quantity']}, got {extracted_data['quantity']}"
-            })
+        else:
+            extracted_qty = _safe_float(extracted_data['quantity'])
+            po_qty = _safe_float(po['quantity'])
+            if extracted_qty is not None and po_qty is not None and abs(extracted_qty - po_qty) > 0.01:
+                validation_results.append({
+                    'field': 'quantity',
+                    'status': 'MISMATCH',
+                    'message': f"Quantity mismatch: expected {po['quantity']}, got {extracted_data['quantity']}",
+                    'expected': str(po['quantity']),
+                    'actual': str(extracted_data['quantity'])
+                })
         
         if 'po_number' not in extracted_data or not extracted_data['po_number']:
             all_fields_present = False
@@ -80,11 +119,13 @@ def validate_document(extracted_data, po_number):
                 'status': 'INCOMPLETE',
                 'message': 'PO number not found in document'
             })
-        elif extracted_data['po_number'] != po_number:
+        elif not _strings_match(extracted_data['po_number'], po_number):
             validation_results.append({
                 'field': 'po_number',
                 'status': 'MISMATCH',
-                'message': f"PO number mismatch: expected '{po_number}', got '{extracted_data['po_number']}'"
+                'message': f"PO number mismatch: expected '{po_number}', got '{extracted_data['po_number']}'",
+                'expected': po_number,
+                'actual': extracted_data['po_number']
             })
     
     elif doc_type == 'coa':
@@ -96,11 +137,13 @@ def validate_document(extracted_data, po_number):
                 'status': 'INCOMPLETE',
                 'message': 'Material name not found in CoA'
             })
-        elif extracted_data['material_name'] != po['material_name']:
+        elif not _strings_match(extracted_data['material_name'], po['material_name']):
             validation_results.append({
                 'field': 'material_name',
                 'status': 'MISMATCH',
-                'message': f"Material mismatch: expected '{po['material_name']}', got '{extracted_data['material_name']}'"
+                'message': f"Material mismatch: expected '{po['material_name']}', got '{extracted_data['material_name']}'",
+                'expected': po['material_name'],
+                'actual': extracted_data['material_name']
             })
         
         if 'batch_number' not in extracted_data or not extracted_data['batch_number']:
