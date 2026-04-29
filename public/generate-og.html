@@ -19,6 +19,10 @@
   .badges { display: flex; gap: 16px; margin-bottom: 48px; }
   .badge { padding: 12px 24px; border-radius: 100px; background: rgba(255,255,255,0.15); color: white; font-size: 17px; }
   .url { font-size: 20px; color: rgba(255,255,255,0.45); }
+  
+  @media (max-width: 425px) and (min-width: 320px) {
+    .tagline { font-size: 32px; }
+  }
 </style>
 </head>
 <body>
@@ -43,7 +47,7 @@
       </div>
       <div class="logo-text">VeriMat</div>
     </div>
-    <div class="tagline">Stop bahan baku salah<br>sebelum masuk gudang.</div>
+    <div class="tagline">Stop bahan baku salah sebelum masuk gudang.</div>
     <div class="desc">Verifikasi otomatis dokumen penerimaan bahan baku farmasi<br>dengan Azure AI. PASS / MISMATCH / INCOMPLETE dalam &lt; 30 detik.</div>
     <div class="badges">
       <div class="badge">Sesuai Standar CPOB · PerBPOM No. 7/2025</div>
