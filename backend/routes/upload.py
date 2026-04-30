@@ -108,6 +108,8 @@ def verify_document():
         temperature = request.form.get('temperature')
         notes = request.form.get('notes', '')
         expiry_date = request.form.get('expiry_date', '')
+        material_code = request.form.get('material_code', '')
+        items_json = request.form.get('items_json', '')
         
         # Save files
         saved_files = {}
@@ -183,8 +185,8 @@ def verify_document():
                 session_id, po_number, doc_type, file_path, validation_status, created_at,
                 reference_number, vendor_name, material_name, batch_number, quantity, unit,
                 document_date, packaging_condition, storage_condition, temperature, notes, explanation,
-                expiry_date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                expiry_date, items_json, material_code
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             session_id, reference_number, 'surat_jalan', surat_jalan_path,
             validation_result['status'], datetime.now().isoformat(),
@@ -193,14 +195,27 @@ def verify_document():
             packaging_condition, storage_condition,
             float(temperature) if temperature else None, notes,
             validation_result.get('explanation', ''),
-            expiry_date
+            expiry_date, items_json, material_code
         ))
         
         conn.commit()
         conn.close()
         
-        # Save material code mapping jika ada
-        material_code = request.form.get('material_code', '').strip()
+        # Save material code mapping untuk setiap item (jika ada items_json)
+        if items_json:
+            try:
+                import json
+                items = json.loads(items_json)
+                for item in items:
+                    code = item.get('materialCode', '').strip()
+                    name = item.get('materialName', '').strip()
+                    if code and name:
+                        from utils.database import upsert_material
+                        upsert_material(code, name)
+            except (json.JSONDecodeError, Exception):
+                pass
+        
+        # Fallback: save material code mapping dari field lama
         if material_code and material_name:
             from utils.database import upsert_material
             upsert_material(material_code, material_name)

@@ -21,6 +21,16 @@ interface POSuggestion {
   display: string;
 }
 
+interface MaterialItem {
+  id: string;
+  materialCode: string;
+  materialName: string;
+  batchNumber: string;
+  quantity: string;
+  unit: string;
+  expiryDate: string;
+}
+
 const STORAGE_KEY = 'verimat_form_draft';
 
 const Dashboard = () => {
@@ -32,41 +42,39 @@ const Dashboard = () => {
     return parseInt(sessionStorage.getItem(STORAGE_KEY + '_step') || '1');
   });
   
-  // Step 1 fields with persistence
+  // Step 1 fields with persistence (removed item-specific fields, now in items array)
   const [formState, setFormState] = useState(() => {
     try {
       const saved = sessionStorage.getItem(STORAGE_KEY);
       return saved ? JSON.parse(saved) : {
         referenceNumber: '',
         vendorName: '',
-        materialName: '',
-        batchNumber: '',
-        quantity: '',
-        unit: 'kg',
         documentDate: new Date().toISOString().split('T')[0],
         packagingCondition: '',
         storageCondition: 'Tidak Diperlukan',
         temperature: '',
         notes: '',
-        expiryDate: '',
-        materialCode: '',
       };
     } catch {
       return {
         referenceNumber: '',
         vendorName: '',
-        materialName: '',
-        batchNumber: '',
-        quantity: '',
-        unit: 'kg',
         documentDate: new Date().toISOString().split('T')[0],
         packagingCondition: '',
         storageCondition: 'Tidak Diperlukan',
         temperature: '',
         notes: '',
-        expiryDate: '',
-        materialCode: '',
       };
+    }
+  });
+
+  // Multi-item material list
+  const [items, setItems] = useState<MaterialItem[]>(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY + '_items');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
   });
   
@@ -127,6 +135,40 @@ const Dashboard = () => {
     failed: { value: 0, trend: 'same' }
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
+
+  // Item management functions
+  const addItem = () => {
+    const newItem: MaterialItem = {
+      id: Date.now().toString(),
+      materialCode: '',
+      materialName: '',
+      batchNumber: '',
+      quantity: '',
+      unit: 'kg',
+      expiryDate: '',
+    };
+    setItems([...items, newItem]);
+  };
+
+  const removeItem = (id: string) => {
+    setItems(items.filter(item => item.id !== id));
+    const newErrors = { ...itemErrors };
+    delete newErrors[id];
+    setItemErrors(newErrors);
+  };
+
+  const updateItem = (id: string, field: keyof MaterialItem, value: string) => {
+    setItems(items.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+    // Clear error for this item if field is updated
+    if (itemErrors[id]) {
+      const newErrors = { ...itemErrors };
+      delete newErrors[id];
+      setItemErrors(newErrors);
+    }
+  };
 
   // Persist form state
   useEffect(() => {
@@ -137,6 +179,11 @@ const Dashboard = () => {
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY + '_files', JSON.stringify(fileNames));
   }, [fileNames]);
+
+  // Persist items
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(items));
+  }, [items]);
   
   // Persist step
   useEffect(() => {
@@ -339,18 +386,36 @@ const Dashboard = () => {
 
   const validateStep1 = () => {
     const errors: Record<string, string> = {};
+    const itemErrs: Record<string, string> = {};
     
     if (!formState.referenceNumber.trim()) errors.referenceNumber = "Nomor referensi wajib diisi";
     if (!formState.vendorName.trim()) errors.vendorName = "Nama vendor wajib diisi";
-    if (!formState.materialName.trim()) errors.materialName = "Nama bahan baku wajib diisi";
-    if (!formState.batchNumber.trim()) errors.batchNumber = "Nomor batch wajib diisi";
-    if (!formState.quantity || parseFloat(formState.quantity) <= 0) errors.quantity = "Jumlah wajib diisi";
     if (!formState.documentDate) errors.documentDate = "Tanggal wajib diisi";
     if (!formState.packagingCondition) errors.packagingCondition = "Kondisi kemasan wajib dipilih";
-    if (!formState.expiryDate) {
-      errors.expiryDate = 'Expired Date wajib diisi';
-    } else if (new Date(formState.expiryDate) <= new Date()) {
-      errors.expiryDate = 'Expired Date sudah lewat. Bahan baku tidak dapat diterima.';
+    
+    // Validate items - at least one item required
+    if (items.length === 0) {
+      errors.items = "Minimal 1 item material wajib ditambahkan";
+    } else {
+      // Validate each item
+      items.forEach((item, index) => {
+        const itemError: string[] = [];
+        if (!item.materialName.trim()) itemError.push("Nama bahan wajib diisi");
+        if (!item.batchNumber.trim()) itemError.push("Batch wajib diisi");
+        if (!item.quantity || parseFloat(item.quantity) <= 0) itemError.push("Jumlah wajib diisi");
+        if (!item.expiryDate) {
+          itemError.push("Expired Date wajib diisi");
+        } else if (new Date(item.expiryDate) <= new Date()) {
+          itemError.push("Expired Date sudah lewat");
+        }
+        if (itemError.length > 0) {
+          itemErrs[item.id] = `Item ${index + 1}: ${itemError.join(', ')}`;
+        }
+      });
+    }
+    
+    if (Object.keys(itemErrs).length > 0) {
+      setItemErrors(itemErrs);
     }
     
     return errors;
@@ -372,22 +437,19 @@ const Dashboard = () => {
     if (window.confirm('Hapus semua isian?')) {
       sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(STORAGE_KEY + '_files');
+      sessionStorage.removeItem(STORAGE_KEY + '_items');
       sessionStorage.removeItem(STORAGE_KEY + '_step');
       setFormState({
         referenceNumber: '',
         vendorName: '',
-        materialName: '',
-        batchNumber: '',
-        quantity: '',
-        unit: 'kg',
         documentDate: new Date().toISOString().split('T')[0],
         packagingCondition: '',
         storageCondition: 'Tidak Diperlukan',
         temperature: '',
         notes: '',
-        expiryDate: '',
-        materialCode: '',
       });
+      setItems([]);
+      setItemErrors({});
       setFileNames({ suratJalan: null, coa: null, faktur: null, dokumenLain: [] });
       setSuratJalan(null);
       setCoa(null);
@@ -461,17 +523,25 @@ const Dashboard = () => {
     
     formData.append("reference_number", formState.referenceNumber);
     formData.append("vendor_name", formState.vendorName);
-    formData.append("material_name", formState.materialName);
-    formData.append("batch_number", formState.batchNumber);
-    formData.append("quantity", formState.quantity);
-    formData.append("unit", formState.unit);
     formData.append("document_date", formState.documentDate);
     formData.append("packaging_condition", formState.packagingCondition);
     formData.append("storage_condition", formState.storageCondition);
     if (formState.temperature) formData.append("temperature", formState.temperature);
     if (formState.notes) formData.append("notes", formState.notes);
-    formData.append("expiry_date", formState.expiryDate);
-    formData.append("material_code", formState.materialCode);
+    
+    // Send items_json for multi-item support
+    formData.append("items_json", JSON.stringify(items));
+    
+    // Backward compatibility: use first item's values for legacy fields
+    if (items.length > 0) {
+      const firstItem = items[0];
+      formData.append("material_name", firstItem.materialName);
+      formData.append("batch_number", firstItem.batchNumber);
+      formData.append("quantity", firstItem.quantity);
+      formData.append("unit", firstItem.unit);
+      formData.append("expiry_date", firstItem.expiryDate);
+      formData.append("material_code", firstItem.materialCode);
+    }
 
     try {
       const response = await fetch(`${API_URL}/api/upload/verify`, {
@@ -488,6 +558,7 @@ const Dashboard = () => {
       // Clear session on success
       sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(STORAGE_KEY + '_files');
+      sessionStorage.removeItem(STORAGE_KEY + '_items');
       sessionStorage.removeItem(STORAGE_KEY + '_step');
       
       navigate(`/verification/${data.session_id}`);
@@ -764,181 +835,150 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Row 2 */}
-              <div className="form-grid-2 mt-5">
-                {/* KODE BAHAN BAKU */}
-                <div
-                  ref={materialSearchRef}
-                  style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
-                >
-                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    Kode Bahan Baku
-                  </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>Kode internal (contoh: P1 untuk Paracetamol)</p>
-                  <input
-                    type="text"
-                    placeholder="Masukkan kode..."
-                    value={formState.materialCode}
-                    onChange={(e) => setFormState({ ...formState, materialCode: e.target.value })}
-                    onFocus={(e) => { e.target.style.borderColor = '#0D4B3B'; e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)'; }}
-                    onBlur={(e) => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
-                    style={{
-                      width: '100%', padding: '10px 14px',
-                      border: '1.5px solid #E5E7EB', borderRadius: '8px',
-                      fontSize: '14px', color: '#0F1A16',
-                      backgroundColor: 'white', outline: 'none', boxSizing: 'border-box' as const
-                    }}
-                  />
-                  {/* Material Suggestion Dropdown */}
-                  {showMaterialSuggestions && materialSuggestions.length > 0 && (
-                    <div style={{
-                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                      background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', marginTop: '4px'
-                    }}>
-                      {materialSuggestions.map((mat, index) => (
-                        <div
-                          key={index}
-                          onClick={() => {
-                            // Auto-fill nama bahan baku saat kode dipilih
-                            setFormState({ ...formState, materialCode: mat.code, materialName: mat.name });
-                            setShowMaterialSuggestions(false);
-                            setMaterialSuggestions([]);
-                          }}
-                          style={{
-                            padding: '10px 14px', fontSize: '14px', color: '#0F1A16',
-                            cursor: 'pointer', borderBottom: index < materialSuggestions.length - 1 ? '1px solid #F3F4F6' : 'none',
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                          }}
-                          onMouseOver={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#F0FAF7'; }}
-                          onMouseOut={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'white'; }}
-                        >
-                          <span style={{ fontWeight: '600', color: '#0D4B3B' }}>{mat.code}</span>
-                          <span style={{ color: '#4A5568' }}>{mat.name}</span>
-                        </div>
-                      ))}
-                      <div style={{ padding: '6px 14px', fontSize: '11px', color: '#9CA3AF', borderTop: '1px solid #F3F4F6', background: '#FAFAFA' }}>
-                        Kode baru? Isi nama bahan baku secara manual
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div data-error={fieldErrors.materialName ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    Nama Bahan Baku <span style={{color: '#DC2626'}}>*</span>
-                  </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Nama bahan baku yang diterima</p>
-                  <input
-                    type="text"
-                    value={formState.materialName}
-                    onChange={(e) => setFormState({ ...formState, materialName: e.target.value })}
-                    placeholder="Paracetamol, Ascorbic Acid, dll"
-                    style={{
-                      width: '100%', padding: '10px 14px',
-                      border: fieldErrors.materialName ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
-                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
-                      backgroundColor: 'white', outline: 'none',
-                      transition: 'border-color 0.15s, box-shadow 0.15s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
-                    onBlur={(e) => e.target.style.borderColor = fieldErrors.materialName ? '#DC2626' : '#E5E7EB'}
-                  />
-                  {formState.materialCode && formState.materialName && (
-                    <p style={{ fontSize: '11px', color: '#0D4B3B', marginTop: '3px' }}>
-                      ✓ Auto-filled dari kode {formState.materialCode}
-                    </p>
-                  )}
-                  {fieldErrors.materialName && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.materialName}</p>}
-                </div>
-              </div>
-
-              {/* Row 3 */}
-              <div className="form-grid-2 mt-5">
-                <div data-error={fieldErrors.batchNumber ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    Nomor Batch Supplier <span style={{color: '#DC2626'}}>*</span>
-                  </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Sesuai yang tertera di Surat Jalan dan CoA</p>
-                  <input
-                    type="text"
-                    value={formState.batchNumber}
-                    onChange={(e) => setFormState({ ...formState, batchNumber: e.target.value })}
-                    placeholder="Contoh: BTX-2024-091"
-                    style={{
-                      width: '100%', padding: '10px 14px',
-                      border: fieldErrors.batchNumber ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
-                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
-                      backgroundColor: 'white', outline: 'none',
-                      transition: 'border-color 0.15s, box-shadow 0.15s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
-                    onBlur={(e) => e.target.style.borderColor = fieldErrors.batchNumber ? '#DC2626' : '#E5E7EB'}
-                  />
-                  {fieldErrors.batchNumber && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.batchNumber}</p>}
-                </div>
-              </div>
-
-              {/* Row 3 */}
-              <div className="form-grid-2 mt-5">
-                <div data-error={fieldErrors.quantity ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    Jumlah Diterima <span style={{color: '#DC2626'}}>*</span>
-                  </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Jumlah bahan baku yang diterima</p>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formState.quantity}
-                    onChange={(e) => setFormState({ ...formState, quantity: e.target.value })}
-                    placeholder="0"
-                    style={{
-                      width: '100%', padding: '10px 14px',
-                      border: fieldErrors.quantity ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
-                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
-                      backgroundColor: 'white', outline: 'none',
-                      transition: 'border-color 0.15s, box-shadow 0.15s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
-                    onBlur={(e) => e.target.style.borderColor = fieldErrors.quantity ? '#DC2626' : '#E5E7EB'}
-                  />
-                  {fieldErrors.quantity && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.quantity}</p>}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-                    Satuan
-                  </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Satuan pengukuran jumlah</p>
-                  <select
-                    value={formState.unit}
-                    onChange={(e) => setFormState({ ...formState, unit: e.target.value })}
-                    style={{
-                      width: '100%', padding: '10px 14px',
-                      border: '1.5px solid #E5E7EB', borderRadius: '8px',
-                      fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
-                      outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
-                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+              {/* Multi-Item Material List */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <label className="text-[13px] font-medium text-[#374151] flex items-center gap-1">
+                      Daftar Material/Bahan Baku <span className="text-[#DC2626]">*</span>
+                    </label>
+                    <p className="text-[11px] text-[#9CA3AF] mt-1">Tambahkan semua item dalam pengiriman ini</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className="px-4 py-2 bg-[#0D4B3B] text-white rounded-lg text-[13px] font-medium hover:bg-[#0a3d30] transition-colors"
                   >
-                    <option value="kg">kg</option>
-                    <option value="gram">gram</option>
-                    <option value="liter">liter</option>
-                    <option value="mL">mL</option>
-                    <option value="pcs">pcs</option>
-                    <option value="karton">karton</option>
-                    <option value="drum">drum</option>
-                    <option value="sak">sak</option>
-                    <option value="lainnya">lainnya</option>
-                  </select>
+                    + Tambah Item
+                  </button>
                 </div>
+
+                {fieldErrors.items && (
+                  <p className="text-[12px] text-[#DC2626] mb-3">{fieldErrors.items}</p>
+                )}
+
+                {items.length === 0 ? (
+                  <div className="text-center py-8 bg-[#F9FAFB] border border-dashed border-[#E5E7EB] rounded-lg">
+                    <p className="text-[13px] text-[#6B7280]">Belum ada item. Klik "Tambah Item" untuk menambahkan bahan baku.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {items.map((item, index) => (
+                      <div key={item.id} className="bg-[#F8FFFE] border border-[#E5E7EB] rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[13px] font-semibold text-[#0D4B3B]">Item #{index + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeItem(item.id)}
+                            className="text-[#DC2626] text-[12px] hover:underline"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+
+                        {itemErrors[item.id] && (
+                          <div className="mb-3 p-2 bg-[#FEF2F2] border border-[#FECACA] rounded text-[11px] text-[#DC2626]">
+                            {itemErrors[item.id]}
+                          </div>
+                        )}
+
+                        <div className="form-grid-2 gap-3">
+                          {/* Material Code */}
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <label className="text-[11px] font-medium text-[#374151] mb-1">Kode Bahan</label>
+                            <input
+                              type="text"
+                              value={item.materialCode}
+                              onChange={(e) => updateItem(item.id, 'materialCode', e.target.value)}
+                              placeholder="Contoh: P1"
+                              className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                            />
+                          </div>
+
+                          {/* Material Name */}
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <label className="text-[11px] font-medium text-[#374151] mb-1">Nama Bahan <span className="text-[#DC2626]">*</span></label>
+                            <input
+                              type="text"
+                              value={item.materialName}
+                              onChange={(e) => updateItem(item.id, 'materialName', e.target.value)}
+                              placeholder="Paracetamol"
+                              className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                            />
+                          </div>
+
+                          {/* Batch */}
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <label className="text-[11px] font-medium text-[#374151] mb-1">Batch <span className="text-[#DC2626]">*</span></label>
+                            <input
+                              type="text"
+                              value={item.batchNumber}
+                              onChange={(e) => updateItem(item.id, 'batchNumber', e.target.value)}
+                              placeholder="BTX-2024-091"
+                              className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                            />
+                          </div>
+
+                          {/* Quantity + Unit */}
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <label className="text-[11px] font-medium text-[#374151] mb-1">Jumlah <span className="text-[#DC2626]">*</span></label>
+                            <div className="flex gap-2">
+                              <input
+                                type="number"
+                                min="0"
+                                value={item.quantity}
+                                onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                                placeholder="0"
+                                className="flex-1 px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                              />
+                              <select
+                                value={item.unit}
+                                onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
+                                className="w-24 px-2 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none bg-white"
+                              >
+                                <option value="kg">kg</option>
+                                <option value="gram">gram</option>
+                                <option value="liter">liter</option>
+                                <option value="mL">mL</option>
+                                <option value="pcs">pcs</option>
+                                <option value="karton">karton</option>
+                                <option value="drum">drum</option>
+                                <option value="sak">sak</option>
+                                <option value="lainnya">lainnya</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Expiry Date */}
+                          <div className="col-span-2 sm:col-span-1" style={{ display: 'flex', flexDirection: 'column' }}>
+                            <label className="text-[11px] font-medium text-[#374151] mb-1">Expired Date <span className="text-[#DC2626]">*</span></label>
+                            <input
+                              type="date"
+                              value={item.expiryDate}
+                              onChange={(e) => updateItem(item.id, 'expiryDate', e.target.value)}
+                              className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                            />
+                            {item.expiryDate && (() => {
+                              const monthsLeft = (new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30);
+                              if (monthsLeft > 0 && monthsLeft < 6) {
+                                return (
+                                  <div className="mt-1 px-2 py-1 bg-[#FFFBEB] border border-[#FDE68A] rounded text-[10px] text-[#92400E]">
+                                    ⚠ ED dalam {Math.ceil(monthsLeft)} bulan
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Row 4 */}
-              <div className="form-grid-2 mt-5">
+              {/* Document Date */}
+              <div className="mt-5">
                 <div data-error={fieldErrors.documentDate ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Tanggal Dokumen / Pengiriman <span style={{color: '#DC2626'}}>*</span>
@@ -960,39 +1000,6 @@ const Dashboard = () => {
                     onBlur={(e) => e.target.style.borderColor = fieldErrors.documentDate ? '#DC2626' : '#E5E7EB'}
                   />
                   {fieldErrors.documentDate && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.documentDate}</p>}
-                </div>
-                <div data-error={fieldErrors.expiryDate ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    Expired Date Bahan Baku (ED)
-                    <span style={{ color: '#DC2626' }}>*</span>
-                  </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>Sesuai yang tertera di CoA atau label kemasan</p>
-                  <input
-                    type="date"
-                    value={formState.expiryDate}
-                    onChange={(e) => setFormState({ ...formState, expiryDate: e.target.value })}
-                    style={{
-                      width: '100%', padding: '10px 14px',
-                      border: fieldErrors.expiryDate ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
-                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
-                      backgroundColor: 'white', outline: 'none', boxSizing: 'border-box' as const
-                    }}
-                    onFocus={(e) => { e.target.style.borderColor = '#0D4B3B'; e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)'; }}
-                    onBlur={(e) => { e.target.style.borderColor = fieldErrors.expiryDate ? '#DC2626' : '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
-                  />
-                  {/* Warning jika ED < 6 bulan */}
-                  {formState.expiryDate && (() => {
-                    const monthsLeft = (new Date(formState.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30);
-                    if (monthsLeft > 0 && monthsLeft < 6) {
-                      return (
-                        <div style={{ marginTop: '6px', padding: '8px 12px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', fontSize: '12px', color: '#92400E' }}>
-                          ⚠ Perhatian: Bahan baku akan expired dalam {Math.ceil(monthsLeft)} bulan. Pastikan dapat habis terpakai sebelum tanggal tersebut.
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                  {fieldErrors.expiryDate && <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '2px' }}>{fieldErrors.expiryDate}</p>}
                 </div>
               </div>
 
