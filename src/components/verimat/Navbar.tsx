@@ -12,6 +12,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isVerySmall, setIsVerySmall] = useState(window.innerWidth <= 380);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -29,8 +30,13 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    if (!isMobile) setMenuOpen(false);
+  }, [isMobile]);
+
   const handleNavClick = (e: React.MouseEvent, targetId: string) => {
     e.preventDefault();
+    setMenuOpen(false);
     const target = document.getElementById(targetId);
     if (target) {
       target.scrollIntoView({
@@ -41,7 +47,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 animate-slide-down">
+    <header className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 animate-slide-down relative">
       <nav
         className={`glass flex items-center gap-1 sm:gap-6 w-auto rounded-full border border-white/5 px-3 py-2 transition-all duration-500 ${
           scrolled
@@ -56,6 +62,7 @@ export default function Navbar() {
           <span className="text-sm font-bold tracking-tight text-white" style={{ display: isVerySmall ? 'none' : 'inline' }}>VeriMat</span>
         </a>
 
+        {/* Desktop nav links */}
         <div className="hidden md:flex items-center gap-1">
           {links.map((l) => (
             <a
@@ -69,6 +76,23 @@ export default function Navbar() {
           ))}
         </div>
 
+        {/* Mobile hamburger button */}
+        <button
+          className="md:hidden flex items-center justify-center w-8 h-8 rounded-full text-white/80 hover:text-white hover:bg-white/5 transition-colors"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-label="Toggle menu"
+        >
+          {menuOpen ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          )}
+        </button>
+
         <Link
           to="/login"
           className="ml-1 rounded-full bg-teal font-semibold text-surface-deep transition-all duration-300 hover:brightness-110 hover:scale-[1.03] active:scale-[0.98]"
@@ -80,6 +104,27 @@ export default function Navbar() {
           {isMobile ? 'Masuk' : 'Masuk ke Sistem'}
         </Link>
       </nav>
+
+      {/* Mobile dropdown menu */}
+      {isMobile && menuOpen && (
+        <div
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 rounded-2xl border border-white/10 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)] overflow-hidden"
+          style={{ background: 'rgba(15, 26, 22, 0.95)', backdropFilter: 'blur(12px)' }}
+        >
+          {links.map((l, i) => (
+            <a
+              key={l.href}
+              href={l.href}
+              onClick={(e) => handleNavClick(e, l.href.substring(1))}
+              className={`block px-5 py-3.5 text-sm text-white/80 hover:text-white hover:bg-white/5 transition-colors ${
+                i < links.length - 1 ? 'border-b border-white/5' : ''
+              }`}
+            >
+              {l.label}
+            </a>
+          ))}
+        </div>
+      )}
     </header>
   );
 }
