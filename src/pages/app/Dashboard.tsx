@@ -32,28 +32,76 @@ interface MaterialItem {
 }
 
 const STORAGE_KEY = 'verimat_form_draft';
+const STORAGE_VERSION = 'v2'; // Increment when form structure changes
 
 const Dashboard = () => {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const navigate = useNavigate();
   
+  // Check storage version and clear if outdated
+  useEffect(() => {
+    const savedVersion = sessionStorage.getItem(STORAGE_KEY + '_version');
+    if (savedVersion !== STORAGE_VERSION) {
+      // Clear all old storage to prevent conflicts
+      sessionStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY + '_files');
+      sessionStorage.removeItem(STORAGE_KEY + '_items');
+      sessionStorage.removeItem(STORAGE_KEY + '_step');
+      sessionStorage.setItem(STORAGE_KEY + '_version', STORAGE_VERSION);
+    }
+  }, []);
+
   // Step management with persistence
   const [currentStep, setCurrentStep] = useState(() => {
-    return parseInt(sessionStorage.getItem(STORAGE_KEY + '_step') || '1');
+    try {
+      const savedVersion = sessionStorage.getItem(STORAGE_KEY + '_version');
+      if (savedVersion !== STORAGE_VERSION) return 1;
+      return parseInt(sessionStorage.getItem(STORAGE_KEY + '_step') || '1');
+    } catch {
+      return 1;
+    }
   });
   
   // Step 1 fields with persistence (removed item-specific fields, now in items array)
   const [formState, setFormState] = useState(() => {
     try {
+      const savedVersion = sessionStorage.getItem(STORAGE_KEY + '_version');
+      if (savedVersion !== STORAGE_VERSION) {
+        return {
+          referenceNumber: '',
+          vendorName: '',
+          documentDate: new Date().toISOString().split('T')[0],
+          packagingCondition: '',
+          storageCondition: 'Tidak Diperlukan',
+          temperature: '',
+          notes: '',
+        };
+      }
       const saved = sessionStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : {
-        referenceNumber: '',
-        vendorName: '',
-        documentDate: new Date().toISOString().split('T')[0],
-        packagingCondition: '',
-        storageCondition: 'Tidak Diperlukan',
-        temperature: '',
-        notes: '',
+      if (!saved) {
+        return {
+          referenceNumber: '',
+          vendorName: '',
+          documentDate: new Date().toISOString().split('T')[0],
+          packagingCondition: '',
+          storageCondition: 'Tidak Diperlukan',
+          temperature: '',
+          notes: '',
+        };
+      }
+      const parsed = JSON.parse(saved);
+      // Validate that parsed data has expected structure
+      if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('Invalid saved data');
+      }
+      return {
+        referenceNumber: parsed.referenceNumber || '',
+        vendorName: parsed.vendorName || '',
+        documentDate: parsed.documentDate || new Date().toISOString().split('T')[0],
+        packagingCondition: parsed.packagingCondition || '',
+        storageCondition: parsed.storageCondition || 'Tidak Diperlukan',
+        temperature: parsed.temperature || '',
+        notes: parsed.notes || '',
       };
     } catch {
       return {
@@ -71,8 +119,14 @@ const Dashboard = () => {
   // Multi-item material list
   const [items, setItems] = useState<MaterialItem[]>(() => {
     try {
+      const savedVersion = sessionStorage.getItem(STORAGE_KEY + '_version');
+      if (savedVersion !== STORAGE_VERSION) return [];
       const saved = sessionStorage.getItem(STORAGE_KEY + '_items');
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      // Validate each item has required structure
+      return parsed.filter(item => item && typeof item === 'object' && item.id);
     } catch {
       return [];
     }
@@ -81,12 +135,23 @@ const Dashboard = () => {
   // File names persistence (can't store File objects in sessionStorage)
   const [fileNames, setFileNames] = useState(() => {
     try {
+      const savedVersion = sessionStorage.getItem(STORAGE_KEY + '_version');
+      if (savedVersion !== STORAGE_VERSION) {
+        return { suratJalan: null, coa: null, faktur: null, dokumenLain: [] };
+      }
       const saved = sessionStorage.getItem(STORAGE_KEY + '_files');
-      return saved ? JSON.parse(saved) : {
-        suratJalan: null,
-        coa: null,
-        faktur: null,
-        dokumenLain: []
+      if (!saved) {
+        return { suratJalan: null, coa: null, faktur: null, dokumenLain: [] };
+      }
+      const parsed = JSON.parse(saved);
+      if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return { suratJalan: null, coa: null, faktur: null, dokumenLain: [] };
+      }
+      return {
+        suratJalan: parsed.suratJalan || null,
+        coa: parsed.coa || null,
+        faktur: parsed.faktur || null,
+        dokumenLain: Array.isArray(parsed.dokumenLain) ? parsed.dokumenLain : []
       };
     } catch {
       return { suratJalan: null, coa: null, faktur: null, dokumenLain: [] };
@@ -173,21 +238,25 @@ const Dashboard = () => {
   // Persist form state
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formState));
+    sessionStorage.setItem(STORAGE_KEY + '_version', STORAGE_VERSION);
   }, [formState]);
   
   // Persist file names
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY + '_files', JSON.stringify(fileNames));
+    sessionStorage.setItem(STORAGE_KEY + '_version', STORAGE_VERSION);
   }, [fileNames]);
 
   // Persist items
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(items));
+    sessionStorage.setItem(STORAGE_KEY + '_version', STORAGE_VERSION);
   }, [items]);
   
   // Persist step
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY + '_step', currentStep.toString());
+    sessionStorage.setItem(STORAGE_KEY + '_version', STORAGE_VERSION);
   }, [currentStep]);
 
   useEffect(() => {
@@ -230,25 +299,6 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, [formState.vendorName]);
 
-  // Fetch material suggestions
-  useEffect(() => {
-    if (formState.materialCode.length < 1) {
-      setMaterialSuggestions([]);
-      setShowMaterialSuggestions(false);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/material/search?q=${encodeURIComponent(formState.materialCode)}`);
-        const data = await res.json();
-        setMaterialSuggestions(data);
-        setShowMaterialSuggestions(data.length > 0);
-      } catch {
-        setMaterialSuggestions([]);
-      }
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [formState.materialCode]);
 
   const fetchStats = async () => {
     try {
@@ -323,7 +373,7 @@ const Dashboard = () => {
   };
 
   const selectSuggestion = (suggestion: POSuggestion) => {
-    setFormState({ ...formState, referenceNumber: suggestion.po_number, materialName: suggestion.material_name });
+    setFormState({ ...formState, referenceNumber: suggestion.po_number });
     setShowSuggestions(false);
   };
 
@@ -439,6 +489,7 @@ const Dashboard = () => {
       sessionStorage.removeItem(STORAGE_KEY + '_files');
       sessionStorage.removeItem(STORAGE_KEY + '_items');
       sessionStorage.removeItem(STORAGE_KEY + '_step');
+      sessionStorage.removeItem(STORAGE_KEY + '_version');
       setFormState({
         referenceNumber: '',
         vendorName: '',
@@ -1356,31 +1407,31 @@ const Dashboard = () => {
                     <span className="text-[#6B7280]">Vendor:</span>
                     <span className="text-[#0F1A16] font-medium">{formState.vendorName}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#6B7280]">Bahan Baku:</span>
-                    <span className="text-[#0F1A16] font-medium">{formState.materialName}</span>
-                  </div>
-                  {formState.materialCode && (
-                    <div className="flex justify-between">
-                      <span className="text-[#6B7280]">Kode Bahan Baku:</span>
-                      <span className="text-[#0F1A16] font-medium">{formState.materialCode}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-[#6B7280]">Nomor Batch:</span>
-                    <span className="text-[#0F1A16] font-medium">{formState.batchNumber}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#6B7280]">Jumlah:</span>
-                    <span className="text-[#0F1A16] font-medium">{formState.quantity} {formState.unit}</span>
+                  {/* Items List */}
+                  <div className="border-t border-[#E5E7EB] pt-2">
+                    <span className="text-[#6B7280] text-[13px]">Item Material:</span>
+                    {items.map((item, idx) => (
+                      <div key={item.id} className="mt-2 p-2 bg-[#F8FFFE] rounded-lg">
+                        <div className="flex justify-between">
+                          <span className="text-[#6B7280] text-[12px]">Item #{idx + 1}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#0F1A16] font-medium">{item.materialName}</span>
+                          {item.materialCode && <span className="text-[#0D4B3B] text-[12px]">({item.materialCode})</span>}
+                        </div>
+                        <div className="flex justify-between text-[12px]">
+                          <span className="text-[#6B7280]">Batch: {item.batchNumber}</span>
+                          <span className="text-[#0F1A16]">{item.quantity} {item.unit}</span>
+                        </div>
+                        <div className="text-[12px] text-[#6B7280]">
+                          ED: {item.expiryDate || '-'}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#6B7280]">Kondisi Kemasan:</span>
                     <span className="text-[#0F1A16] font-medium">{formState.packagingCondition}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#6B7280]">Expired Date:</span>
-                    <span className="text-[#0F1A16] font-medium">{formState.expiryDate || '-'}</span>
                   </div>
                   <div className="border-t border-[#E5E7EB] pt-2 mt-2">
                     <span className="text-[#6B7280]">Dokumen:</span>
