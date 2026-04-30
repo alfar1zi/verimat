@@ -122,7 +122,7 @@ const AuditTrail = () => {
     <div className="min-h-screen bg-[#F7F8F6]">
       <AppNavbar />
       
-      <div className="max-w-[1000px] mx-auto px-6 py-8">
+      <div className="max-w-[1000px] mx-auto" style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px)' }}>
         {/* Header */}
         <div>
           <h1 className="text-[22px] font-bold text-[#0F1A16]">Audit Trail</h1>
@@ -132,7 +132,7 @@ const AuditTrail = () => {
         </div>
 
         {/* Filter Card */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 mt-6">
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] mt-6" style={{ padding: 'clamp(12px, 3vw, 24px)' }}>
           <div className="flex flex-col gap-4">
             {/* Row 1: Nomor Referensi + Status + Buttons */}
             <div className="flex flex-col lg:flex-row gap-3">
@@ -233,7 +233,7 @@ const AuditTrail = () => {
         </div>
 
         {/* Table Card */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] mt-4 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] mt-4 overflow-x-auto">
           {isLoading ? (
             <div className="p-12 text-center">
               <div className="animate-pulse space-y-4">
@@ -281,7 +281,7 @@ const AuditTrail = () => {
               )}
             </div>
           ) : (
-            <table className="w-full">
+            <table className="w-full" style={{ minWidth: '600px' }}>
               {/* Table Header */}
               <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
                 <tr>

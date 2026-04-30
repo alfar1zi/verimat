@@ -140,16 +140,121 @@ def init_db():
         )
     ''')
 
-    # Insert sample materials
+    # Seed: Bahan Aktif (Active Pharmaceutical Ingredients - API)
     materials_data = [
-        ('P1', 'Paracetamol'),
-        ('A1', 'Ascorbic Acid'),
-        ('M1', 'Magnesium Stearate'),
+        # APIs - common in Indonesian pharma
+        ('P1', 'Paracetamol (Acetaminophen)'),
+        ('A1', 'Ascorbic Acid (Vitamin C)'),
+        ('A2', 'Amoxicillin Trihydrate'),
+        ('A3', 'Ampicillin Trihydrate'),
+        ('A4', 'Atorvastatin Calcium'),
+        ('A5', 'Amlodipine Besylate'),
+        ('A6', 'Acyclovir'),
+        ('C1', 'Ciprofloxacin HCl'),
+        ('C2', 'Cetirizine HCl'),
+        ('C3', 'Captopril'),
+        ('C4', 'Chloramphenicol'),
+        ('C5', 'Cefadroxil Monohydrate'),
+        ('C6', 'Cotrimoxazole (TMP-SMZ)'),
+        ('D1', 'Dexamethasone'),
+        ('D2', 'Diclofenac Sodium'),
+        ('D3', 'Domperidone'),
+        ('E1', 'Erythromycin Ethylsuccinate'),
+        ('F1', 'Furosemide'),
+        ('G1', 'Glibenclamide'),
+        ('G2', 'Glimepiride'),
+        ('I1', 'Ibuprofen'),
+        ('I2', 'Isoniazid (INH)'),
+        ('K1', 'Ketoconazole'),
+        ('L1', 'Loperamide HCl'),
+        ('M1', 'Metformin HCl'),
+        ('M2', 'Metronidazole'),
+        ('M3', 'Methylprednisolone'),
+        ('M4', 'Mefenamic Acid'),
+        ('N1', 'Nifedipine'),
+        ('O1', 'Omeprazole'),
+        ('O2', 'Ondansetron HCl'),
+        ('P2', 'Piroxicam'),
+        ('P3', 'Prednisone'),
+        ('P4', 'Pseudoephedrine HCl'),
+        ('R1', 'Ranitidine HCl'),
+        ('R2', 'Rifampicin'),
+        ('S1', 'Simvastatin'),
+        ('S2', 'Salbutamol Sulfate'),
+        ('S3', 'Spironolactone'),
+        ('T1', 'Tramadol HCl'),
+        ('T2', 'Thiamine HCl (Vitamin B1)'),
+        ('V1', 'Vitamin B12 (Cyanocobalamin)'),
+        ('V2', 'Vitamin B6 (Pyridoxine HCl)'),
+        ('V3', 'Vitamin E (d-alpha Tocopherol)'),
+        # Excipients (Bahan Pembantu / Bahan Tambahan)
+        ('X-L1', 'Lactose Monohydrate'),
+        ('X-M1', 'Microcrystalline Cellulose (MCC)'),
+        ('X-M2', 'Magnesium Stearate'),
+        ('X-S1', 'Sodium Starch Glycolate'),
+        ('X-S2', 'Starch (Pati Jagung)'),
+        ('X-P1', 'PVP K30 (Povidone)'),
+        ('X-P2', 'PEG 6000 (Polyethylene Glycol)'),
+        ('X-T1', 'Talc (Magnesium Silicate)'),
+        ('X-C1', 'Carboxymethylcellulose Sodium (CMC-Na)'),
+        ('X-C2', 'Calcium Carbonate'),
+        ('X-C3', 'Croscarmellose Sodium (Ac-Di-Sol)'),
+        ('X-C4', 'Crospovidone (PVPP)'),
+        ('X-H1', 'HPMC (Hydroxypropyl Methylcellulose)'),
+        ('X-H2', 'HPC (Hydroxypropyl Cellulose)'),
+        ('X-S3', 'Sucrose (Gula Farmasi)'),
+        ('X-S4', 'Sorbitol'),
+        ('X-D1', 'Dicalcium Phosphate (DCP)'),
+        ('X-M3', 'Mannitol'),
+        ('X-G1', 'Gelatin'),
+        ('X-G2', 'Glycerin (Gliserol)'),
+        ('X-A1', 'Aspartame'),
+        ('X-S5', 'Silicon Dioxide (Aerosil)'),
+        ('X-T2', 'Titanium Dioxide'),
+        ('X-E1', 'Ethylcellulose'),
     ]
     for code, name in materials_data:
         cursor.execute(
             'INSERT OR IGNORE INTO materials (material_code, material_name) VALUES (?, ?)',
             (code, name)
+        )
+
+    # Seed: Vendor/Supplier farmasi Indonesia yang umum
+    # Ini hanya untuk pre-populate, user bisa tambah vendor baru saat verifikasi
+    vendors_seed = [
+        'PT Brataco (Bratachem)',
+        'PT Kimia Farma Tbk',
+        'PT Kalbe Farma Tbk',
+        'PT Sanbe Farma',
+        'PT Indofarma Tbk',
+        'PT Phapros Tbk',
+        'PT Dexa Medica',
+        'PT Ikapharmindo Putramas Tbk',
+        'PT Hexpharm Jaya',
+        'PT Merck Indonesia',
+        'PT BASF Indonesia',
+        'PT Clariant Indonesia',
+        'PT Croda Indonesia',
+        'PT Dipa Pharmalab Intersains',
+        'PT Enseval Putera Megatrading',
+        'PT Anugrah Argon Medica',
+        'PT Bernofarm',
+        'PT Ferron Par Pharmaceuticals',
+        'PT Saka Farma Laboratories',
+        'PT Combiphar',
+    ]
+
+    # Buat tabel vendors_seed jika belum ada
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS vendor_seeds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            vendor_name TEXT UNIQUE NOT NULL
+        )
+    ''')
+    for vname in vendors_seed:
+        cursor.execute(
+            'INSERT OR IGNORE INTO vendor_seeds (vendor_name) VALUES (?)',
+            (vname,)
         )
     
     conn.commit()

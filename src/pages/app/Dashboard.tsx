@@ -506,7 +506,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-[#F7F8F6]">
       <AppNavbar />
       
-      <div className="max-w-[900px] mx-auto px-6 py-8">
+      <div className="max-w-[900px] mx-auto" style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px)' }}>
         {/* Header */}
         <div>
           <h1 className="text-[22px] font-bold text-[#0F1A16]">Verifikasi Dokumen Baru</h1>
@@ -516,7 +516,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Bar */}
-        <div className="flex gap-4 mt-6">
+        <div className="flex flex-col sm:flex-row gap-3 mt-6">
           {/* Total Card */}
           <div style={{
             flex: 1, background: 'white', borderRadius: '12px',
@@ -609,7 +609,7 @@ const Dashboard = () => {
         </div>
 
         {/* Step Indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '32px', marginBottom: '32px', gap: '0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '32px', marginBottom: '32px', gap: '0', overflowX: 'auto' }}>
           <div className="flex items-center gap-0">
             <div className="flex flex-col items-center">
               <div 
@@ -660,13 +660,13 @@ const Dashboard = () => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8 shadow-sm">
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm" style={{ padding: 'clamp(16px, 4vw, 32px)' }}>
           {currentStep === 1 ? (
             <>
               <h2 className="text-[18px] font-bold text-[#0F1A16] mb-6">Informasi Pengiriman</h2>
               
               {/* Row 1 */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="form-grid-2">
                 <div className="relative" ref={searchRef} data-error={fieldErrors.referenceNumber ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nomor Referensi Dokumen <span style={{color: '#DC2626'}}>*</span>
@@ -715,7 +715,7 @@ const Dashboard = () => {
                   <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>Nama perusahaan supplier pengirim</p>
                   <input
                     type="text"
-                    placeholder="Ketik nama vendor... (suggestion otomatis)"
+                    placeholder="Nama perusahaan supplier"
                     value={formState.vendorName}
                     onChange={(e) => {
                       setFormState({ ...formState, vendorName: e.target.value });
@@ -765,7 +765,7 @@ const Dashboard = () => {
               </div>
 
               {/* Row 2 */}
-              <div className="grid grid-cols-2 gap-4 mt-5">
+              <div className="form-grid-2 mt-5">
                 {/* KODE BAHAN BAKU */}
                 <div
                   ref={materialSearchRef}
@@ -854,7 +854,7 @@ const Dashboard = () => {
               </div>
 
               {/* Row 3 */}
-              <div className="grid grid-cols-2 gap-4 mt-5">
+              <div className="form-grid-2 mt-5">
                 <div data-error={fieldErrors.batchNumber ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nomor Batch Supplier <span style={{color: '#DC2626'}}>*</span>
@@ -881,7 +881,7 @@ const Dashboard = () => {
               </div>
 
               {/* Row 3 */}
-              <div className="grid grid-cols-2 gap-4 mt-5">
+              <div className="form-grid-2 mt-5">
                 <div data-error={fieldErrors.quantity ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Jumlah Diterima <span style={{color: '#DC2626'}}>*</span>
@@ -938,7 +938,7 @@ const Dashboard = () => {
               </div>
 
               {/* Row 4 */}
-              <div className="grid grid-cols-2 gap-4 mt-5">
+              <div className="form-grid-2 mt-5">
                 <div data-error={fieldErrors.documentDate ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Tanggal Dokumen / Pengiriman <span style={{color: '#DC2626'}}>*</span>
@@ -997,7 +997,7 @@ const Dashboard = () => {
               </div>
 
               {/* Row 5 - Kondisi Kemasan */}
-              <div className="grid grid-cols-2 gap-4 mt-5">
+              <div className="form-grid-2 mt-5">
                 <div data-error={fieldErrors.packagingCondition ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Kondisi Kemasan Fisik <span style={{color: '#DC2626'}}>*</span>

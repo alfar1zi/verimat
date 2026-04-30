@@ -9,11 +9,27 @@ def search_vendors():
     if len(q) < 2:
         return jsonify([])
     conn = get_db_connection()
-    rows = conn.execute(
+    # Search dari transaksi nyata (prioritas) + seed data
+    real_vendors = conn.execute(
         """SELECT DISTINCT vendor_name FROM verification_sessions 
            WHERE vendor_name LIKE ? AND vendor_name IS NOT NULL AND vendor_name != ''
-           ORDER BY vendor_name LIMIT 10""",
+           ORDER BY vendor_name LIMIT 5""",
+        (f'%{q}%',)
+    ).fetchall()
+    seed_vendors = conn.execute(
+        """SELECT DISTINCT vendor_name FROM vendor_seeds 
+           WHERE vendor_name LIKE ?
+           ORDER BY vendor_name LIMIT 5""",
         (f'%{q}%',)
     ).fetchall()
     conn.close()
-    return jsonify([row['vendor_name'] for row in rows])
+    
+    # Merge, deduplicate, prioritize real transactions
+    all_vendors = [r['vendor_name'] for r in real_vendors]
+    seen = set(v.lower() for v in all_vendors)
+    for r in seed_vendors:
+        if r['vendor_name'].lower() not in seen:
+            all_vendors.append(r['vendor_name'])
+            seen.add(r['vendor_name'].lower())
+    
+    return jsonify(all_vendors[:10])
