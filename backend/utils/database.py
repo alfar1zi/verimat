@@ -100,6 +100,11 @@ def init_db():
     except sqlite3.OperationalError:
         pass
     
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN expiry_date TEXT')
+    except sqlite3.OperationalError:
+        pass
+    
     # Verification logs table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS verification_logs (
@@ -124,7 +129,48 @@ def init_db():
             ('PO-2024-003', 'PT Brataco', 'Magnesium Stearate', 25.0, 'kg')
     ''')
     
+    # Materials table untuk kode bahan baku
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS materials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            material_code TEXT UNIQUE NOT NULL,
+            material_name TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Insert sample materials
+    materials_data = [
+        ('P1', 'Paracetamol'),
+        ('A1', 'Ascorbic Acid'),
+        ('M1', 'Magnesium Stearate'),
+    ]
+    for code, name in materials_data:
+        cursor.execute(
+            'INSERT OR IGNORE INTO materials (material_code, material_name) VALUES (?, ?)',
+            (code, name)
+        )
+    
     conn.commit()
     conn.close()
     
     print("Database initialized successfully")
+
+
+def upsert_material(material_code: str, material_name: str):
+    """Save or update material code → name mapping."""
+    if not material_code or not material_name:
+        return
+    conn = get_db_connection()
+    try:
+        conn.execute('''
+            INSERT INTO materials (material_code, material_name)
+            VALUES (?, ?)
+            ON CONFLICT(material_code) DO UPDATE SET
+                material_name=excluded.material_name,
+                updated_at=CURRENT_TIMESTAMP
+        ''', (material_code.strip().upper(), material_name.strip()))
+        conn.commit()
+    finally:
+        conn.close()

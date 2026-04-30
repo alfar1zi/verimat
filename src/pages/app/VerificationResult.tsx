@@ -16,6 +16,7 @@ interface VerificationData {
   storage_condition?: string;
   temperature?: number;
   notes?: string;
+  expiry_date?: string;
   doc_type: string;
   verification_time: string;
   session_id: string;
@@ -197,6 +198,10 @@ const VerificationResult = () => {
             <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
               <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Tanggal Dokumen</p>
               <p className="text-[15px] font-semibold text-[#0F1A16]">{data.document_date || '-'}</p>
+            </div>
+            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
+              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Expired Date (ED)</p>
+              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.expiry_date || '-'}</p>
             </div>
             <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
               <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Kondisi Penyimpanan</p>

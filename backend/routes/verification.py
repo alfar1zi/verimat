@@ -40,6 +40,7 @@ def get_verification(session_id):
             'storage_condition': session.get('storage_condition'),
             'temperature': session.get('temperature'),
             'notes': session.get('notes'),
+            'expiry_date': session.get('expiry_date'),
             'doc_type': session.get('doc_type'),
             'status': session.get('validation_status'),
             'explanation': session.get('explanation', ''),
