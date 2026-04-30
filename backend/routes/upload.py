@@ -107,6 +107,7 @@ def verify_document():
         storage_condition = request.form.get('storage_condition', '')
         temperature = request.form.get('temperature')
         notes = request.form.get('notes', '')
+        expiry_date = request.form.get('expiry_date', '')
         
         # Save files
         saved_files = {}
@@ -131,6 +132,19 @@ def verify_document():
                 doc.save(doc_path)
                 dokumen_lain_paths.append(doc_path)
         saved_files['dokumen_lain'] = dokumen_lain_paths
+        
+        # Validate expiry_date if provided
+        if expiry_date:
+            from datetime import date as date_class
+            try:
+                exp_date = datetime.strptime(expiry_date, '%Y-%m-%d').date()
+                if exp_date <= date_class.today():
+                    return jsonify({
+                        'error': 'Expired Date sudah lewat. Bahan baku tidak dapat diterima.',
+                        'field': 'expiry_date'
+                    }), 400
+            except ValueError:
+                pass
         
         # Extract document data from Surat Jalan
         extracted_data = extract_document_data(surat_jalan_path, 'surat_jalan', reference_number)
@@ -168,8 +182,9 @@ def verify_document():
             INSERT INTO verification_sessions (
                 session_id, po_number, doc_type, file_path, validation_status, created_at,
                 reference_number, vendor_name, material_name, batch_number, quantity, unit,
-                document_date, packaging_condition, storage_condition, temperature, notes, explanation
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                document_date, packaging_condition, storage_condition, temperature, notes, explanation,
+                expiry_date
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             session_id, reference_number, 'surat_jalan', surat_jalan_path,
             validation_result['status'], datetime.now().isoformat(),
@@ -177,11 +192,18 @@ def verify_document():
             float(quantity) if quantity else 0, unit, document_date,
             packaging_condition, storage_condition,
             float(temperature) if temperature else None, notes,
-            validation_result.get('explanation', '')
+            validation_result.get('explanation', ''),
+            expiry_date
         ))
         
         conn.commit()
         conn.close()
+        
+        # Save material code mapping jika ada
+        material_code = request.form.get('material_code', '').strip()
+        if material_code and material_name:
+            from utils.database import upsert_material
+            upsert_material(material_code, material_name)
         
         # Create per-field verification logs
         validation_results_list = validation_result.get('validation_results', [])

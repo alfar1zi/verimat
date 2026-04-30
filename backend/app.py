@@ -5,6 +5,8 @@ from routes.verification import verification_bp
 from routes.audit import audit_bp
 from routes.po import po_bp
 from routes.auth import auth_bp
+from routes.vendor import vendor_bp
+from routes.material import material_bp
 from utils.database import init_db
 
 app = Flask(__name__)
@@ -16,6 +18,8 @@ app.register_blueprint(verification_bp, url_prefix='/api/verification')
 app.register_blueprint(audit_bp, url_prefix='/api/audit')
 app.register_blueprint(po_bp, url_prefix='/api/po')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(vendor_bp, url_prefix='/api/vendor')
+app.register_blueprint(material_bp, url_prefix='/api/material')
 
 # Initialize database
 init_db()

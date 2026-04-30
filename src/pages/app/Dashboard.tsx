@@ -48,6 +48,8 @@ const Dashboard = () => {
         storageCondition: 'Tidak Diperlukan',
         temperature: '',
         notes: '',
+        expiryDate: '',
+        materialCode: '',
       };
     } catch {
       return {
@@ -62,6 +64,8 @@ const Dashboard = () => {
         storageCondition: 'Tidak Diperlukan',
         temperature: '',
         notes: '',
+        expiryDate: '',
+        materialCode: '',
       };
     }
   });
@@ -91,6 +95,21 @@ const Dashboard = () => {
   const [poSuggestions, setPoSuggestions] = useState<POSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  
+  // Vendor autocomplete
+  const [vendorSuggestions, setVendorSuggestions] = useState<string[]>([]);
+  const [showVendorSuggestions, setShowVendorSuggestions] = useState(false);
+  const vendorSearchRef = useRef<HTMLDivElement>(null);
+  
+  // Material autocomplete
+  interface MaterialSuggestion {
+    code: string;
+    name: string;
+    display: string;
+  }
+  const [materialSuggestions, setMaterialSuggestions] = useState<MaterialSuggestion[]>([]);
+  const [showMaterialSuggestions, setShowMaterialSuggestions] = useState(false);
+  const materialSearchRef = useRef<HTMLDivElement>(null);
   
   // Camera capture
   const [showCamera, setShowCamera] = useState(false);
@@ -133,10 +152,56 @@ const Dashboard = () => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
       }
+      if (vendorSearchRef.current && !vendorSearchRef.current.contains(event.target as Node)) {
+        setShowVendorSuggestions(false);
+      }
+      if (materialSearchRef.current && !materialSearchRef.current.contains(event.target as Node)) {
+        setShowMaterialSuggestions(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Fetch vendor suggestions
+  useEffect(() => {
+    if (formState.vendorName.length < 2) {
+      setVendorSuggestions([]);
+      setShowVendorSuggestions(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/vendor/search?q=${encodeURIComponent(formState.vendorName)}`);
+        const data = await res.json();
+        setVendorSuggestions(data);
+        setShowVendorSuggestions(data.length > 0);
+      } catch {
+        setVendorSuggestions([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [formState.vendorName]);
+
+  // Fetch material suggestions
+  useEffect(() => {
+    if (formState.materialCode.length < 1) {
+      setMaterialSuggestions([]);
+      setShowMaterialSuggestions(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/material/search?q=${encodeURIComponent(formState.materialCode)}`);
+        const data = await res.json();
+        setMaterialSuggestions(data);
+        setShowMaterialSuggestions(data.length > 0);
+      } catch {
+        setMaterialSuggestions([]);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [formState.materialCode]);
 
   const fetchStats = async () => {
     try {
@@ -282,6 +347,11 @@ const Dashboard = () => {
     if (!formState.quantity || parseFloat(formState.quantity) <= 0) errors.quantity = "Jumlah wajib diisi";
     if (!formState.documentDate) errors.documentDate = "Tanggal wajib diisi";
     if (!formState.packagingCondition) errors.packagingCondition = "Kondisi kemasan wajib dipilih";
+    if (!formState.expiryDate) {
+      errors.expiryDate = 'Expired Date wajib diisi';
+    } else if (new Date(formState.expiryDate) <= new Date()) {
+      errors.expiryDate = 'Expired Date sudah lewat. Bahan baku tidak dapat diterima.';
+    }
     
     return errors;
   };
@@ -315,6 +385,8 @@ const Dashboard = () => {
         storageCondition: 'Tidak Diperlukan',
         temperature: '',
         notes: '',
+        expiryDate: '',
+        materialCode: '',
       });
       setFileNames({ suratJalan: null, coa: null, faktur: null, dokumenLain: [] });
       setSuratJalan(null);
@@ -398,6 +470,8 @@ const Dashboard = () => {
     formData.append("storage_condition", formState.storageCondition);
     if (formState.temperature) formData.append("temperature", formState.temperature);
     if (formState.notes) formData.append("notes", formState.notes);
+    formData.append("expiry_date", formState.expiryDate);
+    formData.append("material_code", formState.materialCode);
 
     try {
       const response = await fetch(`${API_URL}/api/upload/verify`, {
@@ -629,33 +703,126 @@ const Dashboard = () => {
                     </div>
                   )}
                 </div>
-                <div data-error={fieldErrors.vendorName ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
+                <div
+                  ref={vendorSearchRef}
+                  data-error={fieldErrors.vendorName ? 'true' : undefined}
+                  style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
+                >
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    Nama Vendor / Supplier <span style={{color: '#DC2626'}}>*</span>
+                    Nama Vendor / Supplier
+                    <span style={{ color: '#DC2626' }}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Nama perusahaan supplier pengirim</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>Nama perusahaan supplier pengirim</p>
                   <input
                     type="text"
+                    placeholder="Ketik nama vendor... (suggestion otomatis)"
                     value={formState.vendorName}
-                    onChange={(e) => setFormState({ ...formState, vendorName: e.target.value })}
-                    placeholder="PT Kimia Farma, PT Brataco, dll"
+                    onChange={(e) => {
+                      setFormState({ ...formState, vendorName: e.target.value });
+                      if (fieldErrors.vendorName) setFieldErrors({ ...fieldErrors, vendorName: '' });
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = '#0D4B3B'; e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = fieldErrors.vendorName ? '#DC2626' : '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
                     style={{
                       width: '100%', padding: '10px 14px',
                       border: fieldErrors.vendorName ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
                       borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
-                      backgroundColor: 'white', outline: 'none',
-                      transition: 'border-color 0.15s, box-shadow 0.15s',
-                      boxSizing: 'border-box'
+                      backgroundColor: 'white', outline: 'none', boxSizing: 'border-box' as const
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
-                    onBlur={(e) => e.target.style.borderColor = fieldErrors.vendorName ? '#DC2626' : '#E5E7EB'}
                   />
-                  {fieldErrors.vendorName && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.vendorName}</p>}
+                  {/* Vendor Suggestion Dropdown */}
+                  {showVendorSuggestions && vendorSuggestions.length > 0 && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                      background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', marginTop: '4px'
+                    }}>
+                      {vendorSuggestions.map((vendor, index) => (
+                        <div
+                          key={index}
+                          onClick={() => {
+                            setFormState({ ...formState, vendorName: vendor });
+                            setShowVendorSuggestions(false);
+                            setVendorSuggestions([]);
+                          }}
+                          style={{
+                            padding: '10px 14px', fontSize: '14px', color: '#0F1A16',
+                            cursor: 'pointer', borderBottom: index < vendorSuggestions.length - 1 ? '1px solid #F3F4F6' : 'none'
+                          }}
+                          onMouseOver={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#F0FAF7'; }}
+                          onMouseOut={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'white'; }}
+                        >
+                          {vendor}
+                        </div>
+                      ))}
+                      <div style={{ padding: '6px 14px', fontSize: '11px', color: '#9CA3AF', borderTop: '1px solid #F3F4F6', background: '#FAFAFA' }}>
+                        Tidak ada? Ketik nama vendor baru secara manual
+                      </div>
+                    </div>
+                  )}
+                  {fieldErrors.vendorName && <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '2px' }}>{fieldErrors.vendorName}</p>}
                 </div>
               </div>
 
               {/* Row 2 */}
               <div className="grid grid-cols-2 gap-4 mt-5">
+                {/* KODE BAHAN BAKU */}
+                <div
+                  ref={materialSearchRef}
+                  style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
+                >
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    Kode Bahan Baku
+                  </label>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>Kode internal (contoh: P1 untuk Paracetamol)</p>
+                  <input
+                    type="text"
+                    placeholder="Masukkan kode..."
+                    value={formState.materialCode}
+                    onChange={(e) => setFormState({ ...formState, materialCode: e.target.value })}
+                    onFocus={(e) => { e.target.style.borderColor = '#0D4B3B'; e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: '1.5px solid #E5E7EB', borderRadius: '8px',
+                      fontSize: '14px', color: '#0F1A16',
+                      backgroundColor: 'white', outline: 'none', boxSizing: 'border-box' as const
+                    }}
+                  />
+                  {/* Material Suggestion Dropdown */}
+                  {showMaterialSuggestions && materialSuggestions.length > 0 && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                      background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', marginTop: '4px'
+                    }}>
+                      {materialSuggestions.map((mat, index) => (
+                        <div
+                          key={index}
+                          onClick={() => {
+                            // Auto-fill nama bahan baku saat kode dipilih
+                            setFormState({ ...formState, materialCode: mat.code, materialName: mat.name });
+                            setShowMaterialSuggestions(false);
+                            setMaterialSuggestions([]);
+                          }}
+                          style={{
+                            padding: '10px 14px', fontSize: '14px', color: '#0F1A16',
+                            cursor: 'pointer', borderBottom: index < materialSuggestions.length - 1 ? '1px solid #F3F4F6' : 'none',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                          }}
+                          onMouseOver={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#F0FAF7'; }}
+                          onMouseOut={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'white'; }}
+                        >
+                          <span style={{ fontWeight: '600', color: '#0D4B3B' }}>{mat.code}</span>
+                          <span style={{ color: '#4A5568' }}>{mat.name}</span>
+                        </div>
+                      ))}
+                      <div style={{ padding: '6px 14px', fontSize: '11px', color: '#9CA3AF', borderTop: '1px solid #F3F4F6', background: '#FAFAFA' }}>
+                        Kode baru? Isi nama bahan baku secara manual
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div data-error={fieldErrors.materialName ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nama Bahan Baku <span style={{color: '#DC2626'}}>*</span>
@@ -677,8 +844,17 @@ const Dashboard = () => {
                     onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
                     onBlur={(e) => e.target.style.borderColor = fieldErrors.materialName ? '#DC2626' : '#E5E7EB'}
                   />
+                  {formState.materialCode && formState.materialName && (
+                    <p style={{ fontSize: '11px', color: '#0D4B3B', marginTop: '3px' }}>
+                      ✓ Auto-filled dari kode {formState.materialCode}
+                    </p>
+                  )}
                   {fieldErrors.materialName && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.materialName}</p>}
                 </div>
+              </div>
+
+              {/* Row 3 */}
+              <div className="grid grid-cols-2 gap-4 mt-5">
                 <div data-error={fieldErrors.batchNumber ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nomor Batch Supplier <span style={{color: '#DC2626'}}>*</span>
@@ -785,6 +961,43 @@ const Dashboard = () => {
                   />
                   {fieldErrors.documentDate && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.documentDate}</p>}
                 </div>
+                <div data-error={fieldErrors.expiryDate ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                    Expired Date Bahan Baku (ED)
+                    <span style={{ color: '#DC2626' }}>*</span>
+                  </label>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>Sesuai yang tertera di CoA atau label kemasan</p>
+                  <input
+                    type="date"
+                    value={formState.expiryDate}
+                    onChange={(e) => setFormState({ ...formState, expiryDate: e.target.value })}
+                    style={{
+                      width: '100%', padding: '10px 14px',
+                      border: fieldErrors.expiryDate ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
+                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
+                      backgroundColor: 'white', outline: 'none', boxSizing: 'border-box' as const
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = '#0D4B3B'; e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)'; }}
+                    onBlur={(e) => { e.target.style.borderColor = fieldErrors.expiryDate ? '#DC2626' : '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
+                  />
+                  {/* Warning jika ED < 6 bulan */}
+                  {formState.expiryDate && (() => {
+                    const monthsLeft = (new Date(formState.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30);
+                    if (monthsLeft > 0 && monthsLeft < 6) {
+                      return (
+                        <div style={{ marginTop: '6px', padding: '8px 12px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', fontSize: '12px', color: '#92400E' }}>
+                          ⚠ Perhatian: Bahan baku akan expired dalam {Math.ceil(monthsLeft)} bulan. Pastikan dapat habis terpakai sebelum tanggal tersebut.
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  {fieldErrors.expiryDate && <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '2px' }}>{fieldErrors.expiryDate}</p>}
+                </div>
+              </div>
+
+              {/* Row 5 - Kondisi Kemasan */}
+              <div className="grid grid-cols-2 gap-4 mt-5">
                 <div data-error={fieldErrors.packagingCondition ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Kondisi Kemasan Fisik <span style={{color: '#DC2626'}}>*</span>
@@ -1140,6 +1353,12 @@ const Dashboard = () => {
                     <span className="text-[#6B7280]">Bahan Baku:</span>
                     <span className="text-[#0F1A16] font-medium">{formState.materialName}</span>
                   </div>
+                  {formState.materialCode && (
+                    <div className="flex justify-between">
+                      <span className="text-[#6B7280]">Kode Bahan Baku:</span>
+                      <span className="text-[#0F1A16] font-medium">{formState.materialCode}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-[#6B7280]">Nomor Batch:</span>
                     <span className="text-[#0F1A16] font-medium">{formState.batchNumber}</span>
@@ -1151,6 +1370,10 @@ const Dashboard = () => {
                   <div className="flex justify-between">
                     <span className="text-[#6B7280]">Kondisi Kemasan:</span>
                     <span className="text-[#0F1A16] font-medium">{formState.packagingCondition}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#6B7280]">Expired Date:</span>
+                    <span className="text-[#0F1A16] font-medium">{formState.expiryDate || '-'}</span>
                   </div>
                   <div className="border-t border-[#E5E7EB] pt-2 mt-2">
                     <span className="text-[#6B7280]">Dokumen:</span>
