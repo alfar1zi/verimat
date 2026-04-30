@@ -114,8 +114,8 @@ export default function Hero() {
 
       <div className="container relative">
         {/* Badge */}
-        <div className="flex justify-center animate-fade-up" style={{ animationDelay: "100ms" }}>
-          <div className="glass flex items-center gap-2 rounded-full border border-foreground/10 bg-white/60 px-4 py-1.5 text-xs font-medium text-foreground/80 whitespace-nowrap">
+        <div className="flex justify-center animate-fade-up -mt-2" style={{ animationDelay: "100ms" }}>
+          <div className="glass flex items-center gap-2 rounded-full border border-foreground/10 bg-white/60 px-4 py-1.5 text-xs font-medium text-foreground/60 whitespace-nowrap">
             <span className="relative flex h-2 w-2">
               <span className="absolute inset-0 animate-pulse-dot rounded-full bg-success" />
               <span className="relative h-2 w-2 rounded-full bg-success" />

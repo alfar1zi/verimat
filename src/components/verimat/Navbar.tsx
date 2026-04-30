@@ -54,6 +54,10 @@ export default function Navbar() {
             ? "bg-surface-dark/80 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)]"
             : "bg-surface-dark"
         }`}
+        style={{
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}
       >
         <a href="#top" onClick={(e) => handleNavClick(e, 'top')} className="flex items-center gap-2 pl-2 pr-1 sm:pr-3">
           <span className="grid h-7 w-7 place-items-center rounded-lg bg-teal/15 text-teal">
