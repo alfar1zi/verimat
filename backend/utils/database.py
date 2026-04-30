@@ -104,6 +104,16 @@ def init_db():
         cursor.execute('ALTER TABLE verification_sessions ADD COLUMN expiry_date TEXT')
     except sqlite3.OperationalError:
         pass
+
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN items_json TEXT')
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute('ALTER TABLE verification_sessions ADD COLUMN material_code TEXT')
+    except sqlite3.OperationalError:
+        pass
     
     # Verification logs table
     cursor.execute('''
