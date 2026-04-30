@@ -55,6 +55,13 @@ export default function Hero() {
   const statsRef = useRef<HTMLDivElement>(null);
   const hasAnimated = useRef(false);
   const [statsIn, setStatsIn] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const el = dotRef.current;
@@ -119,7 +126,7 @@ export default function Hero() {
 
         {/* Headline */}
         <h1 className="mx-auto mt-7 max-w-5xl w-full text-center font-display font-extrabold"
-            style={{ fontSize: "clamp(2rem, 6.5vw, 4.5rem)", letterSpacing: "-0.01em", lineHeight: 1.05 }}>
+            style={{ fontSize: isMobile ? "clamp(1.875rem, 7.5vw, 2.75rem)" : "clamp(2.75rem, 6.5vw, 4.5rem)", letterSpacing: "-0.01em", lineHeight: 1.05 }}>
           <span className="block">
             {headlineWords.slice(0, 4).map((w, i) => (
               <span
