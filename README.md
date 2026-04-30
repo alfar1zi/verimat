@@ -71,20 +71,6 @@ Log deviasi telah tersimpan otomatis.
 
 ---
 
-## Arsitektur Sistem
-┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
-│   React Frontend │────▶│   Flask Backend API   │────▶│  Azure AI Services  │
-│  verimat.vercel  │     │  pythonanywhere.com   │     │  Document Intel.    │
-│       .app       │◀────│                      │◀────│  OpenAI GPT-4o      │
-└─────────────────┘     └──────────────────────┘     └─────────────────────┘
-│
-▼
-┌──────────────────┐
-│  SQLite Database  │
-│   Audit Trail    │
-│  PO Internal     │
-└──────────────────┘
-
 **Alur Data:**
 1. Staf upload dokumen melalui antarmuka web React
 2. File dikirim ke Flask backend via HTTP POST
@@ -173,42 +159,6 @@ AZURE_DOC_INTELLIGENCE_KEY=your-key-here
 ```
 
 > Tanpa Azure credentials, sistem akan menggunakan mock extractor untuk development.
-
----
-
-## Struktur Project
-verimat/
-├── backend/
-│   ├── app.py                      # Entry point Flask
-│   ├── requirements.txt
-│   ├── routes/
-│   │   ├── auth.py                 # POST /api/auth/login
-│   │   ├── upload.py               # POST /api/upload/verify
-│   │   ├── verification.py         # GET /api/verification/<id>
-│   │   ├── audit.py                # GET /api/audit/list
-│   │   ├── po.py                   # GET /api/po/list, /search
-│   │   ├── vendor.py               # GET /api/vendor/search
-│   │   └── material.py             # GET /api/material/search
-│   ├── models/
-│   │   └── verification_session.py
-│   └── utils/
-│       ├── database.py             # Schema & init
-│       ├── document_extractor.py   # Azure AI integration
-│       └── validation_engine.py    # Deterministic rules engine
-└── src/
-├── components/
-│   ├── verimat/                # Landing page components
-│   └── app/
-│       └── AppNavbar.tsx
-└── pages/
-├── index.tsx               # Landing page
-└── app/
-├── Login.tsx
-├── Dashboard.tsx       # Multi-step verification form
-├── VerificationResult.tsx
-├── AuditTrail.tsx
-└── ProtectedRoute.tsx
-
 
 ---
 
