@@ -114,7 +114,7 @@ export default function Hero() {
 
       <div className="container relative">
         {/* Badge */}
-        <div className="flex justify-center animate-fade-up -mt-2" style={{ animationDelay: "100ms" }}>
+        <div className="flex justify-center animate-fade-up -mt-2 sm:mt-0" style={{ animationDelay: "100ms" }}>
           <div className="glass flex items-center gap-2 rounded-full border border-foreground/10 bg-white/60 px-4 py-1.5 text-xs font-medium text-foreground/60 whitespace-nowrap">
             <span className="relative flex h-2 w-2">
               <span className="absolute inset-0 animate-pulse-dot rounded-full bg-success" />
@@ -126,7 +126,7 @@ export default function Hero() {
 
         {/* Headline */}
         <h1 className="mx-auto mt-7 max-w-5xl w-full text-center font-display font-extrabold"
-            style={{ fontSize: isMobile ? "clamp(1.875rem, 7.5vw, 2.75rem)" : "clamp(2.75rem, 6.5vw, 4.5rem)", letterSpacing: "-0.01em", lineHeight: 1.05 }}>
+            style={{ fontSize: "clamp(1.6rem, 6.5vw, 4.5rem)", letterSpacing: "-0.01em", lineHeight: 1.05 }}>
           <span className="block">
             {headlineWords.slice(0, 4).map((w, i) => (
               <span
