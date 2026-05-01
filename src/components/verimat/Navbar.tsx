@@ -20,7 +20,11 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => {
+      requestAnimationFrame(() => {
+        setIsMobile(window.innerWidth <= 768);
+      });
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -51,6 +55,7 @@ export default function Navbar() {
           href="#top"
           onClick={(e) => handleNavClick(e, 'top')}
           className="flex items-center gap-1.5 pl-1 pr-1"
+          aria-label="Kunjungi halaman beranda VeriMat"
         >
           <span className="grid h-6 w-6 place-items-center rounded-lg bg-teal/15 text-teal flex-shrink-0">
             <MedicineLogo size={14} color="#2DD4BF" />

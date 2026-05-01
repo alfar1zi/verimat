@@ -33,7 +33,7 @@ export default function HowItWorks() {
             className="hidden md:block absolute left-[12.5%] right-[12.5%] top-7 h-[2px] pointer-events-none rounded-full bg-primary/15"
             style={{ borderTop: '2px dashed #2DD4BF' }}
           >
-            <div className="hiw-progress h-full w-0 rounded-full bg-primary" />
+            <div className="hiw-progress h-full w-full rounded-full bg-primary" />
           </div>
 
           {steps.map((s, i) => {
@@ -130,14 +130,15 @@ export default function HowItWorks() {
 
         /* Connector progress line fills step-by-step across the row */
         @keyframes hiw-progress-fill {
-          0%   { width: 0%; }
-          12%  { width: 0%; }      /* step 1 popping */
-          25%  { width: 33.33%; }  /* moves to step 2 */
-          50%  { width: 66.66%; }  /* step 3 */
-          75%  { width: 100%; }    /* step 4 */
-          100% { width: 100%; }
+          0%   { transform: scaleX(0); }
+          12%  { transform: scaleX(0); }      /* step 1 popping */
+          25%  { transform: scaleX(0.3333); }  /* moves to step 2 */
+          50%  { transform: scaleX(0.6666); }  /* step 3 */
+          75%  { transform: scaleX(1); }    /* step 4 */
+          100% { transform: scaleX(1); }
         }
         .hiw-progress {
+          transform-origin: left center;
           animation: hiw-progress-fill ${CYCLE}s var(--ease-in-out) infinite both;
         }
       `}</style>
@@ -147,9 +148,9 @@ export default function HowItWorks() {
 
 function StatusPill({ tone, icon, label }: { tone: "success" | "destructive" | "warning"; icon: React.ReactNode; label: string }) {
   const styles = {
-    success: "bg-success/12 text-success border-success/30",
-    destructive: "bg-destructive/12 text-destructive border-destructive/30",
-    warning: "bg-warning/15 text-[hsl(28_90%_38%)] border-warning/30",
+    success: "bg-success/12 text-[hsl(142_70%_32%)] border-success/30",
+    destructive: "bg-destructive/12 text-[hsl(0_75%_45%)] border-destructive/30",
+    warning: "bg-warning/15 text-[hsl(28_90%_32%)] border-warning/30",
   }[tone];
 
   return (
