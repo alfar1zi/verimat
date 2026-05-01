@@ -132,7 +132,7 @@ const AuditTrail = () => {
         </div>
 
         {/* Filter Card */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] mt-6" style={{ padding: 'clamp(12px, 3vw, 24px)' }}>
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] mt-6 animate-fade-in-up" style={{ padding: 'clamp(12px, 3vw, 24px)' }}>
           <div className="flex flex-col gap-4">
             {/* Row 1: Nomor Referensi + Status + Buttons */}
             <div className="flex flex-col lg:flex-row gap-3">
@@ -233,7 +233,7 @@ const AuditTrail = () => {
         </div>
 
         {/* Table Card */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] mt-4 overflow-x-auto">
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] mt-4 overflow-x-auto animate-fade-in-up delay-100">
           {isLoading ? (
             <div className="p-12 text-center">
               <div className="animate-pulse space-y-4">

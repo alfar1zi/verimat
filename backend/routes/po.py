@@ -57,7 +57,7 @@ def search_po():
             formatted_results.append({
                 'po_number': row['po_number'],
                 'material_name': row['material_name'],
-                'display': f"{row['po_number']} — {row['material_name']}"
+                'display': f"{row['po_number']}: {row['material_name']}"
             })
         
         return jsonify(formatted_results), 200

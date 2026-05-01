@@ -279,9 +279,12 @@ const Dashboard = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Track which item is actively searching for material
+  const [activeMaterialItemId, setActiveMaterialItemId] = useState<string | null>(null);
+
   // Fetch vendor suggestions
   useEffect(() => {
-    if (formState.vendorName.length < 2) {
+    if (formState.vendorName.length < 1) {
       setVendorSuggestions([]);
       setShowVendorSuggestions(false);
       return;
@@ -298,6 +301,34 @@ const Dashboard = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [formState.vendorName]);
+
+  // Fetch material suggestions for active item
+  useEffect(() => {
+    if (!activeMaterialItemId) {
+      setMaterialSuggestions([]);
+      setShowMaterialSuggestions(false);
+      return;
+    }
+    const activeItem = items.find(i => i.id === activeMaterialItemId);
+    if (!activeItem || activeItem.materialCode.length < 1) {
+      setMaterialSuggestions([]);
+      setShowMaterialSuggestions(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `${API_URL}/api/material/search?q=${encodeURIComponent(activeItem.materialCode)}` 
+        );
+        const data = await res.json();
+        setMaterialSuggestions(data);
+        setShowMaterialSuggestions(data.length > 0);
+      } catch {
+        setMaterialSuggestions([]);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [activeMaterialItemId, items]);
 
 
   const fetchStats = async () => {
@@ -640,7 +671,7 @@ const Dashboard = () => {
         {/* Stats Bar */}
         <div className="flex flex-col sm:flex-row gap-3 mt-6">
           {/* Total Card */}
-          <div style={{
+          <div className="animate-fade-in-up card-hover delay-100" style={{
             flex: 1, background: 'white', borderRadius: '12px',
             padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             borderLeft: '4px solid #0D4B3B',
@@ -670,7 +701,7 @@ const Dashboard = () => {
           </div>
 
           {/* Pass Card */}
-          <div style={{
+          <div className="animate-fade-in-up card-hover delay-200" style={{
             flex: 1, background: 'white', borderRadius: '12px',
             padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             borderLeft: '4px solid #16A34A',
@@ -700,7 +731,7 @@ const Dashboard = () => {
           </div>
 
           {/* Failed Card */}
-          <div style={{
+          <div className="animate-fade-in-up card-hover delay-300" style={{
             flex: 1, background: 'white', borderRadius: '12px',
             padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             borderLeft: '4px solid #DC2626',
@@ -782,7 +813,7 @@ const Dashboard = () => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm" style={{ padding: 'clamp(16px, 4vw, 32px)' }}>
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm animate-fade-in-up" style={{ padding: 'clamp(16px, 4vw, 32px)' }}>
           {currentStep === 1 ? (
             <>
               <h2 className="text-[18px] font-bold text-[#0F1A16] mb-6">Informasi Pengiriman</h2>
@@ -843,7 +874,20 @@ const Dashboard = () => {
                       setFormState({ ...formState, vendorName: e.target.value });
                       if (fieldErrors.vendorName) setFieldErrors({ ...fieldErrors, vendorName: '' });
                     }}
-                    onFocus={(e) => { e.target.style.borderColor = '#0D4B3B'; e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)'; }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#0D4B3B';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)';
+                      if (formState.vendorName.length >= 1) {
+                        // Re-trigger vendor search on focus
+                        fetch(`${API_URL}/api/vendor/search?q=${encodeURIComponent(formState.vendorName)}`)
+                          .then(r => r.json())
+                          .then(data => {
+                            setVendorSuggestions(data);
+                            setShowVendorSuggestions(data.length > 0);
+                          })
+                          .catch(() => {});
+                      }
+                    }}
                     onBlur={(e) => { e.target.style.borderColor = fieldErrors.vendorName ? '#DC2626' : '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
                     style={{
                       width: '100%', padding: '10px 14px',
@@ -854,7 +898,7 @@ const Dashboard = () => {
                   />
                   {/* Vendor Suggestion Dropdown */}
                   {showVendorSuggestions && vendorSuggestions.length > 0 && (
-                    <div style={{
+                    <div className="suggestion-dropdown" style={{
                       position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
                       background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', marginTop: '4px'
@@ -915,7 +959,7 @@ const Dashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {items.map((item, index) => (
-                      <div key={item.id} className="bg-[#F8FFFE] border border-[#E5E7EB] rounded-xl p-4">
+                      <div key={item.id} className="bg-[#F8FFFE] border border-[#E5E7EB] rounded-xl p-4" style={{ animation: 'fadeInUp 0.3s ease forwards' }}>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[13px] font-semibold text-[#0D4B3B]">Item #{index + 1}</span>
                           <button
@@ -934,16 +978,69 @@ const Dashboard = () => {
                         )}
 
                         <div className="form-grid-2 gap-3">
-                          {/* Material Code */}
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          {/* Material Code with Autocomplete */}
+                          <div
+                            ref={activeMaterialItemId === item.id ? materialSearchRef : null}
+                            style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
+                          >
                             <label className="text-[11px] font-medium text-[#374151] mb-1">Kode Bahan</label>
                             <input
                               type="text"
                               value={item.materialCode}
-                              onChange={(e) => updateItem(item.id, 'materialCode', e.target.value)}
+                              onChange={(e) => {
+                                updateItem(item.id, 'materialCode', e.target.value);
+                                setActiveMaterialItemId(item.id);
+                              }}
+                              onFocus={() => setActiveMaterialItemId(item.id)}
+                              onBlur={() => setTimeout(() => setActiveMaterialItemId(null), 200)}
                               placeholder="Contoh: P1"
                               className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                              autoComplete="off"
                             />
+                            {/* Material suggestion dropdown */}
+                            {activeMaterialItemId === item.id && showMaterialSuggestions && materialSuggestions.length > 0 && (
+                              <div className="suggestion-dropdown" style={{
+                                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 60,
+                                background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px',
+                                boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden', marginTop: '4px'
+                              }}>
+                                {materialSuggestions.map((mat, idx) => (
+                                  <div
+                                    key={idx}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault(); // Prevent blur before click
+                                      updateItem(item.id, 'materialCode', mat.code);
+                                      updateItem(item.id, 'materialName', mat.name);
+                                      setShowMaterialSuggestions(false);
+                                      setActiveMaterialItemId(null);
+                                    }}
+                                    style={{
+                                      padding: '10px 14px', cursor: 'pointer',
+                                      borderBottom: idx < materialSuggestions.length - 1 ? '1px solid #F3F4F6' : 'none',
+                                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                      transition: 'background 0.1s'
+                                    }}
+                                    onMouseOver={(e) => (e.currentTarget.style.background = '#F0FAF7')}
+                                    onMouseOut={(e) => (e.currentTarget.style.background = 'white')}
+                                  >
+                                    <span style={{ fontWeight: '600', color: '#0D4B3B', fontSize: '13px' }}>{mat.code}</span>
+                                    <span style={{ color: '#4A5568', fontSize: '13px' }}>{mat.name}</span>
+                                  </div>
+                                ))}
+                                <div style={{
+                                  padding: '6px 14px', fontSize: '11px', color: '#9CA3AF',
+                                  borderTop: '1px solid #F3F4F6', background: '#FAFAFA'
+                                }}>
+                                  Kode baru? Isi nama bahan secara manual
+                                </div>
+                              </div>
+                            )}
+                            {/* Auto-fill indicator */}
+                            {item.materialCode && item.materialName && (
+                              <p style={{ fontSize: '10px', color: '#0D4B3B', marginTop: '2px' }}>
+                                Auto-fill aktif
+                              </p>
+                            )}
                           </div>
 
                           {/* Material Name */}
@@ -1076,10 +1173,10 @@ const Dashboard = () => {
                     onBlur={(e) => e.target.style.borderColor = fieldErrors.packagingCondition ? '#DC2626' : '#E5E7EB'}
                   >
                     <option value="">Pilih kondisi</option>
-                    <option value="Baik">Baik — Kemasan utuh dan tidak ada kerusakan</option>
-                    <option value="Minor">Minor — Ada kerusakan kecil, bahan masih aman</option>
-                    <option value="Rusak">Rusak — Kemasan bocor atau rusak signifikan</option>
-                    <option value="Perlu Dicek">Perlu Dicek — Kondisi meragukan</option>
+                    <option value="Baik">Baik: Kemasan utuh dan tidak ada kerusakan</option>
+                    <option value="Minor">Minor: Ada kerusakan kecil, bahan masih aman</option>
+                    <option value="Rusak">Rusak: Kemasan bocor atau rusak signifikan</option>
+                    <option value="Perlu Dicek">Perlu Dicek: Kondisi meragukan</option>
                   </select>
                   {fieldErrors.packagingCondition && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.packagingCondition}</p>}
                 </div>
@@ -1450,6 +1547,7 @@ const Dashboard = () => {
                 type="submit"
                 onClick={handleSubmit}
                 disabled={!suratJalan || isLoading}
+                className="btn-press"
                 style={{
                   width: '100%', height: '52px',
                   background: '#0D4B3B', color: 'white',

@@ -19,5 +19,5 @@ def search_materials():
     return jsonify([{
         'code': row['material_code'],
         'name': row['material_name'],
-        'display': f"{row['material_code']} — {row['material_name']}"
+        'display': f"{row['material_code']}: {row['material_name']}"
     } for row in rows])
