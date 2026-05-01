@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://verimat.vercel.app/sitemap.xml

@@ -58,7 +58,11 @@ export default function Hero() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => {
+      requestAnimationFrame(() => {
+        setIsMobile(window.innerWidth <= 768);
+      });
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -131,7 +135,7 @@ export default function Hero() {
             {headlineWords.slice(0, 4).map((w, i) => (
               <span
                 key={i}
-                className="inline-block opacity-0"
+                className="inline-block"
                 style={{ animation: `word-rise 0.8s var(--ease-out) ${300 + i * 90}ms forwards`, marginRight: "0.25em" }}
               >
                 {w.text}
@@ -142,7 +146,7 @@ export default function Hero() {
             {headlineWords.slice(4).map((w, i) => (
               <span
                 key={i}
-                className="inline-block opacity-0"
+                className="inline-block"
                 style={{ animation: `word-rise 0.8s var(--ease-out) ${700 + i * 90}ms forwards`, marginRight: "0.25em" }}
               >
                 {w.text}
@@ -151,8 +155,8 @@ export default function Hero() {
           </span>
         </h1>
 
-        <p className="mx-auto mt-7 max-w-2xl text-center text-base sm:text-lg text-muted-foreground animate-fade-up"
-           style={{ animationDelay: "1100ms" }}>
+        <p className="mx-auto mt-7 max-w-2xl text-center text-base sm:text-lg text-muted-foreground"
+           style={{ opacity: 1 }}>
           Verifikasi otomatis Surat Jalan, Certificate of Analysis, dan dokumen halal —
           ditenagai Microsoft Azure AI. Dari 20 menit menjadi kurang dari 30 detik.
         </p>
@@ -233,7 +237,7 @@ function StatCard({ tone, value, label, sub, badge, delay = 0, featured }: StatP
           {value}
         </div>
         {badge && (
-          <span className="rounded-full bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-success whitespace-nowrap">
+          <span className="rounded-full bg-success/15 px-2.5 py-1 text-[11px] font-semibold text-[hsl(142_70%_32%)] whitespace-nowrap">
             {badge}
           </span>
         )}
@@ -242,7 +246,7 @@ function StatCard({ tone, value, label, sub, badge, delay = 0, featured }: StatP
         {label}
       </div>
       {sub && (
-        <div className={`mt-1 text-xs ${tone === "dark" ? "text-primary-foreground/55" : "text-foreground/50"}`}>
+        <div className={`mt-1 text-xs ${tone === "dark" ? "text-primary-foreground/75" : "text-foreground/70"}`}>
           {sub}
         </div>
       )}

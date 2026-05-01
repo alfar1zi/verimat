@@ -107,12 +107,12 @@ export default function ScanningSection() {
           78%, 100% { opacity: 1; }
         }
         @keyframes field-typewriter {
-          0%, 18% { width: 0; }
-          30%, 100% { width: 100%; }
+          0%, 18% { clip-path: inset(0 100% 0 0); }
+          30%, 100% { clip-path: inset(0 0% 0 0); }
         }
         .field-row { animation: field-reveal var(--cycle) ease-out infinite both; }
         .field-value-wrap { display: inline-block; overflow: hidden; white-space: nowrap; vertical-align: bottom; }
-        .field-value { animation: field-typewriter var(--cycle) steps(20, end) infinite both; display: inline-block; }
+        .field-value { animation: field-typewriter var(--cycle) steps(20, end) infinite both; display: inline-block; clip-path: inset(0 100% 0 0); }
 
         @keyframes panel-reveal {
           0%, 55% { opacity: 0; transform: translateX(20px); }
