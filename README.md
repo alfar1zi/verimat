@@ -12,9 +12,9 @@
 VeriMat adalah sistem verifikasi otomatis dokumen penerimaan bahan baku farmasi berbasis AI. Dibangun untuk menjawab tantangan nyata di industri farmasi Indonesia: proses verifikasi dokumen yang masih manual, memakan 15-20 menit per pengiriman, dan sepenuhnya bergantung pada ketelitian manusia.
 
 > *"Bagus dan sangat mempercepat proses verifikasi kedatangan bahan baku."*
-> — Apt. Anera Raihana Romli, S.Farm., PT Ikapharmindo Putramas Tbk
+> - Apt. Anera Raihana Romli, S.Farm., PT Ikapharmindo Putramas Tbk
 
-Staf warehouse cukup upload dokumen. VeriMat mengekstrak field kunci, membandingkan dengan data Purchase Order internal, dan menghasilkan keputusan **PASS**, **MISMATCH**, atau **INCOMPLETE** dalam kurang dari 30 detik — lengkap dengan penjelasan dalam bahasa Indonesia dan audit trail digital otomatis.
+Staf warehouse cukup upload dokumen. VeriMat mengekstrak field kunci, membandingkan dengan data Purchase Order internal, dan menghasilkan keputusan **PASS**, **MISMATCH**, atau **INCOMPLETE** dalam kurang dari 30 detik, lengkap dengan penjelasan dalam bahasa Indonesia dan audit trail digital otomatis.
 
 ---
 
@@ -23,7 +23,7 @@ Staf warehouse cukup upload dokumen. VeriMat mengekstrak field kunci, membanding
 | Fitur | Deskripsi |
 |---|---|
 | **Ekstraksi Dokumen Otomatis** | Azure AI Document Intelligence membaca Surat Jalan, CoA, Faktur, dan dokumen halal secara terstruktur |
-| **Validation Engine Deterministik** | Rules engine berbasis domain farmasi — bukan AI, hasilnya transparan dan dapat diaudit |
+| **Validation Engine Deterministik** | Rules engine berbasis domain farmasi, bukan AI, hasilnya transparan dan dapat diaudit |
 | **Multi-Document Upload** | Upload hingga 4 jenis dokumen dalam satu sesi verifikasi |
 | **Audit Trail Otomatis** | Setiap verifikasi tersimpan dengan timestamp dan identitas verifikator untuk kepatuhan CPOB |
 | **Camera Capture** | Foto dokumen langsung dari browser tanpa perlu scan terpisah |

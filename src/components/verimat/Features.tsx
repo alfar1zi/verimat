@@ -4,7 +4,7 @@ const features = [
   {
     icon: SearchIcon,
     title: "Ekstraksi Dokumen Otomatis",
-    body: "Baca dan ekstrak field kunci dari Surat Jalan, CoA, dan sertifikat halal — termasuk dokumen scan dengan kualitas variatif.",
+    body: "Baca dan ekstrak field kunci dari Surat Jalan, CoA, dan sertifikat halal, termasuk dokumen scan dengan kualitas variatif.",
     tag: "Azure AI Document Intelligence",
   },
   {
