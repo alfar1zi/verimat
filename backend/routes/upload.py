@@ -150,20 +150,7 @@ def verify_document():
                 doc.save(doc_path)
                 dokumen_lain_paths.append(doc_path)
         saved_files['dokumen_lain'] = dokumen_lain_paths
-        
-        # Validate expiry_date if provided
-        if expiry_date:
-            from datetime import date as date_class
-            try:
-                exp_date = datetime.strptime(expiry_date, '%Y-%m-%d').date()
-                if exp_date <= date_class.today():
-                    return jsonify({
-                        'error': 'Expired Date sudah lewat. Bahan baku tidak dapat diterima.',
-                        'field': 'expiry_date'
-                    }), 400
-            except ValueError:
-                pass
-        
+
         # Extract document data from Surat Jalan
         extracted_data = extract_document_data(surat_jalan_path, 'surat_jalan', reference_number)
         

@@ -34,6 +34,75 @@ interface MaterialItem {
 const STORAGE_KEY = 'verimat_form_draft';
 const STORAGE_VERSION = 'v2'; // Increment when form structure changes
 
+function getExpiryStatus(expiryDate: string): {
+  isExpired: boolean;
+  isNearExpiry: boolean;
+  label: string;
+  color: string;
+} {
+  if (!expiryDate) return { isExpired: false, isNearExpiry: false, label: '', color: '' };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const exp = new Date(expiryDate);
+  exp.setHours(0, 0, 0, 0);
+
+  const diffMs = exp.getTime() - today.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    const absDays = Math.abs(diffDays);
+    let ago = '';
+    if (absDays >= 30) {
+      const months = Math.floor(absDays / 30);
+      ago = `${months} bulan yang lalu`;
+    } else if (absDays >= 7) {
+      const weeks = Math.floor(absDays / 7);
+      ago = `${weeks} minggu yang lalu`;
+    } else {
+      ago = `${absDays} hari yang lalu`;
+    }
+    return {
+      isExpired: true,
+      isNearExpiry: false,
+      label: `Sudah expired ${ago}. Bahan baku tidak dapat diterima.`,
+      color: '#DC2626'
+    };
+  }
+
+  if (diffDays === 0) {
+    return {
+      isExpired: false,
+      isNearExpiry: true,
+      label: 'Expired hari ini. Pastikan dapat habis terpakai sebelum akhir hari.',
+      color: '#D97706'
+    };
+  }
+
+  if (diffDays <= 180) {
+    let remaining = '';
+    if (diffDays >= 30) {
+      const months = Math.floor(diffDays / 30);
+      const days = diffDays % 30;
+      remaining = days > 0 ? `${months} bulan ${days} hari` : `${months} bulan`;
+    } else if (diffDays >= 7) {
+      const weeks = Math.floor(diffDays / 7);
+      const days = diffDays % 7;
+      remaining = days > 0 ? `${weeks} minggu ${days} hari` : `${weeks} minggu`;
+    } else {
+      remaining = `${diffDays} hari`;
+    }
+    return {
+      isExpired: false,
+      isNearExpiry: true,
+      label: `Perhatian: Akan expired dalam ${remaining}. Pastikan dapat habis terpakai sebelum tanggal tersebut.`,
+      color: '#D97706'
+    };
+  }
+
+  return { isExpired: false, isNearExpiry: false, label: '', color: '' };
+}
+
 const Dashboard = () => {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const navigate = useNavigate();
@@ -486,8 +555,11 @@ const Dashboard = () => {
         if (!item.quantity || parseFloat(item.quantity) <= 0) itemError.push("Jumlah wajib diisi");
         if (!item.expiryDate) {
           itemError.push("Expired Date wajib diisi");
-        } else if (new Date(item.expiryDate) <= new Date()) {
-          itemError.push("Expired Date sudah lewat");
+        } else {
+          const status = getExpiryStatus(item.expiryDate);
+          if (status.isExpired) {
+            itemError.push(`Item #${index + 1}: ${status.label}`);
+          }
         }
         if (itemError.length > 0) {
           itemErrs[item.id] = `Item ${index + 1}: ${itemError.join(', ')}`;
@@ -1107,15 +1179,30 @@ const Dashboard = () => {
                               className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
                             />
                             {item.expiryDate && (() => {
-                              const monthsLeft = (new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30);
-                              if (monthsLeft > 0 && monthsLeft < 6) {
-                                return (
-                                  <div className="mt-1 px-2 py-1 bg-[#FFFBEB] border border-[#FDE68A] rounded text-[10px] text-[#92400E]">
-                                    ⚠ ED dalam {Math.ceil(monthsLeft)} bulan
-                                  </div>
-                                );
-                              }
-                              return null;
+                              const status = getExpiryStatus(item.expiryDate);
+                              if (!status.label) return null;
+                              return (
+                                <div style={{
+                                  marginTop: '6px',
+                                  padding: '8px 12px',
+                                  background: status.isExpired ? '#FEF2F2' : '#FFFBEB',
+                                  border: `1px solid ${status.isExpired ? '#FECACA' : '#FDE68A'}`,
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  color: status.color,
+                                  display: 'flex',
+                                  alignItems: 'flex-start',
+                                  gap: '6px'
+                                }}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+                                       viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                                       style={{ flexShrink: 0, marginTop: '1px' }}>
+                                    <path strokeLinecap="round" strokeLinejoin="round"
+                                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                  </svg>
+                                  {status.label}
+                                </div>
+                              );
                             })()}
                           </div>
                         </div>
@@ -1591,6 +1678,24 @@ const Dashboard = () => {
                   </>
                 )}
               </button>
+              <p style={{
+                fontSize: '12px',
+                color: '#9CA3AF',
+                textAlign: 'center',
+                marginTop: '12px',
+                lineHeight: '1.5'
+              }}>
+                Dokumen yang diunggah diproses sesuai{' '}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#0D4B3B', textDecoration: 'underline' }}
+                >
+                  Kebijakan Privasi
+                </a>{' '}
+                kami dan tidak disimpan permanen setelah verifikasi selesai.
+              </p>
             </>
           )}
 
