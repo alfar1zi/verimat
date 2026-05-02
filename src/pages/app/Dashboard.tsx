@@ -1151,13 +1151,19 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Row 5 - Kondisi Kemasan */}
+              {/* Row: Kondisi Kemasan + Kondisi Penyimpanan */}
               <div className="form-grid-2 mt-5">
-                <div data-error={fieldErrors.packagingCondition ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
+                {/* Kolom kiri: Kondisi Kemasan Fisik */}
+                <div
+                  data-error={fieldErrors.packagingCondition ? 'true' : undefined}
+                  style={{ display: 'flex', flexDirection: 'column' }}
+                >
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    Kondisi Kemasan Fisik <span style={{color: '#DC2626'}}>*</span>
+                    Kondisi Kemasan Fisik <span style={{ color: '#DC2626' }}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Kondisi fisik kemasan saat penerimaan</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px', minHeight: '16px' }}>
+                    Kondisi fisik kemasan saat penerimaan
+                  </p>
                   <select
                     value={formState.packagingCondition}
                     onChange={(e) => setFormState({ ...formState, packagingCondition: e.target.value })}
@@ -1167,7 +1173,7 @@ const Dashboard = () => {
                       borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
                       backgroundColor: 'white', outline: 'none',
                       transition: 'border-color 0.15s, box-shadow 0.15s',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box' as const
                     }}
                     onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
                     onBlur={(e) => e.target.style.borderColor = fieldErrors.packagingCondition ? '#DC2626' : '#E5E7EB'}
@@ -1178,50 +1184,56 @@ const Dashboard = () => {
                     <option value="Rusak">Rusak: Kemasan bocor atau rusak signifikan</option>
                     <option value="Perlu Dicek">Perlu Dicek: Kondisi meragukan</option>
                   </select>
-                  {fieldErrors.packagingCondition && <p style={{fontSize: '12px', color: '#DC2626', marginTop: '2px'}}>{fieldErrors.packagingCondition}</p>}
+                  {fieldErrors.packagingCondition && (
+                    <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '2px' }}>
+                      {fieldErrors.packagingCondition}
+                    </p>
+                  )}
                 </div>
-              </div>
 
-              {/* Row 5 */}
-              <div className="mt-5">
-                <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
-                  Kondisi Penyimpanan / Suhu
-                </label>
-                <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>Isi jika bahan memerlukan cold chain</p>
-                <div className="flex gap-4">
-                  <input
-                    type="number"
-                    value={formState.temperature}
-                    onChange={(e) => setFormState({ ...formState, temperature: e.target.value })}
-                    placeholder="Suhu saat datang (°C)"
-                    style={{
-                      flex: 1, padding: '10px 14px',
-                      border: '1.5px solid #E5E7EB', borderRadius: '8px',
-                      fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
-                      outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
-                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
-                  />
-                  <select
-                    value={formState.storageCondition}
-                    onChange={(e) => setFormState({ ...formState, storageCondition: e.target.value })}
-                    style={{
-                      flex: 1, padding: '10px 14px',
-                      border: '1.5px solid #E5E7EB', borderRadius: '8px',
-                      fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
-                      outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
-                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
-                  >
-                    <option value="Normal (15-30°C)">Normal (15-30°C)</option>
-                    <option value="Dingin (2-8°C)">Dingin (2-8°C)</option>
-                    <option value="Beku (<-18°C)">Beku (&lt;-18°C)</option>
-                    <option value="Tidak Diperlukan">Tidak Diperlukan</option>
-                  </select>
+                {/* Kolom kanan: Kondisi Penyimpanan / Suhu */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+                    Kondisi Penyimpanan / Suhu
+                  </label>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px', minHeight: '16px' }}>
+                    Isi jika bahan memerlukan cold chain
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="number"
+                      value={formState.temperature}
+                      onChange={(e) => setFormState({ ...formState, temperature: e.target.value })}
+                      placeholder="Suhu (°C)"
+                      style={{
+                        flex: '0 0 90px', padding: '10px 10px',
+                        border: '1.5px solid #E5E7EB', borderRadius: '8px',
+                        fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
+                        outline: 'none', transition: 'border-color 0.15s',
+                        boxSizing: 'border-box' as const
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                      onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                    />
+                    <select
+                      value={formState.storageCondition}
+                      onChange={(e) => setFormState({ ...formState, storageCondition: e.target.value })}
+                      style={{
+                        flex: 1, padding: '10px 10px',
+                        border: '1.5px solid #E5E7EB', borderRadius: '8px',
+                        fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
+                        outline: 'none', transition: 'border-color 0.15s',
+                        boxSizing: 'border-box' as const
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
+                      onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                    >
+                      <option value="Normal (15-30°C)">Normal (15-30°C)</option>
+                      <option value="Dingin (2-8°C)">Dingin (2-8°C)</option>
+                      <option value="Beku (<-18°C)">Beku (&lt;-18°C)</option>
+                      <option value="Tidak Diperlukan">Tidak Diperlukan</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
