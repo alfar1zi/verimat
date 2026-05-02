@@ -11,9 +11,9 @@ def search_materials():
     conn = get_db_connection()
     rows = conn.execute(
         '''SELECT material_code, material_name FROM materials
-           WHERE UPPER(material_code) LIKE UPPER(?) OR material_name LIKE ?
+           WHERE UPPER(material_code) LIKE UPPER(?)
            ORDER BY material_code LIMIT 10''',
-        (f'%{q}%', f'%{q}%')
+        (f'%{q}%',)
     ).fetchall()
     conn.close()
     return jsonify([{
