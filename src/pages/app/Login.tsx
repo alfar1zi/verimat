@@ -168,6 +168,24 @@ const Login = () => {
                 Coba lagi dalam {Math.floor(lockoutRemaining / 60)}:{String(lockoutRemaining % 60).padStart(2, '0')}
               </p>
             )}
+            <p style={{
+              fontSize: '12px',
+              color: '#9CA3AF',
+              textAlign: 'center',
+              marginTop: '16px',
+              lineHeight: '1.5'
+            }}>
+              Dengan masuk, Anda menyetujui{' '}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#0D4B3B', textDecoration: 'underline' }}
+              >
+                Kebijakan Privasi
+              </a>{' '}
+              VeriMat.
+            </p>
           </form>
 
           <div className="mt-6 p-4 bg-[#F0FAF7] rounded-lg border border-[#0D4B3B]/20">
