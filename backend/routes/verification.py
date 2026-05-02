@@ -28,22 +28,24 @@ def get_verification(session_id):
         
         return jsonify({
             'session_id': session.get('session_id'),
-            'po_number': session.get('po_number'),
+            'po_number': session.get('reference_number') or session.get('po_number'),
             'reference_number': session.get('reference_number'),
             'vendor_name': session.get('vendor_name'),
             'material_name': session.get('material_name'),
+            'material_code': session.get('material_code'),
             'batch_number': session.get('batch_number'),
             'quantity': session.get('quantity'),
             'unit': session.get('unit'),
             'document_date': session.get('document_date'),
+            'expiry_date': session.get('expiry_date'),
             'packaging_condition': session.get('packaging_condition'),
             'storage_condition': session.get('storage_condition'),
             'temperature': session.get('temperature'),
             'notes': session.get('notes'),
-            'expiry_date': session.get('expiry_date'),
             'doc_type': session.get('doc_type'),
             'status': session.get('validation_status'),
             'explanation': session.get('explanation', ''),
+            'verification_time': session.get('created_at'),
             'created_at': session.get('created_at'),
             'validation_result': {
                 'validation_results': logs

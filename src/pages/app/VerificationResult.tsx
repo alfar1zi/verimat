@@ -4,25 +4,26 @@ import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, CheckIcon, XMark
 import AppNavbar from "../../components/app/AppNavbar";
 
 interface VerificationData {
-  po_number: string;
+  session_id: string;
+  po_number?: string;
   reference_number?: string;
   vendor_name?: string;
   material_name?: string;
+  material_code?: string;
   batch_number?: string;
-  quantity?: number;
+  quantity?: number | string;
   unit?: string;
   document_date?: string;
+  expiry_date?: string;
   packaging_condition?: string;
   storage_condition?: string;
-  temperature?: number;
+  temperature?: number | string;
   notes?: string;
-  expiry_date?: string;
-  doc_type: string;
-  verification_time: string;
-  session_id: string;
+  doc_type?: string;
   status: "PASS" | "MISMATCH" | "INCOMPLETE";
-  explanation: string;
-  mismatched_fields?: string[];
+  explanation?: string;
+  verification_time?: string;
+  created_at?: string;
   validation_result?: {
     validation_results?: Array<{
       field_name: string;
@@ -170,65 +171,38 @@ const VerificationResult = () => {
           </div>
 
           {/* Info Section */}
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Nomor Referensi</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.reference_number || data.po_number}</p>
-            </div>
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Nama Vendor</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.vendor_name || '-'}</p>
-            </div>
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Bahan Baku</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.material_name || '-'}</p>
-            </div>
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Nomor Batch</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.batch_number || '-'}</p>
-            </div>
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Jumlah</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.quantity ? `${data.quantity} ${data.unit || ''}` : '-'}</p>
-            </div>
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Kondisi Kemasan</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.packaging_condition || '-'}</p>
-            </div>
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Tanggal Dokumen</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.document_date || '-'}</p>
-            </div>
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Expired Date (ED)</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.expiry_date || '-'}</p>
-            </div>
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Kondisi Penyimpanan</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{data.storage_condition || '-'}</p>
-            </div>
-            {data.temperature && (
-              <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-                <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Suhu</p>
-                <p className="text-[15px] font-semibold text-[#0F1A16]">{data.temperature}°C</p>
-              </div>
-            )}
-            {data.notes && (
-              <div className="col-span-1 sm:col-span-2 bg-[#F9FAFB] rounded-lg px-4 py-3">
-                <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Catatan</p>
-                <p className="text-[15px] font-semibold text-[#0F1A16]">{data.notes}</p>
-              </div>
-            )}
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Waktu Verifikasi</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16]">{formatDate(data.verification_time)}</p>
-            </div>
-            <div className="bg-[#F9FAFB] rounded-lg px-4 py-3">
-              <p className="text-[12px] text-[#6B7280] mb-1 uppercase tracking-wide">Session ID</p>
-              <p className="text-[15px] font-semibold text-[#0F1A16] font-mono">
-                {data.session_id.slice(0, 8)}...
-              </p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            {[
+              { label: 'Nomor Referensi', value: data.reference_number || data.po_number },
+              { label: 'Nama Vendor', value: data.vendor_name },
+              { label: 'Kode Bahan', value: data.material_code, badge: true },
+              { label: 'Bahan Baku', value: data.material_name },
+              { label: 'Nomor Batch', value: data.batch_number, mono: true },
+              { label: 'Jumlah', value: data.quantity ? `${data.quantity}${data.unit ? ' ' + data.unit : ''}` : undefined },
+              { label: 'Kondisi Kemasan', value: data.packaging_condition },
+              { label: 'Kondisi Penyimpanan', value: data.storage_condition },
+              { label: 'Tanggal Dokumen', value: data.document_date },
+              { label: 'Expired Date (ED)', value: data.expiry_date, highlight: true },
+              { label: 'Waktu Verifikasi', value: data.verification_time || data.created_at, format: true },
+              { label: 'Session ID', value: data.session_id, mono: true, truncate: true },
+            ].map((item, idx) => (
+              item.value ? (
+                <div key={idx} className="bg-[#F9FAFB] rounded-xl p-4 border border-[#F3F4F6]">
+                  <p className="text-[11px] text-[#9CA3AF] uppercase tracking-wider font-medium mb-1.5">
+                    {item.label}
+                  </p>
+                  {item.badge ? (
+                    <span className="inline-block bg-[#E8F5F0] text-[#0D4B3B] px-2.5 py-0.5 rounded-md text-[14px] font-bold">
+                      {item.value}
+                    </span>
+                  ) : (
+                    <p className={`text-[15px] font-medium text-[#0F1A16] ${item.mono ? 'font-mono' : ''} ${item.truncate ? 'truncate' : ''} ${item.highlight ? 'text-[#0D4B3B]' : ''}`}>
+                      {item.format ? formatDate(String(item.value)) : String(item.value)}
+                    </p>
+                  )}
+                </div>
+              ) : null
+            ))}
           </div>
 
           {/* Detail Verifikasi Section */}

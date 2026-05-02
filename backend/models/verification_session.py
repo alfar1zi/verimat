@@ -37,29 +37,23 @@ def get_all_verification_sessions(
     """Get all verification sessions with optional filters"""
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     query = 'SELECT * FROM verification_sessions WHERE 1=1'
     params = []
-    
+
     if po_number:
-        query += ' AND po_number = ?'
-        params.append(po_number)
-    
+        # Search di kedua kolom po_number dan reference_number
+        query += ' AND (po_number LIKE ? OR reference_number LIKE ?)'
+        params.append(f'%{po_number}%')
+        params.append(f'%{po_number}%')
+
     if material_name:
         query += ' AND material_name LIKE ?'
         params.append(f'%{material_name}%')
-    
+
     if vendor_name:
         query += ' AND vendor_name LIKE ?'
         params.append(f'%{vendor_name}%')
-    
-    if doc_type:
-        query += ' AND doc_type = ?'
-        params.append(doc_type)
-    
-    if status:
-        query += ' AND validation_status = ?'
-        params.append(status)
 
     if material_code:
         query += ' AND material_code LIKE ?'
@@ -69,6 +63,14 @@ def get_all_verification_sessions(
         query += ' AND batch_number LIKE ?'
         params.append(f'%{batch_number}%')
 
+    if doc_type:
+        query += ' AND doc_type = ?'
+        params.append(doc_type)
+
+    if status:
+        query += ' AND validation_status = ?'
+        params.append(status)
+
     if date_from:
         query += ' AND DATE(created_at) >= ?'
         params.append(date_from)
@@ -76,13 +78,13 @@ def get_all_verification_sessions(
     if date_to:
         query += ' AND DATE(created_at) <= ?'
         params.append(date_to)
-    
+
     query += ' ORDER BY created_at DESC'
-    
+
     cursor.execute(query, params)
     rows = cursor.fetchall()
     conn.close()
-    
+
     return [dict(row) for row in rows]
 
 def clear_all_audit_data():

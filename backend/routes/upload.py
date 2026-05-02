@@ -109,7 +109,23 @@ def verify_document():
         notes = request.form.get('notes', '')
         expiry_date = request.form.get('expiry_date', '')
         material_code = request.form.get('material_code', '')
-        items_json = request.form.get('items_json', '')
+        items_json = request.form.get('items', '') or request.form.get('items_json', '')
+
+        # Jika items ada, ekstrak field dari item pertama sebagai fallback
+        if items_json and not material_name:
+            try:
+                import json as _json
+                _items = _json.loads(items_json)
+                if _items:
+                    first = _items[0]
+                    material_name = first.get('materialName', material_name)
+                    batch_number = first.get('batchNumber', batch_number)
+                    quantity = str(first.get('quantity', quantity))
+                    unit = first.get('unit', unit)
+                    expiry_date = first.get('expiryDate', expiry_date)
+                    material_code = first.get('materialCode', material_code)
+            except Exception:
+                pass
         
         # Save files
         saved_files = {}
