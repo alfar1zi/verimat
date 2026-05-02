@@ -353,21 +353,29 @@ const Dashboard = () => {
 
   // Fetch vendor suggestions
   useEffect(() => {
-    if (formState.vendorName.length < 1) {
+    const query = formState.vendorName;
+
+    if (query.length < 1) {
       setVendorSuggestions([]);
       setShowVendorSuggestions(false);
       return;
     }
+
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`${API_URL}/api/vendor/search?q=${encodeURIComponent(formState.vendorName)}`);
+        const res = await fetch(`${API_URL}/api/vendor/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
-        setVendorSuggestions(data);
-        setShowVendorSuggestions(data.length > 0);
+        // Guard: hanya update jika vendor input masih sama
+        setVendorSuggestions(prev => {
+          // Cek apakah query masih relevan sebelum show
+          setShowVendorSuggestions(data.length > 0);
+          return data;
+        });
       } catch {
         setVendorSuggestions([]);
       }
     }, 300);
+
     return () => clearTimeout(timer);
   }, [formState.vendorName]);
 
@@ -378,26 +386,40 @@ const Dashboard = () => {
       setShowMaterialSuggestions(false);
       return;
     }
+
+    // Ambil query langsung dari DOM input yang aktif untuk hindari stale closure
     const activeItem = items.find(i => i.id === activeMaterialItemId);
-    if (!activeItem || activeItem.materialCode.length < 1) {
+    const query = activeItem?.materialCode ?? '';
+
+    if (query.length < 1) {
       setMaterialSuggestions([]);
       setShowMaterialSuggestions(false);
       return;
     }
+
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(
-          `${API_URL}/api/material/search?q=${encodeURIComponent(activeItem.materialCode)}` 
+          `${API_URL}/api/material/search?q=${encodeURIComponent(query)}`
         );
         const data = await res.json();
-        setMaterialSuggestions(data);
-        setShowMaterialSuggestions(data.length > 0);
+        // Hanya tampilkan jika query masih sama (guard stale response)
+        setItems(prev => {
+          const current = prev.find(i => i.id === activeMaterialItemId);
+          if (current?.materialCode === query) {
+            setMaterialSuggestions(data);
+            setShowMaterialSuggestions(data.length > 0);
+          }
+          return prev; // tidak ubah items
+        });
       } catch {
         setMaterialSuggestions([]);
       }
     }, 200);
+
     return () => clearTimeout(timer);
-  }, [activeMaterialItemId, items]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMaterialItemId]);
 
 
   const fetchStats = async () => {
@@ -1064,7 +1086,10 @@ const Dashboard = () => {
                                 setActiveMaterialItemId(item.id);
                               }}
                               onFocus={() => setActiveMaterialItemId(item.id)}
-                              onBlur={() => setTimeout(() => setActiveMaterialItemId(null), 200)}
+                              onBlur={() => setTimeout(() => {
+                                setShowMaterialSuggestions(false);
+                                setActiveMaterialItemId(null);
+                              }, 150)}
                               placeholder="Contoh: P1"
                               className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
                               autoComplete="off"
@@ -1080,9 +1105,14 @@ const Dashboard = () => {
                                   <div
                                     key={idx}
                                     onMouseDown={(e) => {
-                                      e.preventDefault(); // Prevent blur before click
-                                      updateItem(item.id, 'materialCode', mat.code);
-                                      updateItem(item.id, 'materialName', mat.name);
+                                      e.preventDefault();
+                                      // Update kedua field sekaligus dalam satu setState untuk hindari race condition
+                                      setItems(prev => prev.map(it =>
+                                        it.id === item.id
+                                          ? { ...it, materialCode: mat.code, materialName: mat.name }
+                                          : it
+                                      ));
+                                      setMaterialSuggestions([]);
                                       setShowMaterialSuggestions(false);
                                       setActiveMaterialItemId(null);
                                     }}
