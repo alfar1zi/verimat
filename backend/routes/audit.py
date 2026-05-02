@@ -31,13 +31,21 @@ def get_audit_list():
         vendor_name = request.args.get('vendor_name')
         doc_type = request.args.get('doc_type')
         status = request.args.get('status')
+        material_code = request.args.get('material_code')
+        batch_number = request.args.get('batch_number')
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
         
         sessions = get_all_verification_sessions(
             po_number=po_number,
             material_name=material_name,
             vendor_name=vendor_name,
             doc_type=doc_type,
-            status=status
+            status=status,
+            material_code=material_code,
+            batch_number=batch_number,
+            date_from=date_from,
+            date_to=date_to
         )
         
         # Transform to required format
@@ -45,11 +53,14 @@ def get_audit_list():
         for session in sessions:
             result.append({
                 'session_id': session.get('session_id'),
-                'po_number': session.get('po_number'),
+                'po_number': session.get('reference_number') or session.get('po_number'),
                 'material_name': session.get('material_name'),
+                'material_code': session.get('material_code'),
+                'batch_number': session.get('batch_number'),
                 'vendor_name': session.get('vendor_name'),
                 'doc_type': session.get('doc_type'),
                 'status': session.get('validation_status'),
+                'expiry_date': session.get('expiry_date'),
                 'verification_time': session.get('created_at')
             })
         

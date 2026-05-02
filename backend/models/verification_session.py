@@ -29,7 +29,11 @@ def get_verification_session(session_id):
     
     return dict(row) if row else None
 
-def get_all_verification_sessions(po_number=None, material_name=None, vendor_name=None, doc_type=None, status=None):
+def get_all_verification_sessions(
+    po_number=None, material_name=None, vendor_name=None,
+    doc_type=None, status=None, material_code=None,
+    date_from=None, date_to=None, batch_number=None
+):
     """Get all verification sessions with optional filters"""
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -56,6 +60,22 @@ def get_all_verification_sessions(po_number=None, material_name=None, vendor_nam
     if status:
         query += ' AND validation_status = ?'
         params.append(status)
+
+    if material_code:
+        query += ' AND material_code LIKE ?'
+        params.append(f'%{material_code}%')
+
+    if batch_number:
+        query += ' AND batch_number LIKE ?'
+        params.append(f'%{batch_number}%')
+
+    if date_from:
+        query += ' AND DATE(created_at) >= ?'
+        params.append(date_from)
+
+    if date_to:
+        query += ' AND DATE(created_at) <= ?'
+        params.append(date_to)
     
     query += ' ORDER BY created_at DESC'
     

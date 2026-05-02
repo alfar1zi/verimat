@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { ShieldIcon } from "./icons";
 
 export default function Footer() {
@@ -16,7 +17,13 @@ export default function Footer() {
           </div>
 
           <div className="text-xs text-white/50">
-            © 2026 VeriMat · AI Impact Challenge · Microsoft Elevate Training Center
+            © 2026 VeriMat · AI Impact Challenge · Microsoft Elevate Training Center ·{" "}
+            <Link
+              to="/privacy"
+              className="text-white/40 hover:text-white/70 transition-colors"
+            >
+              Kebijakan Privasi
+            </Link>
           </div>
         </div>
       </div>

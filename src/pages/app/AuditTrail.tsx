@@ -7,9 +7,12 @@ interface AuditRecord {
   session_id: string;
   po_number: string;
   material_name?: string;
+  material_code?: string;
+  batch_number?: string;
   vendor_name?: string;
   doc_type: string;
   status: "PASS" | "MISMATCH" | "INCOMPLETE" | "QUARANTINE";
+  expiry_date?: string;
   verification_time: string;
 }
 
@@ -22,9 +25,13 @@ const AuditTrail = () => {
   const [filters, setFilters] = useState({
     po_number: "",
     material_name: "",
+    material_code: "",
+    batch_number: "",
     vendor_name: "",
     doc_type: "",
     status: "",
+    date_from: "",
+    date_to: "",
   });
 
   useEffect(() => {
@@ -38,9 +45,13 @@ const AuditTrail = () => {
       const params = new URLSearchParams();
       if (filters.po_number) params.append("po_number", filters.po_number);
       if (filters.material_name) params.append("material_name", filters.material_name);
+      if (filters.material_code) params.append("material_code", filters.material_code);
+      if (filters.batch_number) params.append("batch_number", filters.batch_number);
       if (filters.vendor_name) params.append("vendor_name", filters.vendor_name);
       if (filters.doc_type) params.append("doc_type", filters.doc_type);
       if (filters.status) params.append("status", filters.status);
+      if (filters.date_from) params.append("date_from", filters.date_from);
+      if (filters.date_to) params.append("date_to", filters.date_to);
 
       const response = await fetch(`${API_URL}/api/audit/list?${params.toString()}`);
       if (!response.ok) throw new Error("Server error");
@@ -133,102 +144,156 @@ const AuditTrail = () => {
 
         {/* Filter Card */}
         <div className="bg-white rounded-2xl border border-[#E5E7EB] mt-6 animate-fade-in-up" style={{ padding: 'clamp(12px, 3vw, 24px)' }}>
-          <div className="flex flex-col gap-4">
-            {/* Row 1: Nomor Referensi + Status + Buttons */}
-            <div className="flex flex-col lg:flex-row gap-3">
-              <div className="relative flex-1 lg:flex-[2]">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <div className="flex flex-col gap-3">
+            {/* Row 1: Pencarian teks */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {/* Nomor Referensi */}
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Cari nomor referensi..."
+                  placeholder="Nomor referensi..."
                   value={filters.po_number}
                   onChange={(e) => setFilters({ ...filters, po_number: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                  className="w-full pl-9 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
                 />
               </div>
-              <div className="flex-1">
-                <select
-                  value={filters.status}
-                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white"
-                >
-                  <option value="">Semua Status</option>
-                  <option value="PASS">PASS</option>
-                  <option value="MISMATCH">MISMATCH</option>
-                  <option value="INCOMPLETE">INCOMPLETE</option>
-                  <option value="QUARANTINE">KARANTINA</option>
-                </select>
+              {/* Nama Bahan Baku */}
+              <input
+                type="text"
+                placeholder="Nama bahan baku..."
+                value={filters.material_name}
+                onChange={(e) => setFilters({ ...filters, material_name: e.target.value })}
+                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+              />
+              {/* Kode Bahan (e.g. P1) */}
+              <input
+                type="text"
+                placeholder="Kode bahan (P1, A1...)"
+                value={filters.material_code}
+                onChange={(e) => setFilters({ ...filters, material_code: e.target.value })}
+                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+              />
+            </div>
+
+            {/* Row 2: Filter lanjutan */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {/* Nama Vendor */}
+              <input
+                type="text"
+                placeholder="Nama vendor/supplier..."
+                value={filters.vendor_name}
+                onChange={(e) => setFilters({ ...filters, vendor_name: e.target.value })}
+                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+              />
+              {/* Nomor Batch */}
+              <input
+                type="text"
+                placeholder="Nomor batch..."
+                value={filters.batch_number}
+                onChange={(e) => setFilters({ ...filters, batch_number: e.target.value })}
+                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+              />
+              {/* Jenis Dokumen */}
+              <select
+                value={filters.doc_type}
+                onChange={(e) => setFilters({ ...filters, doc_type: e.target.value })}
+                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white"
+              >
+                <option value="">Semua Jenis Dokumen</option>
+                <option value="surat_jalan">Surat Jalan</option>
+                <option value="coa">Certificate of Analysis (CoA)</option>
+                <option value="faktur_pajak">Faktur Pajak</option>
+                <option value="invoice">Invoice / Faktur Penjualan</option>
+                <option value="kwitansi">Kwitansi</option>
+                <option value="halal">Sertifikat Halal</option>
+                <option value="tanda_terima">Tanda Terima / Delivery Order</option>
+                <option value="lainnya">Dokumen Lainnya</option>
+                <option value="multi">Multi-Dokumen</option>
+              </select>
+            </div>
+
+            {/* Row 3: Status + Date Range + Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              {/* Status */}
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                className="w-full sm:w-auto px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white"
+              >
+                <option value="">Semua Status</option>
+                <option value="PASS">PASS</option>
+                <option value="MISMATCH">MISMATCH</option>
+                <option value="INCOMPLETE">INCOMPLETE</option>
+                <option value="QUARANTINE">KARANTINA</option>
+              </select>
+
+              {/* Date range */}
+              <div className="flex items-center gap-2 flex-1">
+                <span className="text-[13px] text-[#6B7280] whitespace-nowrap">Dari</span>
+                <input
+                  type="date"
+                  value={filters.date_from}
+                  onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
+                  className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                />
+                <span className="text-[13px] text-[#6B7280] whitespace-nowrap">Sampai</span>
+                <input
+                  type="date"
+                  value={filters.date_to}
+                  onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
+                  className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                />
               </div>
+
+              {/* Action buttons */}
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={fetchAuditData}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#4A5568] font-medium hover:bg-[#F9FAFB] transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#4A5568] font-medium hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                  </svg>
+                  <ArrowPathIcon className="h-4 w-4" />
                   Refresh
                 </button>
                 {Object.values(filters).some(v => v) && (
                   <button
-                    onClick={() => setFilters({ po_number: '', material_name: '', vendor_name: '', doc_type: '', status: '' })}
-                    className="px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#6B7280] font-medium hover:bg-[#F9FAFB] transition-colors"
+                    onClick={() => setFilters({
+                      po_number: '', material_name: '', material_code: '',
+                      batch_number: '', vendor_name: '', doc_type: '',
+                      status: '', date_from: '', date_to: ''
+                    })}
+                    className="px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#6B7280] font-medium hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
                   >
-                    Reset Filter
+                    Reset
                   </button>
                 )}
                 <button
                   onClick={handleClearHistory}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[#FEE2E2] rounded-lg bg-white text-[13px] text-[#DC2626] font-medium hover:bg-[#FFF5F5] transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[#FEE2E2] rounded-lg bg-white text-[13px] text-[#DC2626] font-medium hover:bg-[#FFF5F5] transition-colors whitespace-nowrap"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                    fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round"
-                      d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                   </svg>
-                  Clear History
+                  Clear
                 </button>
               </div>
             </div>
-            {/* Row 2: Bahan Baku + Vendor + Jenis Dokumen */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Cari nama bahan baku..."
-                  value={filters.material_name}
-                  onChange={(e) => setFilters({ ...filters, material_name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                />
+
+            {/* Active filter summary - tampil jika ada filter aktif */}
+            {Object.values(filters).some(v => v) && (
+              <div className="flex flex-wrap gap-2 pt-1 border-t border-[#F3F4F6]">
+                <span className="text-[12px] text-[#6B7280]">Filter aktif:</span>
+                {filters.po_number && <span className="text-[12px] bg-[#F0FAF7] text-[#0D4B3B] px-2 py-0.5 rounded-full border border-[#BBF7D0]">Ref: {filters.po_number}</span>}
+                {filters.material_name && <span className="text-[12px] bg-[#F0FAF7] text-[#0D4B3B] px-2 py-0.5 rounded-full border border-[#BBF7D0]">Bahan: {filters.material_name}</span>}
+                {filters.material_code && <span className="text-[12px] bg-[#F0FAF7] text-[#0D4B3B] px-2 py-0.5 rounded-full border border-[#BBF7D0]">Kode: {filters.material_code}</span>}
+                {filters.batch_number && <span className="text-[12px] bg-[#F0FAF7] text-[#0D4B3B] px-2 py-0.5 rounded-full border border-[#BBF7D0]">Batch: {filters.batch_number}</span>}
+                {filters.vendor_name && <span className="text-[12px] bg-[#F0FAF7] text-[#0D4B3B] px-2 py-0.5 rounded-full border border-[#BBF7D0]">Vendor: {filters.vendor_name}</span>}
+                {filters.status && <span className="text-[12px] bg-[#F0FAF7] text-[#0D4B3B] px-2 py-0.5 rounded-full border border-[#BBF7D0]">Status: {filters.status}</span>}
+                {filters.doc_type && <span className="text-[12px] bg-[#F0FAF7] text-[#0D4B3B] px-2 py-0.5 rounded-full border border-[#BBF7D0]">Jenis: {filters.doc_type}</span>}
+                {filters.date_from && <span className="text-[12px] bg-[#F0FAF7] text-[#0D4B3B] px-2 py-0.5 rounded-full border border-[#BBF7D0]">Dari: {filters.date_from}</span>}
+                {filters.date_to && <span className="text-[12px] bg-[#F0FAF7] text-[#0D4B3B] px-2 py-0.5 rounded-full border border-[#BBF7D0]">Sampai: {filters.date_to}</span>}
               </div>
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Cari nama vendor..."
-                  value={filters.vendor_name}
-                  onChange={(e) => setFilters({ ...filters, vendor_name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                />
-              </div>
-              <div className="flex-1">
-                <select
-                  value={filters.doc_type}
-                  onChange={(e) => setFilters({ ...filters, doc_type: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[15px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white"
-                >
-                  <option value="">Semua Jenis</option>
-                  <option value="surat_jalan">Surat Jalan</option>
-                  <option value="coa">Certificate of Analysis (CoA)</option>
-                  <option value="faktur_pajak">Faktur Pajak</option>
-                  <option value="invoice">Invoice / Faktur Penjualan</option>
-                  <option value="kwitansi">Kwitansi</option>
-                  <option value="halal">Sertifikat Halal</option>
-                  <option value="tanda_terima">Tanda Terima / Delivery Order</option>
-                  <option value="lainnya">Dokumen Lainnya</option>
-                  <option value="multi">Multi-Dokumen</option>
-                </select>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 

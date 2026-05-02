@@ -12,6 +12,7 @@ const Login = lazy(() => import("./pages/app/Login.tsx"));
 const Dashboard = lazy(() => import("./pages/app/Dashboard.tsx"));
 const VerificationResult = lazy(() => import("./pages/app/VerificationResult.tsx"));
 const AuditTrail = lazy(() => import("./pages/app/AuditTrail.tsx"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
         }>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
