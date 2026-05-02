@@ -13,6 +13,7 @@ interface AuditRecord {
   doc_type: string;
   status: "PASS" | "MISMATCH" | "INCOMPLETE" | "QUARANTINE";
   expiry_date?: string;
+  packaging_condition?: string;
   verification_time: string;
 }
 
@@ -348,29 +349,18 @@ const AuditTrail = () => {
           ) : (
             <table className="w-full" style={{ minWidth: '600px' }}>
               {/* Table Header */}
-              <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                <tr>
-                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase hidden md:table-cell">
-                    Session ID
-                  </th>
-                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
-                    Nomor Referensi
-                  </th>
-                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
-                    Bahan Baku
-                  </th>
-                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase hidden md:table-cell">
-                    Vendor
-                  </th>
-                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
-                    Jenis Dokumen
-                  </th>
-                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
-                    Status
-                  </th>
-                  <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] tracking-[0.05em] uppercase">
-                    Waktu Verifikasi
-                  </th>
+              <thead>
+                <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Session ID</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Nomor Referensi</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Kode</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Bahan Baku</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Batch</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Vendor</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Jenis Dokumen</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Expired Date</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Waktu Verifikasi</th>
                 </tr>
               </thead>
 
@@ -379,36 +369,51 @@ const AuditTrail = () => {
                 {records.map((record) => (
                   <tr
                     key={record.session_id}
+                    className="border-b border-[#F3F4F6] cursor-pointer"
+                    style={{ transition: 'background 0.15s' }}
+                    onMouseOver={(e) => (e.currentTarget.style.background = '#F9FAFB')}
+                    onMouseOut={(e) => (e.currentTarget.style.background = 'white')}
                     onClick={() => navigate(`/verification/${record.session_id}`)}
-                    className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] cursor-pointer transition"
                   >
-                    <td className="px-5 py-4 font-mono text-[13px] text-[#374151] hidden md:table-cell">
-                      {record.session_id.slice(0, 8)}...
+                    <td className="px-4 py-3.5 text-[13px] text-[#6B7280] font-mono">
+                      {record.session_id.substring(0, 8)}...
                     </td>
-                    <td className="px-5 py-4 font-medium text-[#0F1A16]">
-                      {record.po_number}
+                    <td className="px-4 py-3.5 text-[14px] font-medium text-[#0F1A16]">
+                      {record.po_number || '-'}
                     </td>
-                    <td className="px-5 py-4 text-[#4A5568]">
-                      {record.material_name || <span style={{color: '#9CA3AF', fontStyle: 'italic'}}>-</span>}
+                    <td className="px-4 py-3.5 text-[13px]">
+                      {record.material_code ? (
+                        <span className="bg-[#E8F5F0] text-[#0D4B3B] px-2 py-0.5 rounded-md text-[12px] font-semibold">
+                          {record.material_code}
+                        </span>
+                      ) : <span className="text-[#9CA3AF]">-</span>}
                     </td>
-                    <td className="px-5 py-4 text-[#4A5568] hidden md:table-cell">
-                      {record.vendor_name ? (record.vendor_name.length > 18 ? (
-                        <span title={record.vendor_name}>{record.vendor_name.slice(0, 18)}...</span>
-                      ) : record.vendor_name) : <span style={{color: '#9CA3AF', fontStyle: 'italic'}}>-</span>}
+                    <td className="px-4 py-3.5 text-[14px] text-[#0F1A16]">
+                      {record.material_name || <span className="text-[#9CA3AF] italic">-</span>}
                     </td>
-                    <td className="px-5 py-4 text-[#4A5568]">
+                    <td className="px-4 py-3.5 text-[13px] text-[#4A5568] font-mono">
+                      {record.batch_number || <span className="text-[#9CA3AF]">-</span>}
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] text-[#4A5568]">
+                      {record.vendor_name
+                        ? (record.vendor_name.length > 20
+                            ? record.vendor_name.substring(0, 20) + '...'
+                            : record.vendor_name)
+                        : <span className="text-[#9CA3AF]">-</span>
+                      }
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] text-[#4A5568]">
                       {getDocTypeLabel(record.doc_type)}
                     </td>
-                    <td className="px-5 py-4">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-[12px] font-semibold ${getStatusBadge(
-                          record.status
-                        )}`}
-                      >
+                    <td className="px-4 py-3.5">
+                      <span className={`px-2.5 py-1 rounded-full text-[12px] font-semibold ${getStatusBadge(record.status)}`}>
                         {record.status}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-[#6B7280] text-[13px]">
+                    <td className="px-4 py-3.5 text-[13px] text-[#4A5568]">
+                      {record.expiry_date || <span className="text-[#9CA3AF]">-</span>}
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] text-[#6B7280]">
                       {formatDate(record.verification_time)}
                     </td>
                   </tr>

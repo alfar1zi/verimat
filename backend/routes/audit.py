@@ -24,7 +24,7 @@ def get_audit_trail():
 
 @audit_bp.route('/list', methods=['GET'])
 def get_audit_list():
-    """Get audit list with optional filters - returns simplified format"""
+    """Get audit list with optional filters - returns complete format"""
     try:
         po_number = request.args.get('po_number')
         material_name = request.args.get('material_name')
@@ -35,7 +35,7 @@ def get_audit_list():
         batch_number = request.args.get('batch_number')
         date_from = request.args.get('date_from')
         date_to = request.args.get('date_to')
-        
+
         sessions = get_all_verification_sessions(
             po_number=po_number,
             material_name=material_name,
@@ -47,8 +47,7 @@ def get_audit_list():
             date_from=date_from,
             date_to=date_to
         )
-        
-        # Transform to required format
+
         result = []
         for session in sessions:
             result.append({
@@ -61,9 +60,10 @@ def get_audit_list():
                 'doc_type': session.get('doc_type'),
                 'status': session.get('validation_status'),
                 'expiry_date': session.get('expiry_date'),
+                'packaging_condition': session.get('packaging_condition'),
                 'verification_time': session.get('created_at')
             })
-        
+
         return jsonify(result), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
