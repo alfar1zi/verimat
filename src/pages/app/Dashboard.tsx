@@ -350,6 +350,7 @@ const Dashboard = () => {
 
   // Track which item is actively searching for material
   const [activeMaterialItemId, setActiveMaterialItemId] = useState<string | null>(null);
+  const [activeMaterialQuery, setActiveMaterialQuery] = useState('');
 
   // Fetch vendor suggestions
   useEffect(() => {
@@ -381,45 +382,31 @@ const Dashboard = () => {
 
   // Fetch material suggestions for active item
   useEffect(() => {
-    if (!activeMaterialItemId) {
+    if (!activeMaterialItemId || activeMaterialQuery.length < 1) {
       setMaterialSuggestions([]);
       setShowMaterialSuggestions(false);
       return;
     }
 
-    // Ambil query langsung dari DOM input yang aktif untuk hindari stale closure
-    const activeItem = items.find(i => i.id === activeMaterialItemId);
-    const query = activeItem?.materialCode ?? '';
-
-    if (query.length < 1) {
-      setMaterialSuggestions([]);
-      setShowMaterialSuggestions(false);
-      return;
-    }
-
+    const query = activeMaterialQuery;
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(
           `${API_URL}/api/material/search?q=${encodeURIComponent(query)}`
         );
         const data = await res.json();
-        // Hanya tampilkan jika query masih sama (guard stale response)
-        setItems(prev => {
-          const current = prev.find(i => i.id === activeMaterialItemId);
-          if (current?.materialCode === query) {
-            setMaterialSuggestions(data);
-            setShowMaterialSuggestions(data.length > 0);
-          }
-          return prev; // tidak ubah items
-        });
+        // Guard: hanya tampilkan jika query masih sama dengan yang diketik
+        if (activeMaterialQuery === query) {
+          setMaterialSuggestions(data);
+          setShowMaterialSuggestions(data.length > 0);
+        }
       } catch {
         setMaterialSuggestions([]);
       }
     }, 200);
 
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeMaterialItemId]);
+  }, [activeMaterialQuery, activeMaterialItemId]);
 
 
   const fetchStats = async () => {
@@ -1082,13 +1069,19 @@ const Dashboard = () => {
                               type="text"
                               value={item.materialCode}
                               onChange={(e) => {
-                                updateItem(item.id, 'materialCode', e.target.value);
+                                const val = e.target.value;
+                                updateItem(item.id, 'materialCode', val);
                                 setActiveMaterialItemId(item.id);
+                                setActiveMaterialQuery(val);
                               }}
-                              onFocus={() => setActiveMaterialItemId(item.id)}
+                              onFocus={() => {
+                                setActiveMaterialItemId(item.id);
+                                setActiveMaterialQuery(item.materialCode);
+                              }}
                               onBlur={() => setTimeout(() => {
                                 setShowMaterialSuggestions(false);
                                 setActiveMaterialItemId(null);
+                                setActiveMaterialQuery('');
                               }, 150)}
                               placeholder="Contoh: P1"
                               className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
@@ -1112,6 +1105,7 @@ const Dashboard = () => {
                                           ? { ...it, materialCode: mat.code, materialName: mat.name }
                                           : it
                                       ));
+                                      setActiveMaterialQuery('');
                                       setMaterialSuggestions([]);
                                       setShowMaterialSuggestions(false);
                                       setActiveMaterialItemId(null);
