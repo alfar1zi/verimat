@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpTrayIcon, DocumentIcon, XMarkIcon, ShieldCheckIcon, DocumentTextIcon, CheckCircleIcon, ExclamationCircleIcon, ArrowRightCircleIcon, ChevronLeftIcon, CheckIcon } from "@heroicons/react/24/outline";
 import AppNavbar from "../../components/app/AppNavbar";
+import { apiFetch } from "../../lib/api";
 
 interface Stats {
   total: number;
@@ -104,7 +105,6 @@ function getExpiryStatus(expiryDate: string): {
 }
 
 const Dashboard = () => {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const navigate = useNavigate();
   
   // Check storage version and clear if outdated
@@ -364,7 +364,7 @@ const Dashboard = () => {
 
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`${API_URL}/api/vendor/search?q=${encodeURIComponent(query)}`);
+        const res = await apiFetch(`/api/vendor/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
         // Guard: hanya update jika vendor input masih sama
         setVendorSuggestions(prev => {
@@ -411,7 +411,7 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/audit/list`);
+      const response = await apiFetch('/api/audit/list');
       if (response.ok) {
         const data = await response.json();
         const today = new Date();
@@ -465,7 +465,7 @@ const Dashboard = () => {
       return;
     }
     try {
-      const response = await fetch(`${API_URL}/api/po/search?q=${encodeURIComponent(query)}`);
+      const response = await apiFetch(`/api/po/search?q=${encodeURIComponent(query)}`);
       if (response.ok) {
         const data = await response.json();
         setPoSuggestions(data);
@@ -707,7 +707,7 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/upload/verify`, {
+      const response = await apiFetch('/api/upload/verify', {
         method: "POST",
         body: formData,
       });
@@ -960,7 +960,7 @@ const Dashboard = () => {
                       e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)';
                       if (formState.vendorName.length >= 1) {
                         // Re-trigger vendor search on focus
-                        fetch(`${API_URL}/api/vendor/search?q=${encodeURIComponent(formState.vendorName)}`)
+                        apiFetch(`/api/vendor/search?q=${encodeURIComponent(formState.vendorName)}`)
                           .then(r => r.json())
                           .then(data => {
                             setVendorSuggestions(data);

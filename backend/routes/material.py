@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from utils.database import get_db_connection
+from utils.auth_middleware import require_auth
 
 material_bp = Blueprint('material', __name__)
 
 @material_bp.route('/search', methods=['GET'])
+@require_auth
 def search_materials():
     q = request.args.get('q', '').strip()
     if len(q) < 1:

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LockClosedIcon, UserIcon } from "@heroicons/react/24/outline";
+import { API_URL } from "../../lib/api";
 
 const Login = () => {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -48,7 +48,11 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("verimat_auth", JSON.stringify(data));
+        localStorage.setItem("verimat_auth", JSON.stringify({
+          token: data.token,
+          user: data.user,
+          loginTime: Date.now()
+        }));
         localStorage.setItem("verimat_login_time", Date.now().toString());
         setFailedAttempts(0);
         navigate("/dashboard");

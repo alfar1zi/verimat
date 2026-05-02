@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify, request
 from models.purchase_order import get_all_purchase_orders
 from utils.database import get_db_connection
+from utils.auth_middleware import require_auth
 
 po_bp = Blueprint('po', __name__)
 
 @po_bp.route('/list', methods=['GET'])
+@require_auth
 def get_po_list():
     """Get list of all purchase orders"""
     try:
@@ -32,6 +34,7 @@ def get_po_list():
         return jsonify({'error': str(e)}), 500
 
 @po_bp.route('/search', methods=['GET'])
+@require_auth
 def search_po():
     """Search purchase orders by PO number or material name"""
     try:

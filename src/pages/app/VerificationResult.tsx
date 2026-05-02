@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import AppNavbar from "../../components/app/AppNavbar";
+import { apiFetch } from "../../lib/api";
 
 interface VerificationData {
   session_id: string;
@@ -36,7 +37,6 @@ interface VerificationData {
 }
 
 const VerificationResult = () => {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [data, setData] = useState<VerificationData | null>(null);
@@ -49,7 +49,7 @@ const VerificationResult = () => {
 
   const fetchVerificationData = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/verification/${id}`);
+      const response = await apiFetch(`/api/verification/${id}`);
       if (!response.ok) throw new Error("Server error");
       const result = await response.json();
       setData(result);

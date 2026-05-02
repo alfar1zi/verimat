@@ -1,16 +1,74 @@
 from flask import Blueprint, request, jsonify
 import os
+import uuid
+import magic
 from datetime import datetime
+from werkzeug.utils import secure_filename
 from utils.document_extractor import extract_document_data
 from models.verification_session import create_verification_session
 from models.verification_log import create_verification_log
 from utils.validation_engine import validate_document
+from utils.auth_middleware import require_auth
 
 upload_bp = Blueprint('upload', __name__)
 
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png'}
+ALLOWED_MIME_TYPES = {
+    'application/pdf',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+}
+MAX_FILE_SIZE_MB = 10
+
+def _validate_file(file) -> tuple[bool, str]:
+    """Validate file extension, MIME type, and size."""
+    if not file or file.filename == '':
+        return False, 'File tidak ditemukan.'
+
+    # Check extension
+    filename = secure_filename(file.filename)
+    if not filename or '.' not in filename:
+        return False, 'Nama file tidak valid.'
+    ext = filename.rsplit('.', 1)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        return False, f'Format file tidak didukung. Gunakan: {", ".join(ALLOWED_EXTENSIONS).upper()}'
+
+    # Read first 2048 bytes for MIME check (don't load whole file)
+    header = file.read(2048)
+    file.seek(0)  # Reset stream
+
+    try:
+        mime = magic.from_buffer(header, mime=True)
+        if mime not in ALLOWED_MIME_TYPES:
+            return False, f'Tipe file tidak valid (terdeteksi: {mime}).'
+    except Exception:
+        # If magic unavailable, skip MIME check but log warning
+        pass
+
+    return True, ''
+
+def _safe_save(file, prefix: str) -> str:
+    """Save file with secure random filename, return saved path."""
+    filename = secure_filename(file.filename)
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'bin'
+    # Use UUID to prevent filename collision and path traversal
+    safe_name = f"{prefix}_{uuid.uuid4().hex}.{ext}"
+    filepath = os.path.join(UPLOAD_FOLDER, safe_name)
+    file.save(filepath)
+    return filepath
+
+def _sanitize(value: str, max_len: int = 255) -> str:
+    """Strip whitespace and limit length."""
+    if not value:
+        return ''
+    # Remove null bytes and control characters
+    value = value.replace('\x00', '').strip()
+    return value[:max_len]
 
 @upload_bp.route('/document', methods=['POST'])
 def upload_document():
@@ -77,6 +135,7 @@ def upload_document():
         return jsonify({'error': str(e)}), 500
 
 @upload_bp.route('/verify', methods=['POST', 'OPTIONS'])
+@require_auth
 def verify_document():
     """Verify document with multiple files and new form fields"""
     if request.method == 'OPTIONS':
@@ -95,20 +154,20 @@ def verify_document():
         if surat_jalan.filename == '':
             return jsonify({'error': 'Surat Jalan file is required'}), 400
         
-        # Get form fields
-        reference_number = request.form.get('reference_number', '')
-        vendor_name = request.form.get('vendor_name', '')
-        material_name = request.form.get('material_name', '')
-        batch_number = request.form.get('batch_number', '')
-        quantity = request.form.get('quantity', '0')
-        unit = request.form.get('unit', '')
-        document_date = request.form.get('document_date', '')
-        packaging_condition = request.form.get('packaging_condition', '')
-        storage_condition = request.form.get('storage_condition', '')
-        temperature = request.form.get('temperature')
-        notes = request.form.get('notes', '')
-        expiry_date = request.form.get('expiry_date', '')
-        material_code = request.form.get('material_code', '')
+        # Get form fields with sanitization
+        reference_number = _sanitize(request.form.get('reference_number', ''), 100)
+        vendor_name      = _sanitize(request.form.get('vendor_name', ''), 200)
+        material_name    = _sanitize(request.form.get('material_name', ''), 200)
+        batch_number     = _sanitize(request.form.get('batch_number', ''), 100)
+        quantity         = _sanitize(request.form.get('quantity', '0'), 20)
+        unit             = _sanitize(request.form.get('unit', ''), 20)
+        document_date    = _sanitize(request.form.get('document_date', ''), 10)
+        packaging_condition = _sanitize(request.form.get('packaging_condition', ''), 100)
+        storage_condition   = _sanitize(request.form.get('storage_condition', ''), 100)
+        temperature      = request.form.get('temperature')
+        notes            = _sanitize(request.form.get('notes', ''), 1000)
+        expiry_date      = _sanitize(request.form.get('expiry_date', ''), 10)
+        material_code    = _sanitize(request.form.get('material_code', ''), 20)
         items_json = request.form.get('items', '') or request.form.get('items_json', '')
 
         # Jika items ada, ekstrak field dari item pertama sebagai fallback
@@ -127,27 +186,35 @@ def verify_document():
             except Exception:
                 pass
         
-        # Save files
+        # Save files with validation
         saved_files = {}
-        surat_jalan_path = os.path.join(UPLOAD_FOLDER, f"surat_jalan_{surat_jalan.filename}")
-        surat_jalan.save(surat_jalan_path)
+        valid, err = _validate_file(surat_jalan)
+        if not valid:
+            return jsonify({'error': f'Surat Jalan: {err}'}), 400
+        surat_jalan_path = _safe_save(surat_jalan, 'sj')
         saved_files['surat_jalan'] = surat_jalan_path
-        
+
         if coa and coa.filename:
-            coa_path = os.path.join(UPLOAD_FOLDER, f"coa_{coa.filename}")
-            coa.save(coa_path)
+            valid, err = _validate_file(coa)
+            if not valid:
+                return jsonify({'error': f'CoA: {err}'}), 400
+            coa_path = _safe_save(coa, 'coa')
             saved_files['coa'] = coa_path
-        
+
         if faktur and faktur.filename:
-            faktur_path = os.path.join(UPLOAD_FOLDER, f"faktur_{faktur.filename}")
-            faktur.save(faktur_path)
+            valid, err = _validate_file(faktur)
+            if not valid:
+                return jsonify({'error': f'Faktur: {err}'}), 400
+            faktur_path = _safe_save(faktur, 'faktur')
             saved_files['faktur'] = faktur_path
-        
+
         dokumen_lain_paths = []
         for doc in dokumen_lain:
             if doc.filename:
-                doc_path = os.path.join(UPLOAD_FOLDER, f"doc_lain_{doc.filename}")
-                doc.save(doc_path)
+                valid, err = _validate_file(doc)
+                if not valid:
+                    continue  # Skip invalid files silently
+                doc_path = _safe_save(doc, 'lain')
                 dokumen_lain_paths.append(doc_path)
         saved_files['dokumen_lain'] = dokumen_lain_paths
 

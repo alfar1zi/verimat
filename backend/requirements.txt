@@ -4,3 +4,7 @@ azure-ai-formrecognizer==3.3.3
 azure-identity==1.15.0
 azure-storage-blob==12.19.0
 python-dotenv==1.0.0
+PyJWT==2.8.0
+Werkzeug==3.0.1
+flask-limiter==3.5.0
+python-magic==0.4.27

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MagnifyingGlassIcon, ClipboardDocumentListIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import AppNavbar from "../../components/app/AppNavbar";
+import { apiFetch } from "../../lib/api";
 
 interface AuditRecord {
   session_id: string;
@@ -18,7 +19,6 @@ interface AuditRecord {
 }
 
 const AuditTrail = () => {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const navigate = useNavigate();
   const [records, setRecords] = useState<AuditRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +54,7 @@ const AuditTrail = () => {
       if (filters.date_from) params.append("date_from", filters.date_from);
       if (filters.date_to) params.append("date_to", filters.date_to);
 
-      const response = await fetch(`${API_URL}/api/audit/list?${params.toString()}`);
+      const response = await apiFetch(`/api/audit/list?${params.toString()}`);
       if (!response.ok) throw new Error("Server error");
       const data = await response.json();
       setRecords(data);
@@ -74,7 +74,7 @@ const AuditTrail = () => {
     if (!confirmed) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/audit/clear`, {
+      const response = await apiFetch('/api/audit/clear', {
         method: 'DELETE'
       });
       if (response.ok) {

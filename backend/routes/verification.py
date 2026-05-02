@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models.verification_session import get_verification_session
 from models.verification_log import get_verification_logs
+from utils.auth_middleware import require_auth
 
 verification_bp = Blueprint('verification', __name__)
 
@@ -17,6 +18,7 @@ def get_verification_result(session_id):
         return jsonify({'error': str(e)}), 500
 
 @verification_bp.route('/<session_id>', methods=['GET'])
+@require_auth
 def get_verification(session_id):
     """Get verification by session ID - returns full format including all form fields"""
     try:

@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from utils.database import get_db_connection
+from utils.auth_middleware import require_auth
 
 vendor_bp = Blueprint('vendor', __name__)
 
 @vendor_bp.route('/search', methods=['GET'])
+@require_auth
 def search_vendors():
     q = request.args.get('q', '').strip()
     if len(q) < 2:

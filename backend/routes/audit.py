@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models.verification_session import get_all_verification_sessions, clear_all_audit_data
 from models.verification_log import get_verification_logs
+from utils.auth_middleware import require_auth
 
 audit_bp = Blueprint('audit', __name__)
 
@@ -23,6 +24,7 @@ def get_audit_trail():
         return jsonify({'error': str(e)}), 500
 
 @audit_bp.route('/list', methods=['GET'])
+@require_auth
 def get_audit_list():
     """Get audit list with optional filters - returns complete format"""
     try:
@@ -78,6 +80,7 @@ def get_session_logs(session_id):
         return jsonify({'error': str(e)}), 500
 
 @audit_bp.route('/clear', methods=['DELETE'])
+@require_auth
 def clear_audit():
     """Clear all audit history"""
     try:

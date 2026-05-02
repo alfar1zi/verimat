@@ -6,7 +6,13 @@ const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 jam
 const IDLE_TIMEOUT = 30 * 60 * 1000; // 30 menit
 
 const ProtectedRoute = () => {
-  const isAuth = localStorage.getItem("verimat_auth");
+  const authRaw = localStorage.getItem("verimat_auth");
+  const isAuth = authRaw ? (() => {
+    try {
+      const parsed = JSON.parse(authRaw);
+      return parsed.token ? true : false;
+    } catch { return false; }
+  })() : false;
   const navigate = useNavigate();
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
