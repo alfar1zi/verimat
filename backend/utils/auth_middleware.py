@@ -9,6 +9,8 @@ def require_auth(f):
     """Decorator: require valid JWT token for this endpoint."""
     @wraps(f)
     def decorated(*args, **kwargs):
+        if request.method == 'OPTIONS':
+            return jsonify({}), 200
         token = None
 
         # Try Authorization header: "Bearer <token>"
