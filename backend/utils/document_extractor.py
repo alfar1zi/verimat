@@ -5,6 +5,7 @@ Falls back to mock extraction if Azure credentials are not configured
 import os
 from azure.ai.formrecognizer import DocumentAnalysisClient
 from azure.core.credentials import AzureKeyCredential
+from models.purchase_order import get_purchase_order_by_number
 
 AZURE_ENDPOINT = os.environ.get('AZURE_DOC_INTELLIGENCE_ENDPOINT', '')
 AZURE_KEY = os.environ.get('AZURE_DOC_INTELLIGENCE_KEY', '')
@@ -55,13 +56,7 @@ def map_extracted_to_fields(extracted, doc_type, po_number):
     """
     Map extracted key-value pairs to structured fields based on document type
     """
-    from utils.database import get_db_connection
-    conn = get_db_connection()
-    po = conn.execute(
-        'SELECT * FROM purchase_orders WHERE po_number = ?',
-        (po_number,)
-    ).fetchone()
-    conn.close()
+    po = get_purchase_order_by_number(po_number)
     
     if doc_type == 'surat_jalan':
         return {
@@ -96,13 +91,7 @@ def get_mock_extraction(doc_type, po_number):
     """
     Fallback mock extraction when Azure is not available
     """
-    from utils.database import get_db_connection
-    conn = get_db_connection()
-    po = conn.execute(
-        'SELECT * FROM purchase_orders WHERE po_number = ?',
-        (po_number,)
-    ).fetchone()
-    conn.close()
+    po = get_purchase_order_by_number(po_number)
     
     if doc_type == 'surat_jalan':
         return {

@@ -1,6 +1,7 @@
 from datetime import datetime
 import re
-from models.purchase_order import get_purchase_order
+from models.purchase_order import get_purchase_order_by_number
+from utils.ai_explainer import generate_ai_explanation
 
 def _normalize_string(s):
     """Normalize string for comparison: lowercase, strip whitespace, remove common legal suffixes."""
@@ -37,7 +38,7 @@ def validate_document(extracted_data, po_number):
     Returns: PASS, MISMATCH, or INCOMPLETE
     """
     # Get PO data
-    po = get_purchase_order(po_number)
+    po = get_purchase_order_by_number(po_number)
     
     if not po:
         return {
@@ -231,16 +232,19 @@ def validate_document(extracted_data, po_number):
     return {
         'status': overall_status,
         'validation_results': validation_results,
-        'explanation': _generate_explanation(overall_status, validation_results)
+        'explanation': _generate_explanation(
+            overall_status, validation_results,
+            vendor_name=extracted_data.get('supplier_name', ''),
+            material_name=extracted_data.get('material_name', ''),
+            reference_number=po_number
+        )
     }
 
-def _generate_explanation(status, validation_results):
-    """Generate human-readable explanation"""
-    if status == 'PASS':
-        return 'Semua field dokumen telah diverifikasi dan sesuai dengan data Purchase Order internal.'
-    elif status == 'INCOMPLETE':
-        incomplete_fields = [r['field'] for r in validation_results if r['status'] == 'INCOMPLETE']
-        return f"Satu atau lebih field wajib tidak dapat dibaca: {', '.join(incomplete_fields)}. Periksa kualitas dokumen dan upload ulang."
-    else:
-        mismatch_messages = [r['message'] for r in validation_results if r['status'] == 'MISMATCH']
-        return f"Field berikut tidak sesuai dengan Purchase Order: {', '.join(mismatch_messages)}"
+def _generate_explanation(status, validation_results, vendor_name='', material_name='', reference_number=''):
+    return generate_ai_explanation(
+        status=status,
+        validation_results=validation_results,
+        vendor_name=vendor_name,
+        material_name=material_name,
+        reference_number=reference_number
+    )
