@@ -391,8 +391,8 @@ const Dashboard = () => {
     const query = activeMaterialQuery;
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `${API_URL}/api/material/search?q=${encodeURIComponent(query)}`
+        const res = await apiFetch(
+          `/api/material/search?q=${encodeURIComponent(query)}`
         );
         const data = await res.json();
         // Guard: hanya tampilkan jika query masih sama dengan yang diketik
