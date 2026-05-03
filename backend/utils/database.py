@@ -1,41 +1,33 @@
 import os
 import logging
-import pyodbc
+try:
+    import pymssql
+    _USE_PYMSSQL = True
+except ImportError:
+    _USE_PYMSSQL = False
 import sqlite3
 
 logger = logging.getLogger(__name__)
 
 # ─── Connection config ───────────────────────────────────────────────────────
 
-def _get_azure_sql_connection_string() -> str | None:
-    """Build pyodbc connection string from environment variables."""
-    server   = os.environ.get('AZURE_SQL_SERVER')
-    database = os.environ.get('AZURE_SQL_DATABASE')
-    username = os.environ.get('AZURE_SQL_USERNAME')
-    password = os.environ.get('AZURE_SQL_PASSWORD')
-
-    if not all([server, database, username, password]):
-        return None
-
-    return (
-        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-        f"SERVER={server},1433;"
-        f"DATABASE={database};"
-        f"UID={username};"
-        f"PWD={password};"
-        f"Encrypt=yes;"
-        f"TrustServerCertificate=no;"
-        f"Connection Timeout=30;"
-    )
-
 USE_AZURE_SQL = bool(os.environ.get('AZURE_SQL_SERVER'))
 
 def get_db_connection():
-    """Return a database connection (Azure SQL or SQLite fallback)."""
+    """Return a database connection (Azure SQL via pymssql or SQLite fallback)."""
     if USE_AZURE_SQL:
-        conn_str = _get_azure_sql_connection_string()
-        conn = pyodbc.connect(conn_str)
-        conn.autocommit = False
+        server   = os.environ.get('AZURE_SQL_SERVER')
+        database = os.environ.get('AZURE_SQL_DATABASE')
+        username = os.environ.get('AZURE_SQL_USERNAME')
+        password = os.environ.get('AZURE_SQL_PASSWORD')
+        conn = pymssql.connect(
+            server=server,
+            database=database,
+            user=username,
+            password=password,
+            tds_version='7.4',
+            login_timeout=30
+        )
         return conn
     else:
         conn = sqlite3.connect(
