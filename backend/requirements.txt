@@ -8,3 +8,4 @@ PyJWT==2.8.0
 Werkzeug==3.0.1
 flask-limiter==3.5.0
 python-magic==0.4.27
+pyodbc==5.1.0
