@@ -727,7 +727,7 @@ const Dashboard = () => {
       navigate(`/verification/${data.session_id}`);
     } catch (error: any) {
       if (error.message.includes('fetch')) {
-        setError('Tidak dapat terhubung ke server. Pastikan backend berjalan di ' + API_URL);
+        setError('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
       } else {
         setError(error.message || 'Terjadi kesalahan saat memproses dokumen.');
       }

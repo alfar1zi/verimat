@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LockClosedIcon, UserIcon } from "@heroicons/react/24/outline";
-import { API_URL } from "../../lib/api";
+import { apiFetch } from "../../lib/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ const Login = () => {
     if (lockoutUntil && Date.now() < lockoutUntil) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await apiFetch('/api/auth/login', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
