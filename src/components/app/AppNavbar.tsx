@@ -28,19 +28,18 @@ const AppNavbar = () => {
           </div>
           <span className="font-bold text-[17px] sm:text-[20px] text-[#0D4B3B]">VeriMat</span>
           
-          {/* Admin pill - mobile only */}
-          <div className="sm:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F3F4F6]">
+          {/* Admin pill - mobile and tablet */}
+          <div className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F3F4F6]">
             {/* User icon */}
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#374151">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
             </svg>
             <span className="text-[13px] font-medium text-[#374151]">Admin</span>
           </div>
-          
-          {/* Logout button - mobile only */}
+          {/* Logout button - mobile and tablet */}
           <button
             onClick={handleLogout}
-            className="sm:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FCA5A5] text-[#DC2626] text-[12px] font-medium hover:bg-[#FEF2F2] transition-all duration-200"
+            className="md:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FCA5A5] text-[#DC2626] text-[12px] font-medium hover:bg-[#FEF2F2] transition-all duration-200"
           >
             {/* Logout icon */}
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -84,8 +83,8 @@ const AppNavbar = () => {
           </Link>
         </div>
 
-        {/* Right: Admin + Logout for desktop/tablet */}
-        <div className="hidden sm:flex items-center justify-end gap-2 sm:gap-3">
+        {/* Right: Admin + Logout for desktop only */}
+        <div className="hidden md:flex items-center justify-end gap-2 sm:gap-3">
           {/* Admin pill */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F3F4F6]">
             {/* User icon */}
