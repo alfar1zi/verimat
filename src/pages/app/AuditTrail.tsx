@@ -417,23 +417,23 @@ const AuditTrail = () => {
               </select>
 
               {/* Date range - 2 kolom di mobile (Dari | Sampai) */}
-              <div className="flex items-center gap-2 w-full">
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <span className="text-[13px] text-[#6B7280] whitespace-nowrap">Dari</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 w-full">
+                <div className="flex items-center gap-1 flex-1 min-w-0">
+                  <span className="text-[12px] sm:text-[13px] text-[#6B7280] whitespace-nowrap">Dari</span>
                   <input
                     type="date"
                     value={filters.date_from}
                     onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
-                    className="flex-1 min-w-0 px-2 py-2.5 border border-[#E5E7EB] rounded-lg text-[13px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                    className="flex-1 min-w-0 px-1.5 sm:px-2 py-2 border border-[#E5E7EB] rounded-lg text-[12px] sm:text-[13px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
                   />
                 </div>
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <span className="text-[13px] text-[#6B7280] whitespace-nowrap">Sampai</span>
+                <div className="flex items-center gap-1 flex-1 min-w-0">
+                  <span className="text-[12px] sm:text-[13px] text-[#6B7280] whitespace-nowrap">Sampai</span>
                   <input
                     type="date"
                     value={filters.date_to}
                     onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
-                    className="flex-1 min-w-0 px-2 py-2.5 border border-[#E5E7EB] rounded-lg text-[13px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                    className="flex-1 min-w-0 px-1.5 sm:px-2 py-2 border border-[#E5E7EB] rounded-lg text-[12px] sm:text-[13px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
                   />
                 </div>
               </div>

@@ -1364,12 +1364,12 @@ const Dashboard = () => {
                     value={formState.packagingCondition}
                     onChange={(e) => setFormState({ ...formState, packagingCondition: e.target.value })}
                     style={{
-                      width: '100%', padding: '10px 14px',
+                      width: '100%', padding: 'clamp(8px, 2.5vw, 10px) clamp(10px, 3vw, 14px)',
                       border: fieldErrors.packagingCondition ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
-                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
+                      borderRadius: '8px', fontSize: 'clamp(13px, 3vw, 14px)', color: '#0F1A16',
                       backgroundColor: 'white', outline: 'none',
                       transition: 'border-color 0.15s, box-shadow 0.15s',
-                      boxSizing: 'border-box' as const
+                      boxSizing: 'border-box' as const, minWidth: 0
                     }}
                     onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
                     onBlur={(e) => e.target.style.borderColor = fieldErrors.packagingCondition ? '#DC2626' : '#E5E7EB'}
@@ -1396,18 +1396,18 @@ const Dashboard = () => {
                   <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px', minHeight: '16px' }}>
                     Isi jika bahan memerlukan cold chain
                   </p>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: 'clamp(6px, 2vw, 8px)' }}>
                     <input
                       type="number"
                       value={formState.temperature}
                       onChange={(e) => setFormState({ ...formState, temperature: e.target.value })}
                       placeholder="Suhu (°C)"
                       style={{
-                        flex: '0 0 90px', padding: '10px 10px',
+                        flex: '0 0 clamp(70px, 20vw, 90px)', padding: 'clamp(8px, 2.5vw, 10px)',
                         border: '1.5px solid #E5E7EB', borderRadius: '8px',
-                        fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
+                        fontSize: 'clamp(13px, 3vw, 14px)', color: '#0F1A16', backgroundColor: 'white',
                         outline: 'none', transition: 'border-color 0.15s',
-                        boxSizing: 'border-box' as const
+                        boxSizing: 'border-box' as const, minWidth: 0
                       }}
                       onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
                       onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
@@ -1416,11 +1416,11 @@ const Dashboard = () => {
                       value={formState.storageCondition}
                       onChange={(e) => setFormState({ ...formState, storageCondition: e.target.value })}
                       style={{
-                        flex: 1, padding: '10px 10px',
+                        flex: 1, padding: 'clamp(8px, 2.5vw, 10px)',
                         border: '1.5px solid #E5E7EB', borderRadius: '8px',
-                        fontSize: '14px', color: '#0F1A16', backgroundColor: 'white',
+                        fontSize: 'clamp(13px, 3vw, 14px)', color: '#0F1A16', backgroundColor: 'white',
                         outline: 'none', transition: 'border-color 0.15s',
-                        boxSizing: 'border-box' as const
+                        boxSizing: 'border-box' as const, minWidth: 0
                       }}
                       onFocus={(e) => e.target.style.borderColor = '#0D4B3B'}
                       onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
