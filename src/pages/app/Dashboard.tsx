@@ -768,7 +768,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F8F6]">
+    <div className="min-h-screen bg-[#F7F8F6] overflow-x-hidden">
       <AppNavbar />
       
       {/* Progress Overlay */}
@@ -784,7 +784,7 @@ const Dashboard = () => {
         />
       )}
       
-      <div className="max-w-[900px] mx-auto" style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px)' }}>
+      <div className="max-w-[900px] mx-auto w-full" style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px)', boxSizing: 'border-box' }}>
         {/* Header */}
         <div>
           <h1 className="text-[22px] font-bold text-[#0F1A16]">Verifikasi Dokumen Baru</h1>
@@ -794,14 +794,14 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 mt-6">
+        <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full">
           {/* Total Card */}
           <div className="animate-fade-in-up card-hover delay-100" style={{
             flex: 1, background: 'white', borderRadius: '12px',
-            padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            padding: 'clamp(12px, 4vw, 20px) clamp(12px, 4vw, 24px)', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             borderLeft: '4px solid #0D4B3B',
             display: 'flex', justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0
           }}>
             <div>
               <p style={{
@@ -828,10 +828,10 @@ const Dashboard = () => {
           {/* Pass Card */}
           <div className="animate-fade-in-up card-hover delay-200" style={{
             flex: 1, background: 'white', borderRadius: '12px',
-            padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            padding: 'clamp(12px, 4vw, 20px) clamp(12px, 4vw, 24px)', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             borderLeft: '4px solid #16A34A',
             display: 'flex', justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0
           }}>
             <div>
               <p style={{
@@ -858,10 +858,10 @@ const Dashboard = () => {
           {/* Failed Card */}
           <div className="animate-fade-in-up card-hover delay-300" style={{
             flex: 1, background: 'white', borderRadius: '12px',
-            padding: '20px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            padding: 'clamp(12px, 4vw, 20px) clamp(12px, 4vw, 24px)', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             borderLeft: '4px solid #DC2626',
             display: 'flex', justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center', width: '100%', boxSizing: 'border-box', minWidth: 0
           }}>
             <div>
               <p style={{
@@ -887,7 +887,7 @@ const Dashboard = () => {
         </div>
 
         {/* Step Indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '32px', marginBottom: '32px', gap: '0', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '32px', marginBottom: '32px', gap: '0', overflowX: 'auto', width: '100%', maxWidth: '100%' }}>
           <div className="flex items-center gap-0">
             <div className="flex flex-col items-center">
               <div 

@@ -292,7 +292,7 @@ const AuditTrail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F8F6]">
+    <div className="min-h-screen bg-[#F7F8F6] overflow-x-hidden">
       <AppNavbar />
       
       {/* Export Confirmation Dialog */}
@@ -321,7 +321,7 @@ const AuditTrail = () => {
         </div>
       )}
       
-      <div className="max-w-[1000px] mx-auto" style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px)' }}>
+      <div className="max-w-[1000px] mx-auto w-full" style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px)', boxSizing: 'border-box' }}>
         {/* Header */}
         <div>
           <h1 className="text-[22px] font-bold text-[#0F1A16]">Audit Trail</h1>
@@ -402,8 +402,8 @@ const AuditTrail = () => {
             </div>
 
             {/* Row 3: Status + Date Range + Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-              {/* Status */}
+            <div className="flex flex-col gap-3 w-full">
+              {/* Status filter - full width di mobile */}
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
@@ -416,37 +416,41 @@ const AuditTrail = () => {
                 <option value="QUARANTINE">KARANTINA</option>
               </select>
 
-              {/* Date range */}
-              <div className="flex items-center gap-2 flex-1">
-                <span className="text-[13px] text-[#6B7280] whitespace-nowrap">Dari</span>
-                <input
-                  type="date"
-                  value={filters.date_from}
-                  onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
-                  className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                />
-                <span className="text-[13px] text-[#6B7280] whitespace-nowrap">Sampai</span>
-                <input
-                  type="date"
-                  value={filters.date_to}
-                  onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
-                  className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                />
+              {/* Date range - 2 kolom di mobile (Dari | Sampai) */}
+              <div className="flex items-center gap-2 w-full">
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <span className="text-[13px] text-[#6B7280] whitespace-nowrap">Dari</span>
+                  <input
+                    type="date"
+                    value={filters.date_from}
+                    onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
+                    className="flex-1 min-w-0 px-2 py-2.5 border border-[#E5E7EB] rounded-lg text-[13px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <span className="text-[13px] text-[#6B7280] whitespace-nowrap">Sampai</span>
+                  <input
+                    type="date"
+                    value={filters.date_to}
+                    onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
+                    className="flex-1 min-w-0 px-2 py-2.5 border border-[#E5E7EB] rounded-lg text-[13px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                  />
+                </div>
               </div>
 
-              {/* Action buttons */}
-              <div className="flex gap-2 flex-wrap">
+              {/* Action buttons - full width row di mobile */}
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                 <button
                   onClick={handleExportToExcel}
                   disabled={records.length === 0}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[#0D4B3B] rounded-lg bg-white text-[13px] text-[#0D4B3B] font-medium hover:bg-[#F0FAF7] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-[#0D4B3B] rounded-lg bg-white text-[13px] text-[#0D4B3B] font-medium hover:bg-[#F0FAF7] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <DocumentArrowDownIcon className="h-4 w-4" />
                   Export ke Excel
                 </button>
                 <button
                   onClick={fetchAuditData}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#4A5568] font-medium hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#4A5568] font-medium hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
                 >
                   <ArrowPathIcon className="h-4 w-4" />
                   Refresh
