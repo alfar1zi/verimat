@@ -73,3 +73,29 @@
     font-size: 22px !important;
   }
 }
+
+@media (max-width: 768px) {
+  /* Prevent horizontal overflow globally */
+  .min-h-screen {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  /* Fix all card containers */
+  [class*="rounded-2xl"],
+  [class*="rounded-xl"] {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+  
+  /* Fix all flex containers that might overflow */
+  [class*="flex"] {
+    min-width: 0;
+  }
+
+  /* Fix date input on mobile - chromium often renders wider than container */
+  input[type="date"] {
+    min-width: 0;
+    width: 100%;
+  }
+}

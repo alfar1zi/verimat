@@ -13,9 +13,9 @@ const AppNavbar = () => {
   };
 
   return (
-    <nav className="bg-white border-b border-[#E5E7EB] sticky top-0 z-40 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+    <nav className="bg-white border-b border-[#E5E7EB] sticky top-0 z-40 shadow-[0_1px_4px_rgba(0,0,0,0.06)] w-full overflow-x-hidden">
       {/* Main row */}
-      <div className="h-14 sm:h-16 px-3 sm:px-6 grid grid-cols-3 items-center">
+      <div className="h-14 sm:h-16 px-3 sm:px-6 grid grid-cols-3 items-center w-full max-w-full">
         {/* Left: Logo */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           <div style={{
@@ -26,7 +26,7 @@ const AppNavbar = () => {
           }}>
             <MedicineLogo size={18} color="#0D4B3B" />
           </div>
-          <span className="font-bold text-[17px] sm:text-[20px] text-[#0D4B3B]">VeriMat</span>
+<span className="font-bold text-[17px] sm:text-[20px] text-[#0D4B3B] truncate">VeriMat</span>
            {/* Admin pill */}
           <div className="sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F3F4F6]">
             {/* User icon */}
@@ -91,10 +91,10 @@ const AppNavbar = () => {
       </div>
 
       {/* Mobile bottom tab bar */}
-      <div className="sm:hidden flex border-t border-[#E5E7EB]">
+      <div className="sm:hidden flex border-t border-[#E5E7EB] w-full overflow-hidden">
         <Link
           to="/home"
-          className={`flex-1 py-2.5 text-center text-[11px] font-medium transition-all duration-200 ${
+          className={`flex-1 min-w-0 py-2.5 text-center text-[11px] font-medium transition-all duration-200 ${
             isActive("/home")
               ? "text-[#0D4B3B] border-b-2 border-[#0D4B3B] bg-[#F0FAF7]"
               : "text-[#6B7280] hover:text-[#0D4B3B]"
@@ -104,7 +104,7 @@ const AppNavbar = () => {
         </Link>
         <Link
           to="/verify"
-          className={`flex-1 py-2.5 text-center text-[11px] font-medium transition-all duration-200 ${
+          className={`flex-1 min-w-0 py-2.5 text-center text-[11px] font-medium transition-all duration-200 ${
             isActive("/verify") || isActive("/dashboard")
               ? "text-[#0D4B3B] border-b-2 border-[#0D4B3B] bg-[#F0FAF7]"
               : "text-[#6B7280] hover:text-[#0D4B3B]"
@@ -114,7 +114,7 @@ const AppNavbar = () => {
         </Link>
         <Link
           to="/audit"
-          className={`flex-1 py-2.5 text-center text-[11px] font-medium transition-all duration-200 ${
+          className={`flex-1 min-w-0 py-2.5 text-center text-[11px] font-medium transition-all duration-200 ${
             isActive("/audit")
               ? "text-[#0D4B3B] border-b-2 border-[#0D4B3B] bg-[#F0FAF7]"
               : "text-[#6B7280] hover:text-[#0D4B3B]"
