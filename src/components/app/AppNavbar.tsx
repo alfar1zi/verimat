@@ -85,6 +85,29 @@ const AppNavbar = () => {
             <span>Logout</span>
           </button>
         </div>
+
+        {/* Right: Admin + Logout for desktop/tablet */}
+        <div className="hidden sm:flex items-center justify-end gap-2 sm:gap-3">
+          {/* Admin pill */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F3F4F6]">
+            {/* User icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#374151">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            <span className="text-[13px] font-medium text-[#374151]">Admin</span>
+          </div>
+          {/* Logout button */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FCA5A5] text-[#DC2626] text-[12px] sm:text-[13px] font-medium hover:bg-[#FEF2F2] transition-all duration-200"
+          >
+            {/* Logout icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+            <span className="hidden sm:inline">Logout</span>
+          </button>
+        </div>
       </div>
 
       {/* Mobile bottom tab bar */}
