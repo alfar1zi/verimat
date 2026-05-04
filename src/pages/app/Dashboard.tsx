@@ -912,7 +912,7 @@ const Dashboard = () => {
               }}>Informasi</span>
             </div>
             <div style={{
-              height: '2px', width: '60px',
+              height: '2px', width: '60px', marginBottom: '22px',
               background: currentStep > 1 ? '#16A34A' : '#E5E7EB',
               transition: 'background 0.3s ease'
             }} />
@@ -938,7 +938,7 @@ const Dashboard = () => {
               }}>Dokumen</span>
             </div>
             <div style={{
-              height: '2px', width: '60px',
+              height: '2px', width: '60px', marginBottom: '22px',
               background: currentStep > 2 ? '#16A34A' : '#E5E7EB',
               transition: 'background 0.3s ease'
             }} />
