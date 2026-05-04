@@ -17,7 +17,7 @@ const AppNavbar = () => {
       {/* Main row */}
       <div className="h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between">
         {/* Left: Logo */}
-        <div className="flex-1 flex items-center gap-1.5 sm:gap-1 whitespace-nowrap">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <div style={{
             width: '32px', height: '32px',
             background: 'rgba(13,75,59,0.1)', borderRadius: '8px',
@@ -27,30 +27,10 @@ const AppNavbar = () => {
             <MedicineLogo size={18} color="#0D4B3B" />
           </div>
           <span className="font-bold text-[17px] sm:text-[20px] text-[#0D4B3B]">VeriMat</span>
-          
-          {/* Admin pill - mobile only */}
-          <div className="sm:hidden flex items-center gap-1 px-2 py-1 rounded-full bg-[#F3F4F6]">
-            {/* User icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#374151">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-            </svg>
-            <span className="text-[13px] font-medium text-[#374151]">Admin</span>
-          </div>
-          {/* Logout button - mobile and tablet */}
-          <button
-            onClick={handleLogout}
-            className="md:hidden flex items-center gap-1 px-2 py-1 rounded-full border border-[#FCA5A5] text-[#DC2626] text-[12px] font-medium hover:bg-[#FEF2F2] transition-all duration-200"
-          >
-            {/* Logout icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-            </svg>
-            <span className="hidden">Logout</span>
-          </button>
         </div>
 
-        {/* Center: Nav tabs (desktop only) */}
-        <div className="hidden md:flex-1 md:flex items-center justify-center gap-1">
+        {/* Center: Nav tabs (tablet and desktop) */}
+        <div className="hidden sm:flex-1 sm:flex items-center justify-center gap-1">
           <Link
             to="/home"
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -83,8 +63,8 @@ const AppNavbar = () => {
           </Link>
         </div>
 
-        {/* Right: Admin + Logout for desktop only */}
-        <div className="hidden md:flex items-center justify-end gap-2 sm:gap-3">
+        {/* Right: Admin + Logout */}
+        <div className="flex items-center justify-end gap-2 sm:gap-3">
           {/* Admin pill */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F3F4F6]">
             {/* User icon */}
@@ -108,7 +88,7 @@ const AppNavbar = () => {
       </div>
 
       {/* Mobile bottom tab bar */}
-      <div className="md:hidden flex border-t border-[#E5E7EB]">
+      <div className="sm:hidden flex border-t border-[#E5E7EB]">
         <Link
           to="/home"
           className={`flex-1 py-2.5 text-center text-[11px] font-medium transition-all duration-200 ${
