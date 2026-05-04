@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpTrayIcon, DocumentIcon, XMarkIcon, ShieldCheckIcon, DocumentTextIcon, CheckCircleIcon, ExclamationCircleIcon, ArrowRightCircleIcon, ChevronLeftIcon, CheckIcon } from "@heroicons/react/24/outline";
 import AppNavbar from "../../components/app/AppNavbar";
+import { FieldTooltip } from "../../components/app/FieldTooltip";
+import { ProgressOverlay } from "../../components/app/ProgressOverlay";
 import { apiFetch } from "../../lib/api";
 
 interface Stats {
@@ -270,6 +272,10 @@ const Dashboard = () => {
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
+  
+  // Progress state
+  const [progressStep, setProgressStep] = useState(0);
+  const [progressError, setProgressError] = useState<string | null>(null);
 
   // Item management functions
   const addItem = () => {
@@ -668,8 +674,8 @@ const Dashboard = () => {
     setFileNames({ ...fileNames, dokumenLain: fileNames.dokumenLain.filter((_, i) => i !== index) });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!suratJalan) {
       setError("Surat Jalan wajib diupload");
       return;
@@ -677,6 +683,22 @@ const Dashboard = () => {
 
     setIsLoading(true);
     setError("");
+    setProgressError(null);
+    setProgressStep(1);
+
+    // Simulate progress steps
+    const simulateProgress = async () => {
+      const stepDurations = [2500, 3000, 2500, 3000, 2000, 1500]; // ms per step
+      
+      for (let i = 0; i < stepDurations.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, stepDurations[i]));
+        if (progressError) return; // Stop if error occurred
+        setProgressStep(i + 2);
+      }
+    };
+
+    // Start progress simulation
+    const progressPromise = simulateProgress();
 
     const formData = new FormData();
     formData.append("surat_jalan", suratJalan);
@@ -707,6 +729,9 @@ const Dashboard = () => {
     }
 
     try {
+      // Wait for progress simulation to complete (or at least reach step 4)
+      await new Promise(resolve => setTimeout(resolve, 10000));
+
       const response = await apiFetch('/api/upload/verify', {
         method: "POST",
         body: formData,
@@ -718,6 +743,9 @@ const Dashboard = () => {
       }
       const data = await response.json();
       
+      // Wait for progress to complete
+      await progressPromise;
+      
       // Clear session on success
       sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(STORAGE_KEY + '_files');
@@ -726,19 +754,35 @@ const Dashboard = () => {
       
       navigate(`/verification/${data.session_id}`);
     } catch (error: any) {
-      if (error.message.includes('fetch')) {
-        setError('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
-      } else {
-        setError(error.message || 'Terjadi kesalahan saat memproses dokumen.');
-      }
+      setProgressError(
+        error.message.includes('fetch') 
+          ? 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'
+          : error.message || 'Terjadi kesalahan saat memproses dokumen.'
+      );
     } finally {
       setIsLoading(false);
+      if (!progressError) {
+        setProgressStep(0);
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-[#F7F8F6]">
       <AppNavbar />
+      
+      {/* Progress Overlay */}
+      {progressStep > 0 && (
+        <ProgressOverlay
+          currentStep={progressStep}
+          error={progressError}
+          onRetry={() => {
+            setProgressError(null);
+            setProgressStep(0);
+            handleSubmit(undefined);
+          }}
+        />
+      )}
       
       <div className="max-w-[900px] mx-auto" style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px)' }}>
         {/* Header */}
@@ -847,7 +891,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-0">
             <div className="flex flex-col items-center">
               <div 
-                onClick={() => currentStep === 2 && setCurrentStep(1)}
+                onClick={() => currentStep > 1 && setCurrentStep(1)}
                 style={{
                   width: '36px', height: '36px', borderRadius: '50%',
                   background: currentStep >= 1 ? '#0D4B3B' : '#E5E7EB',
@@ -856,7 +900,7 @@ const Dashboard = () => {
                   fontSize: '14px', fontWeight: '700',
                   boxShadow: currentStep >= 1 ? '0 0 0 4px rgba(13,75,59,0.15)' : 'none',
                   position: 'relative', zIndex: 1,
-                  cursor: currentStep === 2 ? 'pointer' : 'default'
+                  cursor: currentStep > 1 ? 'pointer' : 'default'
                 }}
               >
                 {currentStep > 1 ? <CheckIcon className="h-4 w-4" /> : '1'}
@@ -868,27 +912,53 @@ const Dashboard = () => {
               }}>Informasi</span>
             </div>
             <div style={{
-              height: '2px', width: '80px',
+              height: '2px', width: '60px',
               background: currentStep > 1 ? '#16A34A' : '#E5E7EB',
               transition: 'background 0.3s ease'
             }} />
             <div className="flex flex-col items-center">
-              <div style={{
-                width: '36px', height: '36px', borderRadius: '50%',
-                background: currentStep >= 2 ? '#0D4B3B' : '#E5E7EB',
-                color: currentStep >= 2 ? 'white' : '#9CA3AF',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '14px', fontWeight: '700',
-                boxShadow: currentStep >= 2 ? '0 0 0 4px rgba(13,75,59,0.15)' : 'none',
-                position: 'relative', zIndex: 1
-              }}>
-                2
+              <div 
+                onClick={() => currentStep > 2 && setCurrentStep(2)}
+                style={{
+                  width: '36px', height: '36px', borderRadius: '50%',
+                  background: currentStep >= 2 ? '#0D4B3B' : '#E5E7EB',
+                  color: currentStep >= 2 ? 'white' : '#9CA3AF',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '14px', fontWeight: '700',
+                  boxShadow: currentStep >= 2 ? '0 0 0 4px rgba(13,75,59,0.15)' : 'none',
+                  position: 'relative', zIndex: 1,
+                  cursor: currentStep > 2 ? 'pointer' : 'default'
+                }}>
+                {currentStep > 2 ? <CheckIcon className="h-4 w-4" /> : '2'}
               </div>
               <span style={{
                 fontSize: '11px', fontWeight: currentStep === 2 ? '600' : '400',
                 color: currentStep === 2 ? '#0D4B3B' : '#9CA3AF',
                 marginTop: '6px', textAlign: 'center'
               }}>Dokumen</span>
+            </div>
+            <div style={{
+              height: '2px', width: '60px',
+              background: currentStep > 2 ? '#16A34A' : '#E5E7EB',
+              transition: 'background 0.3s ease'
+            }} />
+            <div className="flex flex-col items-center">
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: currentStep >= 3 ? '#0D4B3B' : '#E5E7EB',
+                color: currentStep >= 3 ? 'white' : '#9CA3AF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '14px', fontWeight: '700',
+                boxShadow: currentStep >= 3 ? '0 0 0 4px rgba(13,75,59,0.15)' : 'none',
+                position: 'relative', zIndex: 1
+              }}>
+                3
+              </div>
+              <span style={{
+                fontSize: '11px', fontWeight: currentStep === 3 ? '600' : '400',
+                color: currentStep === 3 ? '#0D4B3B' : '#9CA3AF',
+                marginTop: '6px', textAlign: 'center'
+              }}>Konfirmasi</span>
             </div>
           </div>
         </div>
@@ -904,6 +974,7 @@ const Dashboard = () => {
                 <div className="relative" ref={searchRef} data-error={fieldErrors.referenceNumber ? 'true' : undefined} style={{ display: 'flex', flexDirection: 'column' }}>
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nomor Referensi Dokumen <span style={{color: '#DC2626'}}>*</span>
+                    <FieldTooltip text="Nomor unik dari Surat Jalan yang diberikan supplier. Biasanya tercetak di bagian atas dokumen pengiriman." />
                   </label>
                   <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px', minHeight: '16px' }}>Nomor PO, Kontrak, Berita Acara, atau Invoice dari supplier</p>
                   <input
@@ -945,6 +1016,7 @@ const Dashboard = () => {
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Nama Vendor / Supplier
                     <span style={{ color: '#DC2626' }}>*</span>
+                    <FieldTooltip text="Nama perusahaan supplier sesuai yang tertera di dokumen. Sistem akan mencocokkan dengan database PO internal." />
                   </label>
                   <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>Nama perusahaan supplier pengirim</p>
                   <input
@@ -1064,7 +1136,10 @@ const Dashboard = () => {
                             ref={activeMaterialItemId === item.id ? materialSearchRef : null}
                             style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
                           >
-                            <label className="text-[11px] font-medium text-[#374151] mb-1">Kode Bahan</label>
+                            <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
+                              Kode Bahan
+                              <FieldTooltip text="Kode internal bahan baku. Ketik kode (contoh: P1, C2) dan nama bahan akan otomatis terisi." />
+                            </label>
                             <input
                               type="text"
                               value={item.materialCode}
@@ -1153,7 +1228,10 @@ const Dashboard = () => {
 
                           {/* Batch */}
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <label className="text-[11px] font-medium text-[#374151] mb-1">Batch <span className="text-[#DC2626]">*</span></label>
+                            <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
+                              Batch <span className="text-[#DC2626]">*</span>
+                              <FieldTooltip text="Kode produksi unik dari supplier untuk membedakan setiap kelompok produksi bahan baku ini." />
+                            </label>
                             <input
                               type="text"
                               value={item.batchNumber}
@@ -1165,7 +1243,10 @@ const Dashboard = () => {
 
                           {/* Quantity + Unit */}
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <label className="text-[11px] font-medium text-[#374151] mb-1">Jumlah <span className="text-[#DC2626]">*</span></label>
+                            <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
+                              Jumlah <span className="text-[#DC2626]">*</span>
+                              <FieldTooltip text="Jumlah bahan baku yang diterima sesuai Surat Jalan. Akan dicocokkan dengan jumlah di PO." />
+                            </label>
                             <div className="flex gap-2">
                               <input
                                 type="number"
@@ -1195,7 +1276,10 @@ const Dashboard = () => {
 
                           {/* Expiry Date */}
                           <div className="col-span-2 sm:col-span-1" style={{ display: 'flex', flexDirection: 'column' }}>
-                            <label className="text-[11px] font-medium text-[#374151] mb-1">Expired Date <span className="text-[#DC2626]">*</span></label>
+                            <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
+                              Expired Date <span className="text-[#DC2626]">*</span>
+                              <FieldTooltip text="Tanggal kedaluwarsa bahan baku. Sistem akan otomatis memperingatkan jika kurang dari 6 bulan." />
+                            </label>
                             <input
                               type="date"
                               value={item.expiryDate}
@@ -1271,6 +1355,7 @@ const Dashboard = () => {
                 >
                   <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
                     Kondisi Kemasan Fisik <span style={{ color: '#DC2626' }}>*</span>
+                    <FieldTooltip text="Catat kondisi fisik kemasan saat diterima — rusak, basah, sobek, atau baik." />
                   </label>
                   <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px', minHeight: '16px' }}>
                     Kondisi fisik kemasan saat penerimaan
@@ -1304,8 +1389,9 @@ const Dashboard = () => {
 
                 {/* Kolom kanan: Kondisi Penyimpanan / Suhu */}
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     Kondisi Penyimpanan / Suhu
+                    <FieldTooltip text="Pilih sesuai instruksi pada label kemasan. Jika tidak ada instruksi khusus, pilih 'Tidak Diperlukan'." />
                   </label>
                   <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px', minHeight: '16px' }}>
                     Isi jika bahan memerlukan cold chain
@@ -1401,7 +1487,7 @@ const Dashboard = () => {
                 Hapus draft dan mulai ulang
               </button>
             </>
-          ) : (
+          ) : currentStep === 2 ? (
             <>
               <button
                 type="button"
@@ -1433,6 +1519,7 @@ const Dashboard = () => {
                   onFileSelect={(file) => handleFileSelect(file, 'surat_jalan')}
                   onRemove={() => removeFile('surat_jalan')}
                   accept=".pdf,.jpg,.jpeg,.png"
+                  tooltip="Dokumen wajib dari supplier yang berisi daftar barang yang dikirim. Bisa berupa PDF atau foto."
                 />
                 {!suratJalan && typeof navigator !== 'undefined' && navigator.mediaDevices && (
                   <button
@@ -1464,6 +1551,7 @@ const Dashboard = () => {
                   onFileSelect={(file) => handleFileSelect(file, 'coa')}
                   onRemove={() => removeFile('coa')}
                   accept=".pdf,.jpg,.jpeg,.png"
+                  tooltip="Certificate of Analysis — laporan hasil uji kualitas dari supplier. Sangat disarankan untuk bahan aktif."
                 />
                 {!coa && typeof navigator !== 'undefined' && navigator.mediaDevices && (
                   <button
@@ -1495,6 +1583,7 @@ const Dashboard = () => {
                   onFileSelect={(file) => handleFileSelect(file, 'faktur')}
                   onRemove={() => removeFile('faktur')}
                   accept=".pdf,.jpg,.jpeg,.png"
+                  tooltip="Dokumen tagihan dari supplier. Opsional, namun diperlukan untuk rekonsiliasi keuangan."
                 />
                 {!faktur && typeof navigator !== 'undefined' && navigator.mediaDevices && (
                   <button
@@ -1665,42 +1754,27 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
+              {/* Next Button */}
               <button
-                type="submit"
-                onClick={handleSubmit}
-                disabled={!suratJalan || isLoading}
-                className="btn-press"
+                type="button"
+                onClick={() => setCurrentStep(3)}
+                disabled={!suratJalan}
                 style={{
                   width: '100%', height: '52px',
                   background: '#0D4B3B', color: 'white',
                   borderRadius: '8px', fontWeight: '700', fontSize: '16px',
-                  marginTop: '24px', cursor: (!suratJalan || isLoading) ? 'not-allowed' : 'pointer',
-                  border: 'none', opacity: (!suratJalan || isLoading) ? 0.6 : 1,
+                  marginTop: '24px', cursor: !suratJalan ? 'not-allowed' : 'pointer',
+                  border: 'none', opacity: !suratJalan ? 0.6 : 1,
                   transition: 'background 0.2s, transform 0.2s, opacity 0.2s',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                 }}
                 onMouseOver={(e) => {
-                  if (suratJalan && !isLoading) e.currentTarget.style.background = '#0a3d30';
+                  if (suratJalan) e.currentTarget.style.background = '#0a3d30';
                 }}
                 onMouseOut={(e) => e.currentTarget.style.background = '#0D4B3B'}
               >
-                {isLoading ? (
-                  <>
-                    <div style={{
-                      width: '20px', height: '20px',
-                      border: '2px solid white', borderTopColor: 'transparent',
-                      borderRadius: '50%',
-                      animation: 'spin 0.8s linear infinite'
-                    }} />
-                    Sedang Memproses...
-                  </>
-                ) : (
-                  <>
-                    Submit untuk Verifikasi
-                    <ArrowRightCircleIcon className="h-5 w-5" />
-                  </>
-                )}
+                Lanjut ke Konfirmasi
+                <ArrowRightCircleIcon className="h-5 w-5" />
               </button>
               <p style={{
                 fontSize: '12px',
@@ -1721,7 +1795,225 @@ const Dashboard = () => {
                 kami dan tidak disimpan permanen setelah verifikasi selesai.
               </p>
             </>
-          )}
+          ) : currentStep === 3 ? (
+            <>
+              <h2 className="text-[18px] font-bold text-[#0F1A16] mb-6">Konfirmasi Data</h2>
+
+              {/* Warning Banner for Expired Dates */}
+              {items.some(item => {
+                const status = getExpiryStatus(item.expiryDate);
+                return status.isExpired || status.isNearExpiry;
+              }) && (
+                <div className="bg-[#FEF3C7] border border-[#F59E0B] rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <ExclamationCircleIcon className="h-5 w-5 text-[#F59E0B] mt-0.5" />
+                    <div>
+                      <p className="text-[14px] font-semibold text-[#92400E] mb-1">Perhatian: Tanggal Kedaluwarsa</p>
+                      <p className="text-[13px] text-[#92400E]">
+                        Beberapa item memiliki tanggal kedaluwarsa yang perlu perhatian. Pastikan untuk memeriksa kembali sebelum melanjutkan verifikasi.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Informasi Pengiriman Section */}
+              <div className="bg-[#F8FFFE] border border-[#E5E7EB] rounded-xl p-5 mb-5">
+                <h3 className="text-[15px] font-semibold text-[#0D4B3B] mb-4">Informasi Pengiriman</h3>
+                <div className="grid grid-cols-2 gap-4 text-[13px]">
+                  <div>
+                    <p className="text-[#6B7280] mb-1">Nomor Referensi</p>
+                    <p className="text-[#0F1A16] font-medium">{formState.referenceNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#6B7280] mb-1">Nama Vendor</p>
+                    <p className="text-[#0F1A16] font-medium">{formState.vendorName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#6B7280] mb-1">Tanggal Dokumen</p>
+                    <p className="text-[#0F1A16] font-medium">{formState.documentDate}</p>
+                  </div>
+                  <div>
+                    <p className="text-[#6B7280] mb-1">Kondisi Kemasan</p>
+                    <p className="text-[#0F1A16] font-medium">{formState.packagingCondition}</p>
+                  </div>
+                  {formState.storageCondition !== 'Tidak Diperlukan' && (
+                    <div className="col-span-2">
+                      <p className="text-[#6B7280] mb-1">Kondisi Penyimpanan</p>
+                      <p className="text-[#0F1A16] font-medium">
+                        {formState.storageCondition}
+                        {formState.temperature && ` (${formState.temperature}°C)`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Daftar Bahan Section */}
+              <div className="bg-[#F8FFFE] border border-[#E5E7EB] rounded-xl p-5 mb-5">
+                <h3 className="text-[15px] font-semibold text-[#0D4B3B] mb-4">Daftar Bahan ({items.length} item)</h3>
+                <div className="space-y-3">
+                  {items.map((item, index) => {
+                    const expiryStatus = getExpiryStatus(item.expiryDate);
+                    const getExpiryBadge = () => {
+                      if (expiryStatus.isExpired) {
+                        return { bg: '#FEE2E2', text: '#DC2626', label: 'Expired' };
+                      }
+                      if (expiryStatus.isNearExpiry) {
+                        return { bg: '#FEF3C7', text: '#D97706', label: '< 6 bulan' };
+                      }
+                      return { bg: '#DCFCE7', text: '#16A34A', label: 'Aman' };
+                    };
+                    const badge = getExpiryBadge();
+                    
+                    return (
+                      <div key={item.id} className="bg-white border border-[#E5E7EB] rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[13px] font-semibold text-[#0D4B3B]">Item #{index + 1}</span>
+                          <span 
+                            className="px-2 py-0.5 rounded text-[11px] font-semibold"
+                            style={{ background: badge.bg, color: badge.text }}
+                          >
+                            {badge.label}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-[12px]">
+                          <div>
+                            <p className="text-[#6B7280] mb-1">Kode Bahan</p>
+                            <p className="text-[#0F1A16] font-medium">{item.materialCode || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-[#6B7280] mb-1">Nama Bahan</p>
+                            <p className="text-[#0F1A16] font-medium">{item.materialName}</p>
+                          </div>
+                          <div>
+                            <p className="text-[#6B7280] mb-1">Batch</p>
+                            <p className="text-[#0F1A16] font-medium">{item.batchNumber}</p>
+                          </div>
+                          <div>
+                            <p className="text-[#6B7280] mb-1">Jumlah</p>
+                            <p className="text-[#0F1A16] font-medium">{item.quantity} {item.unit}</p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-[#6B7280] mb-1">Expired Date</p>
+                            <p className="text-[#0F1A16] font-medium">{item.expiryDate}</p>
+                            {expiryStatus.label && (
+                              <p className="text-[11px] mt-1" style={{ color: expiryStatus.color }}>
+                                {expiryStatus.label}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Dokumen Section */}
+              <div className="bg-[#F8FFFE] border border-[#E5E7EB] rounded-xl p-5 mb-5">
+                <h3 className="text-[15px] font-semibold text-[#0D4B3B] mb-4">Dokumen yang Diupload</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-lg p-3">
+                    <div className="flex items-center gap-3">
+                      <DocumentIcon className="h-5 w-5 text-[#0D4B3B]" />
+                      <div>
+                        <p className="text-[13px] font-medium text-[#0F1A16]">Surat Jalan</p>
+                        <p className="text-[11px] text-[#6B7280]">{suratJalan?.name || 'Belum diupload'}</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FEE2E2] text-[#991B1B]">Wajib</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-lg p-3">
+                    <div className="flex items-center gap-3">
+                      <DocumentIcon className="h-5 w-5 text-[#0D4B3B]" />
+                      <div>
+                        <p className="text-[13px] font-medium text-[#0F1A16]">Certificate of Analysis (CoA)</p>
+                        <p className="text-[11px] text-[#6B7280]">{coa?.name || 'Belum diupload'}</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FEF9C3] text-[#854D0E]">Direkomendasikan</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-lg p-3">
+                    <div className="flex items-center gap-3">
+                      <DocumentIcon className="h-5 w-5 text-[#0D4B3B]" />
+                      <div>
+                        <p className="text-[13px] font-medium text-[#0F1A16]">Faktur Pajak / Invoice</p>
+                        <p className="text-[11px] text-[#6B7280]">{faktur?.name || 'Belum diupload'}</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F3F4F6] text-[#6B7280]">Opsional</span>
+                  </div>
+                  {dokumenLain.length > 0 && (
+                    <div className="flex items-center justify-between bg-white border border-[#E5E7EB] rounded-lg p-3">
+                      <div className="flex items-center gap-3">
+                        <DocumentIcon className="h-5 w-5 text-[#0D4B3B]" />
+                        <div>
+                          <p className="text-[13px] font-medium text-[#0F1A16]">Dokumen Lain</p>
+                          <p className="text-[11px] text-[#6B7280]">{dokumenLain.length} file</p>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F3F4F6] text-[#6B7280]">Opsional</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Navigation Buttons */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(2)}
+                  style={{
+                    flex: 1, height: '48px',
+                    background: 'white', color: '#0D4B3B',
+                    borderRadius: '8px', fontWeight: '600', fontSize: '14px',
+                    cursor: 'pointer', border: '1.5px solid #0D4B3B',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#F0FAF7'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                >
+                  ← Kembali Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  style={{
+                    flex: 2, height: '48px',
+                    background: '#0D4B3B', color: 'white',
+                    borderRadius: '8px', fontWeight: '600', fontSize: '14px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    border: 'none', opacity: isLoading ? 0.6 : 1,
+                    transition: 'background 0.2s',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                  }}
+                  onMouseOver={(e) => {
+                    if (!isLoading) e.currentTarget.style.background = '#0a3d30';
+                  }}
+                  onMouseOut={(e) => e.currentTarget.style.background = '#0D4B3B'}
+                >
+                  {isLoading ? (
+                    <>
+                      <div style={{
+                        width: '16px', height: '16px',
+                        border: '2px solid white', borderTopColor: 'transparent',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite'
+                      }} />
+                      Sedang Memproses...
+                    </>
+                  ) : (
+                    <>
+                      Konfirmasi & Mulai Verifikasi
+                      <ArrowRightCircleIcon className="h-5 w-5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          ) : null}
 
           {/* Error Message */}
           {error && (
@@ -1797,9 +2089,10 @@ interface DocumentSlotProps {
   onFileSelect: (file: File) => void;
   onRemove: () => void;
   accept: string;
+  tooltip?: string;
 }
 
-function DocumentSlot({ badge, badgeColor, title, description, file, onFileSelect, onRemove, accept }: DocumentSlotProps) {
+function DocumentSlot({ badge, badgeColor, title, description, file, onFileSelect, onRemove, accept, tooltip }: DocumentSlotProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -1823,6 +2116,7 @@ function DocumentSlot({ badge, badgeColor, title, description, file, onFileSelec
       <div className="flex items-center gap-2 mb-2">
         <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${badgeColor}`}>{badge}</span>
         <h3 className="text-[15px] font-semibold text-[#0F1A16]">{title}</h3>
+        {tooltip && <FieldTooltip text={tooltip} />}
       </div>
       <p className="text-[13px] text-[#6B7280] mb-3">{description}</p>
       

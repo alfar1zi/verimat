@@ -32,9 +32,19 @@ const AppNavbar = () => {
         {/* Center: Nav tabs (desktop only) */}
         <div className="hidden sm:flex items-center justify-center gap-1">
           <Link
-            to="/dashboard"
+            to="/home"
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              isActive("/dashboard")
+              isActive("/home")
+                ? "bg-[#0D4B3B] text-white shadow-sm"
+                : "text-[#4A5568] hover:text-[#0D4B3B] hover:bg-[#F0FAF7]"
+            }`}
+          >
+            Home
+          </Link>
+          <Link
+            to="/verify"
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              isActive("/verify") || isActive("/dashboard")
                 ? "bg-[#0D4B3B] text-white shadow-sm"
                 : "text-[#4A5568] hover:text-[#0D4B3B] hover:bg-[#F0FAF7]"
             }`}
@@ -81,14 +91,24 @@ const AppNavbar = () => {
       {/* Mobile bottom tab bar */}
       <div className="sm:hidden flex border-t border-[#E5E7EB]">
         <Link
-          to="/dashboard"
+          to="/home"
           className={`flex-1 py-2.5 text-center text-[11px] font-medium transition-all duration-200 ${
-            isActive("/dashboard")
+            isActive("/home")
               ? "text-[#0D4B3B] border-b-2 border-[#0D4B3B] bg-[#F0FAF7]"
               : "text-[#6B7280] hover:text-[#0D4B3B]"
           }`}
         >
-          Verifikasi Baru
+          Home
+        </Link>
+        <Link
+          to="/verify"
+          className={`flex-1 py-2.5 text-center text-[11px] font-medium transition-all duration-200 ${
+            isActive("/verify") || isActive("/dashboard")
+              ? "text-[#0D4B3B] border-b-2 border-[#0D4B3B] bg-[#F0FAF7]"
+              : "text-[#6B7280] hover:text-[#0D4B3B]"
+          }`}
+        >
+          Verifikasi
         </Link>
         <Link
           to="/audit"
@@ -98,7 +118,7 @@ const AppNavbar = () => {
               : "text-[#6B7280] hover:text-[#0D4B3B]"
           }`}
         >
-          Audit Trail
+          Audit
         </Link>
       </div>
     </nav>

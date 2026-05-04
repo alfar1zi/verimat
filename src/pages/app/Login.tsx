@@ -54,8 +54,9 @@ const Login = () => {
           loginTime: Date.now()
         }));
         localStorage.setItem("verimat_login_time", Date.now().toString());
+        localStorage.setItem("username", data.user.username || username);
         setFailedAttempts(0);
-        navigate("/dashboard");
+        navigate("/home");
       } else {
         const newAttempts = failedAttempts + 1;
         setFailedAttempts(newAttempts);

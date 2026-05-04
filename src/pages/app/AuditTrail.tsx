@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MagnifyingGlassIcon, ClipboardDocumentListIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, ClipboardDocumentListIcon, ArrowPathIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
 import AppNavbar from "../../components/app/AppNavbar";
 import { apiFetch } from "../../lib/api";
+import * as XLSX from 'xlsx';
 
 interface AuditRecord {
   session_id: string;
@@ -23,6 +24,7 @@ const AuditTrail = () => {
   const [records, setRecords] = useState<AuditRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [filters, setFilters] = useState({
     po_number: "",
     material_name: "",
@@ -130,9 +132,194 @@ const AuditTrail = () => {
     return badges[status as keyof typeof badges] || "";
   };
 
+  const handleExportToExcel = () => {
+    const hasActiveFilters = Object.values(filters).some(v => v);
+    
+    if (hasActiveFilters) {
+      setShowExportConfirm(true);
+    } else {
+      performExport();
+    }
+  };
+
+  const performExport = () => {
+    setShowExportConfirm(false);
+
+    // Get username from localStorage
+    const username = localStorage.getItem("username") || "Admin";
+    
+    // Format current date for filename
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const exportDate = now.toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    // Create filter description
+    const filterDescriptions: string[] = [];
+    if (filters.po_number) filterDescriptions.push(`Ref: ${filters.po_number}`);
+    if (filters.material_name) filterDescriptions.push(`Bahan: ${filters.material_name}`);
+    if (filters.material_code) filterDescriptions.push(`Kode: ${filters.material_code}`);
+    if (filters.batch_number) filterDescriptions.push(`Batch: ${filters.batch_number}`);
+    if (filters.vendor_name) filterDescriptions.push(`Vendor: ${filters.vendor_name}`);
+    if (filters.status) filterDescriptions.push(`Status: ${filters.status}`);
+    if (filters.doc_type) filterDescriptions.push(`Jenis: ${filters.doc_type}`);
+    if (filters.date_from) filterDescriptions.push(`Dari: ${filters.date_from}`);
+    if (filters.date_to) filterDescriptions.push(`Sampai: ${filters.date_to}`);
+    const filterDesc = filterDescriptions.length > 0 ? filterDescriptions.join(', ') : 'Tidak ada';
+
+    // Format date for Excel (DD/MM/YYYY HH:MM)
+    const formatExcelDate = (dateStr: string) => {
+      if (!dateStr) return '-';
+      try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '-';
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+      } catch {
+        return '-';
+      }
+    };
+
+    // Prepare data for export
+    const exportData = records.map((record) => ({
+      "Tanggal & Waktu": formatExcelDate(record.verification_time),
+      "Nomor Referensi": record.po_number || '-',
+      "Vendor": record.vendor_name || '-',
+      "Nama Bahan": record.material_name || '-',
+      "Kode Bahan": record.material_code || '-',
+      "Nomor Batch": record.batch_number || '-',
+      "Jumlah": '-', // Not available in current data structure
+      "Satuan": '-', // Not available in current data structure
+      "Status": record.status,
+      "Catatan Mismatch": record.status === 'MISMATCH' ? 'Perlu review manual' : '-',
+    }));
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+
+    // Create header rows
+    const headerRows = [
+      ["LAPORAN AUDIT TRAIL VERIFIKASI BAHAN BAKU"],
+      [`Diekspor oleh: ${username} | Tanggal Export: ${exportDate} | Filter Aktif: ${filterDesc}`],
+      [],
+      Object.keys(exportData[0] || {}),
+    ];
+
+    // Combine header rows with data
+    const wsData = [...headerRows, ...exportData.map(row => Object.values(row))];
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Apply styles to header rows
+    // Row 1: Title
+    ws['A1'].s = {
+      font: { bold: true, sz: 14 },
+      alignment: { horizontal: 'center' }
+    };
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+
+    // Row 2: Metadata
+    ws['A2'].s = {
+      font: { sz: 10 },
+      alignment: { horizontal: 'left' }
+    };
+    ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 9 } });
+
+    // Row 4: Column headers
+    const headerRow = 3; // 0-indexed, so row 4
+    const headers = Object.keys(exportData[0] || {});
+    headers.forEach((header, colIndex) => {
+      const cellRef = XLSX.utils.encode_cell({ r: headerRow, c: colIndex });
+      if (ws[cellRef]) {
+        ws[cellRef].s = {
+          font: { bold: true, sz: 11 },
+          fill: { fgColor: { rgb: "F3F4F6" } },
+          alignment: { horizontal: 'center', vertical: 'center' }
+        };
+      }
+    });
+
+    // Apply color to status cells
+    const statusColIndex = headers.indexOf("Status");
+    exportData.forEach((row, rowIndex) => {
+      const cellRef = XLSX.utils.encode_cell({ r: headerRow + 1 + rowIndex, c: statusColIndex });
+      if (ws[cellRef]) {
+        const status = row.Status;
+        let fillColor = "FFFFFF";
+        if (status === "PASS") fillColor = "DCFCE7";
+        else if (status === "MISMATCH") fillColor = "FEE2E2";
+        else if (status === "INCOMPLETE") fillColor = "F3F4F6";
+        else if (status === "QUARANTINE") fillColor = "FEF3C7";
+        
+        ws[cellRef].s = {
+          font: { bold: true },
+          fill: { fgColor: { rgb: fillColor } },
+          alignment: { horizontal: 'center' }
+        };
+      }
+    });
+
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 20 }, // Tanggal & Waktu
+      { wch: 20 }, // Nomor Referensi
+      { wch: 25 }, // Vendor
+      { wch: 30 }, // Nama Bahan
+      { wch: 12 }, // Kode Bahan
+      { wch: 15 }, // Nomor Batch
+      { wch: 10 }, // Jumlah
+      { wch: 10 }, // Satuan
+      { wch: 12 }, // Status
+      { wch: 25 }, // Catatan Mismatch
+    ];
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Audit Trail");
+
+    // Generate filename and download
+    const filename = `AuditTrail_VeriMat_${dateStr}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F8F6]">
       <AppNavbar />
+      
+      {/* Export Confirmation Dialog */}
+      {showExportConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
+            <h3 className="text-[18px] font-bold text-[#0F1A16] mb-3">Konfirmasi Export</h3>
+            <p className="text-[14px] text-[#6B7280] mb-6">
+              Mengekspor {records.length} baris data dengan filter yang aktif. Lanjutkan?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowExportConfirm(false)}
+                className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-[13px] font-medium text-[#4A5568] hover:bg-[#F9FAFB] transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={performExport}
+                className="px-4 py-2 bg-[#0D4B3B] text-white rounded-lg text-[13px] font-medium hover:bg-[#0a3d30] transition-colors"
+              >
+                Lanjutkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="max-w-[1000px] mx-auto" style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 24px)' }}>
         {/* Header */}
@@ -249,6 +436,14 @@ const AuditTrail = () => {
 
               {/* Action buttons */}
               <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={handleExportToExcel}
+                  disabled={records.length === 0}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[#0D4B3B] rounded-lg bg-white text-[13px] text-[#0D4B3B] font-medium hover:bg-[#F0FAF7] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4" />
+                  Export ke Excel
+                </button>
                 <button
                   onClick={fetchAuditData}
                   className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#4A5568] font-medium hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, CheckIcon, XMarkIcon, PrinterIcon } from "@heroicons/react/24/outline";
 import AppNavbar from "../../components/app/AppNavbar";
 import { apiFetch } from "../../lib/api";
 
@@ -120,23 +120,26 @@ const VerificationResult = () => {
     PASS: {
       icon: CheckCircleIcon,
       iconColor: "#16A34A",
-      badgeBg: "#DCFCE7",
-      badgeColor: "#166534",
-      text: "Semua dokumen sesuai",
+      bg: "#D1FAE5",
+      border: "#10B981",
+      title: "DOKUMEN INI LOLOS VERIFIKASI",
+      subtitle: "Semua data yang tertera pada dokumen sesuai dengan Purchase Order internal. Bahan baku dapat diterima.",
     },
     MISMATCH: {
       icon: XCircleIcon,
       iconColor: "#DC2626",
-      badgeBg: "#FEE2E2",
-      badgeColor: "#991B1B",
-      text: "Ditemukan ketidaksesuaian dokumen",
+      bg: "#FEE2E2",
+      border: "#EF4444",
+      title: "DITEMUKAN KETIDAKSESUAIAN",
+      subtitle: "Ada data yang tidak cocok antara dokumen dan Purchase Order. Bahan baku TIDAK DAPAT diterima sebelum ketidaksesuaian diselesaikan.",
     },
     INCOMPLETE: {
       icon: ExclamationTriangleIcon,
       iconColor: "#D97706",
-      badgeBg: "#FEF9C3",
-      badgeColor: "#854D0E",
-      text: "Dokumen tidak lengkap atau tidak terbaca",
+      bg: "#FEF3C7",
+      border: "#F59E0B",
+      title: "DOKUMEN TIDAK LENGKAP",
+      subtitle: "Sistem tidak dapat membaca semua data yang diperlukan. Cek kelengkapan dokumen dan ulangi verifikasi.",
     },
   };
 
@@ -145,9 +148,11 @@ const VerificationResult = () => {
 
   return (
     <div className="min-h-screen bg-[#F7F8F6]">
-      <AppNavbar />
+      <div className="no-print">
+        <AppNavbar />
+      </div>
       
-      <div className="max-w-[800px] mx-auto px-6 py-8">
+      <div className="max-w-[800px] mx-auto px-6 py-8 no-print">
         {/* Back Button */}
         <button
           onClick={() => navigate("/dashboard")}
@@ -158,16 +163,21 @@ const VerificationResult = () => {
 
         {/* Result Card */}
         <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8">
-          {/* Status Badge Section */}
-          <div className="text-center pb-6 border-b border-[#F3F4F6]">
-            <StatusIcon className="h-16 w-16 mx-auto" style={{ color: config.iconColor }} />
-            <div
-              className="inline-block mt-3 px-7 py-2 rounded-full text-[24px] font-bold"
-              style={{ backgroundColor: config.badgeBg, color: config.badgeColor }}
-            >
-              {data.status}
+          {/* Summary Banner */}
+          <div
+            className="rounded-xl p-6 mb-6"
+            style={{
+              background: config.bg,
+              border: `2px solid ${config.border}`,
+            }}
+          >
+            <div className="flex items-start gap-4">
+              <StatusIcon className="h-12 w-12 flex-shrink-0" style={{ color: config.iconColor }} />
+              <div>
+                <h2 className="text-[20px] font-bold text-[#0F1A16] mb-2">{config.title}</h2>
+                <p className="text-[14px] text-[#4A5568] leading-relaxed">{config.subtitle}</p>
+              </div>
             </div>
-            <p className="text-[15px] text-[#4A5568] mt-2">{config.text}</p>
           </div>
 
           {/* Info Section */}
@@ -207,36 +217,89 @@ const VerificationResult = () => {
 
           {/* Detail Verifikasi Section */}
           <div className="mt-6 bg-[#F9FAFB] rounded-xl p-5">
-            <h3 className="font-semibold text-[#0F1A16] mb-3">Detail Verifikasi</h3>
+            <h3 className="font-semibold text-[#0F1A16] mb-4 text-[16px]">Detail Per Field</h3>
             
-            {data.status === "PASS" ? (
+            {data.validation_result?.validation_results && data.validation_result.validation_results.length > 0 ? (
+              <div className="space-y-3">
+                {data.validation_result.validation_results.map((log, index) => {
+                  const fieldNameMap: Record<string, string> = {
+                    reference_number: "Nomor Referensi",
+                    vendor_name: "Nama Vendor",
+                    material_name: "Nama Bahan",
+                    material_code: "Kode Bahan",
+                    batch_number: "Nomor Batch",
+                    quantity: "Jumlah",
+                    expiry_date: "Tanggal Kedaluwarsa",
+                    document_date: "Tanggal Dokumen",
+                    packaging_condition: "Kondisi Kemasan",
+                    storage_condition: "Kondisi Penyimpanan",
+                  };
+                  const displayName = fieldNameMap[log.field_name] || log.field_name.replace(/_/g, ' ');
+                  
+                  const isMatch = log.status === 'MATCH';
+                  const isMismatch = log.status === 'MISMATCH';
+                  const isNotFound = log.status === 'INCOMPLETE' || log.status === 'NOT_FOUND';
+                  
+                  return (
+                    <div
+                      key={index}
+                      className="bg-white rounded-lg p-4 border"
+                      style={{
+                        borderColor: isMismatch ? '#FECACA' : isNotFound ? '#FDE68A' : '#BBF7D0',
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          {isMatch ? (
+                            <CheckIcon className="h-5 w-5 text-[#16A34A]" />
+                          ) : isMismatch ? (
+                            <XMarkIcon className="h-5 w-5 text-[#DC2626]" />
+                          ) : (
+                            <ExclamationTriangleIcon className="h-5 w-5 text-[#D97706]" />
+                          )}
+                          <span className="font-medium text-[#0F1A16] text-[14px]">{displayName}</span>
+                        </div>
+                        <span
+                          className="px-2 py-0.5 rounded text-[11px] font-semibold"
+                          style={{
+                            background: isMatch ? '#DCFCE7' : isMismatch ? '#FEE2E2' : '#FEF3C7',
+                            color: isMatch ? '#166534' : isMismatch ? '#991B1B' : '#854D0E',
+                          }}
+                        >
+                          {isMatch ? '✓ Sesuai' : isMismatch ? '✗ Tidak Sesuai' : '⚠ Tidak Ditemukan'}
+                        </span>
+                      </div>
+                      
+                      {(log.actual_value || log.expected_value) && (
+                        <div className="grid grid-cols-2 gap-3 mb-2">
+                          <div>
+                            <p className="text-[11px] text-[#9CA3AF] uppercase tracking-wider mb-1">Nilai Dokumen</p>
+                            <p className="text-[13px] font-medium text-[#0F1A16]">{log.actual_value || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-[#9CA3AF] uppercase tracking-wider mb-1">Nilai PO</p>
+                            <p className="text-[13px] font-medium text-[#0F1A16]">{log.expected_value || '-'}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {log.explanation && (
+                        <p
+                          className="text-[12px] mt-2"
+                          style={{ color: isMismatch ? '#DC2626' : isNotFound ? '#D97706' : '#6B7280' }}
+                        >
+                          {log.explanation}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : data.status === "PASS" ? (
               <div className="flex items-center gap-2 text-[15px] text-[#374151]">
                 <CheckIcon className="h-5 w-5 text-[#16A34A] flex-shrink-0" />
                 <span>Semua field dokumen telah diverifikasi dan sesuai dengan data Purchase Order internal.</span>
               </div>
-            ) : data.validation_result?.validation_results && data.validation_result.validation_results.length > 0 ? (
-              <ul className="space-y-3">
-                {data.validation_result.validation_results.map((log, index) => (
-                  <li key={index} className="flex items-start gap-3 p-3 rounded-lg" style={{
-                    background: log.status === 'MISMATCH' ? '#FEF2F2' : log.status === 'INCOMPLETE' ? '#FFFBEB' : '#F0FDF4',
-                    border: `1px solid ${log.status === 'MISMATCH' ? '#FECACA' : log.status === 'INCOMPLETE' ? '#FDE68A' : '#BBF7D0'}` 
-                  }}>
-                    {log.status === 'MISMATCH' ? (
-                      <XMarkIcon className="h-5 w-5 text-[#DC2626] flex-shrink-0 mt-0.5" />
-                    ) : log.status === 'INCOMPLETE' ? (
-                      <ExclamationTriangleIcon className="h-5 w-5 text-[#D97706] flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <CheckIcon className="h-5 w-5 text-[#16A34A] flex-shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                      <p className="text-[14px] font-medium text-[#0F1A16] capitalize">
-                        {log.field_name.replace(/_/g, ' ')}
-                      </p>
-                      <p className="text-[13px] text-[#4A5568] mt-0.5">{log.explanation}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
             ) : (
               <p className="text-[15px] text-[#374151]">{data.explanation || 'Tidak ada detail tersedia.'}</p>
             )}
@@ -245,20 +308,93 @@ const VerificationResult = () => {
           {/* Action Buttons */}
           <div className="mt-7 flex gap-3">
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/verify")}
               className="flex-1 bg-[#0D4B3B] text-white rounded-lg px-6 py-3 font-semibold text-[15px] hover:bg-[#0a3d30] transition"
             >
-              Verifikasi Dokumen Lain
+              ← Verifikasi Baru
             </button>
-            <button
-              onClick={() => navigate("/audit")}
-              className="flex-1 border-[1.5px] border-[#0D4B3B] text-[#0D4B3B] rounded-lg px-6 py-3 font-semibold text-[15px] hover:bg-[#F7F8F6] transition"
-            >
-              Lihat Audit Trail
-            </button>
+            {data.status === "PASS" && (
+              <button
+                onClick={() => window.print()}
+                className="flex-1 border-[1.5px] border-[#0D4B3B] text-[#0D4B3B] rounded-lg px-6 py-3 font-semibold text-[15px] hover:bg-[#F7F8F6] transition flex items-center justify-center gap-2"
+              >
+                <PrinterIcon className="h-5 w-5" />
+                Cetak Tanda Terima
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Print Receipt Section - Only visible when printing */}
+        <div className="print-only hidden">
+          <div className="p-8 border-2 border-black">
+            {/* Header */}
+            <div className="text-center mb-6 border-b-2 border-black pb-4">
+              <h1 className="text-2xl font-bold">TANDA TERIMA BAHAN BAKU</h1>
+              <p className="text-sm mt-1">VeriMat - Sistem Verifikasi Dokumen Farmasi</p>
+              <p className="text-xs mt-2">{formatDate(data.verification_time || data.created_at || '')}</p>
+            </div>
+
+            {/* Summary Table */}
+            <table className="w-full mb-6">
+              <tbody>
+                <tr>
+                  <td className="py-2 font-semibold">Nama Bahan:</td>
+                  <td className="py-2">{data.material_name || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 font-semibold">Kode Bahan:</td>
+                  <td className="py-2">{data.material_code || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 font-semibold">Nomor Batch:</td>
+                  <td className="py-2">{data.batch_number || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 font-semibold">Jumlah:</td>
+                  <td className="py-2">{data.quantity ? `${data.quantity} ${data.unit || ''}` : '-'}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 font-semibold">Status:</td>
+                  <td className="py-2 font-bold text-green-600">{data.status}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* Footer */}
+            <div className="mt-8 pt-4 border-t-2 border-black">
+              <div className="flex justify-between mb-4">
+                <div>
+                  <p className="text-sm font-semibold">Diterima oleh:</p>
+                  <div className="border-b border-black w-48 mt-2"></div>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Tanggal:</p>
+                  <div className="border-b border-black w-32 mt-2"></div>
+                </div>
+              </div>
+              <p className="text-xs text-center mt-4">
+                Dokumen ini diverifikasi secara otomatis oleh sistem VeriMat. ID Verifikasi: {data.session_id}
+              </p>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Print CSS */}
+      <style>{`
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+          .print-only {
+            display: block !important;
+          }
+          body {
+            background: white !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

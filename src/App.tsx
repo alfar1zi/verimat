@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound.tsx";
 import ProtectedRoute from "./pages/app/ProtectedRoute.tsx";
 
 const Login = lazy(() => import("./pages/app/Login.tsx"));
+const Home = lazy(() => import("./pages/app/Home.tsx"));
 const Dashboard = lazy(() => import("./pages/app/Dashboard.tsx"));
 const VerificationResult = lazy(() => import("./pages/app/VerificationResult.tsx"));
 const AuditTrail = lazy(() => import("./pages/app/AuditTrail.tsx"));
@@ -41,7 +42,8 @@ const App = () => (
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/verify" element={<Dashboard />} />
               <Route path="/verification/:id" element={<VerificationResult />} />
               <Route path="/audit" element={<AuditTrail />} />
             </Route>
