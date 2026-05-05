@@ -6,9 +6,15 @@ import { apiFetch } from "../../lib/api";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface Stats {
-  total: number;
-  pass: number;
-  failed: number;
+  todayTotal: number;
+  weekTotal: number;
+  passRate: number;
+  chartData: {
+    pass: number;
+    mismatch: number;
+    incomplete: number;
+    total: number;
+  };
 }
 
 interface AuditLog {
@@ -19,6 +25,7 @@ interface AuditLog {
   material_name: string;
   status: "PASS" | "MISMATCH" | "INCOMPLETE";
   created_at: string;
+  verification_time?: string;
 }
 
 const COLORS = {
@@ -30,9 +37,8 @@ const COLORS = {
 export default function Home() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("User");
-  const [stats, setStats] = useState<Stats>({ total: 0, pass: 0, failed: 0 });
+  const [stats, setStats] = useState<Stats>({ todayTotal: 0, weekTotal: 0, passRate: 0, chartData: { pass: 0, mismatch: 0, incomplete: 0, total: 0 } });
   const [recentLogs, setRecentLogs] = useState<AuditLog[]>([]);
-  const [chartData, setChartData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Format date in Indonesian
@@ -71,36 +77,8 @@ export default function Home() {
         const storedUser = localStorage.getItem("username");
         if (storedUser) setUsername(storedUser);
 
-        // Fetch stats
-        const statsResponse = await apiFetch("/api/audit/stats");
-        if (statsResponse.ok) {
-          const statsData = await statsResponse.json();
-          setStats(statsData);
-        }
-
-        // Fetch recent logs
-        const logsResponse = await apiFetch("/api/audit/logs?limit=5");
-        if (logsResponse.ok) {
-          const logsData = await logsResponse.json();
-          setRecentLogs(logsData.logs || []);
-        }
-
-        // Fetch chart data (last 30 days)
-        const chartResponse = await apiFetch("/api/audit/logs?days=30");
-        if (chartResponse.ok) {
-          const chartDataRaw = await chartResponse.json();
-          const logs = chartDataRaw.logs || [];
-          
-          const passCount = logs.filter((log: AuditLog) => log.status === "PASS").length;
-          const mismatchCount = logs.filter((log: AuditLog) => log.status === "MISMATCH").length;
-          const incompleteCount = logs.filter((log: AuditLog) => log.status === "INCOMPLETE").length;
-
-          setChartData([
-            { name: "PASS", value: passCount, color: COLORS.PASS },
-            { name: "MISMATCH", value: mismatchCount, color: COLORS.MISMATCH },
-            { name: "INCOMPLETE", value: incompleteCount, color: COLORS.INCOMPLETE },
-          ]);
-        }
+        await fetchHomeStats();
+        await fetchRecentVerifications();
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -111,8 +89,83 @@ export default function Home() {
     fetchData();
   }, []);
 
-  const passRate = stats.total > 0 ? Math.round((stats.pass / stats.total) * 100) : 0;
-  const passRateColor = passRate >= 80 ? "#10B981" : passRate >= 60 ? "#F59E0B" : "#EF4444";
+  const fetchHomeStats = async () => {
+    try {
+      const response = await apiFetch('/api/audit/list');
+      if (!response.ok) return;
+      const data = await response.json();
+      
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(todayStart);
+      weekStart.setDate(weekStart.getDate() - 7);
+      
+      // Filter berdasarkan tanggal verifikasi
+      const todayData = data.filter((r: any) => {
+        if (!r.verification_time) return false;
+        const d = new Date(r.verification_time);
+        return d >= todayStart;
+      });
+      
+      const weekData = data.filter((r: any) => {
+        if (!r.verification_time) return false;
+        const d = new Date(r.verification_time);
+        return d >= weekStart;
+      });
+      
+      // Hitung pass rate dari semua data (30 hari ke belakang)
+      const thirtyDaysAgo = new Date(todayStart);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const last30Days = data.filter((r: any) => {
+        if (!r.verification_time) return false;
+        return new Date(r.verification_time) >= thirtyDaysAgo;
+      });
+      
+      const passCount = last30Days.filter((r: any) => r.status === 'PASS').length;
+      const mismatchCount = last30Days.filter((r: any) => r.status === 'MISMATCH').length;
+      const incompleteCount = last30Days.filter((r: any) => r.status === 'INCOMPLETE').length;
+      const passRate = last30Days.length > 0 
+        ? Math.round((passCount / last30Days.length) * 100) 
+        : 0;
+      
+      setStats({
+        todayTotal: todayData.length,
+        weekTotal: weekData.length,
+        passRate: passRate,
+        chartData: {
+          pass: passCount,
+          mismatch: mismatchCount,
+          incomplete: incompleteCount,
+          total: last30Days.length,
+        }
+      });
+    } catch (err) {
+      console.error('Failed to fetch home stats:', err);
+    }
+  };
+
+  const fetchRecentVerifications = async () => {
+    try {
+      const response = await apiFetch('/api/audit/list');
+      if (!response.ok) return;
+      const data = await response.json();
+      // Ambil 5 terbaru, sort berdasarkan verification_time descending
+      const sorted = [...data].sort((a: any, b: any) => {
+        return new Date(b.verification_time).getTime() - new Date(a.verification_time).getTime();
+      });
+      setRecentLogs(sorted.slice(0, 5));
+    } catch (err) {
+      console.error('Failed to fetch recent:', err);
+    }
+  };
+
+  const passRateColor = stats.passRate >= 80 ? "#10B981" : stats.passRate >= 60 ? "#F59E0B" : "#EF4444";
+
+  const chartData = [
+    { name: 'PASS', value: stats.chartData.pass, color: '#16A34A' },
+    { name: 'MISMATCH', value: stats.chartData.mismatch, color: '#DC2626' },
+    { name: 'INCOMPLETE', value: stats.chartData.incomplete, color: '#6B7280' },
+  ].filter(d => d.value > 0);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -179,7 +232,7 @@ export default function Home() {
               <p className="text-[13px] font-medium text-[#6B7280]">Verifikasi Hari Ini</p>
               <DocumentIcon className="h-5 w-5 text-[#0D4B3B]" />
             </div>
-            <p className="text-[32px] font-bold text-[#0F1A16] mb-1">{stats.total}</p>
+            <p className="text-[32px] font-bold text-[#0F1A16] mb-1">{stats.todayTotal}</p>
             <p className="text-[12px] text-[#6B7280]">Total verifikasi hari ini</p>
           </div>
 
@@ -192,8 +245,8 @@ export default function Home() {
               <p className="text-[13px] font-medium text-[#6B7280]">Total Minggu Ini</p>
               <ClockIcon className="h-5 w-5 text-[#3B82F6]" />
             </div>
-            <p className="text-[32px] font-bold text-[#0F1A16] mb-1">{stats.total * 7}</p>
-            <p className="text-[12px] text-[#6B7280]">Estimasi total mingguan</p>
+            <p className="text-[32px] font-bold text-[#0F1A16] mb-1">{stats.weekTotal}</p>
+            <p className="text-[12px] text-[#6B7280]">Total verifikasi minggu ini</p>
           </div>
 
           {/* Tingkat Kelulusan */}
@@ -206,7 +259,7 @@ export default function Home() {
               <CheckCircleIcon className="h-5 w-5" style={{ color: passRateColor }} />
             </div>
             <p className="text-[32px] font-bold text-[#0F1A16] mb-1" style={{ color: passRateColor }}>
-              {passRate}%
+              {stats.passRate}%
             </p>
             <p className="text-[12px] text-[#6B7280]">Persentase PASS dari total</p>
           </div>
@@ -253,7 +306,7 @@ export default function Home() {
                           <p className="text-[11px] text-[#6B7280]">{log.reference_number}</p>
                         </div>
                       </div>
-                      <p className="text-[11px] text-[#9CA3AF]">{getRelativeTime(log.created_at)}</p>
+                      <p className="text-[11px] text-[#9CA3AF]">{getRelativeTime(log.verification_time || log.created_at)}</p>
                     </div>
                   );
                 })}
@@ -264,14 +317,14 @@ export default function Home() {
           {/* BAGIAN 4 — Grafik Donut */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E5E7EB]">
             <h2 className="text-[18px] font-bold text-[#0F1A16] mb-4">Statistik 30 Hari Terakhir</h2>
-            <div style={{ height: "250px" }}>
-              <ResponsiveContainer width="100%" height="100%">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
+                    innerRadius={50}
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
@@ -280,15 +333,7 @@ export default function Home() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    formatter={(value: number) => [value, ""]}
-                    contentStyle={{
-                      background: "white",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                    }}
-                  />
+                  <Tooltip formatter={(value: number, name: string) => [`${value} verifikasi`, name]} />
                   <Legend
                     verticalAlign="bottom"
                     height={36}
@@ -299,9 +344,10 @@ export default function Home() {
                   />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
-            {chartData.length > 0 && chartData.every((d) => d.value === 0) && (
-              <p className="text-center text-[13px] text-[#6B7280] mt-4">Belum ada data 30 hari terakhir</p>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[200px] text-[#9CA3AF]">
+                <p className="text-[13px]">Belum ada data untuk 30 hari terakhir</p>
+              </div>
             )}
           </div>
         </div>
