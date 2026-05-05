@@ -2096,6 +2096,15 @@ interface DocumentSlotProps {
 function DocumentSlot({ badge, badgeColor, title, description, file, onFileSelect, onRemove, accept, tooltip }: DocumentSlotProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) { setPreviewUrl(null); return; }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   const handleFileSelect = (selectedFile: File) => {
     if (selectedFile.size > 10 * 1024 * 1024) {
@@ -2136,8 +2145,17 @@ function DocumentSlot({ badge, badgeColor, title, description, file, onFileSelec
         <div className="bg-[#DCFCE7] border border-[#16A34A] rounded-lg px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <DocumentIcon className="h-5 w-5 text-[#16A34A]" />
-            <span className="text-[14px] text-[#0F1A16] font-medium">{file.name}</span>
+            <span 
+              className="text-[14px] text-[#0F1A16] font-medium truncate max-w-[160px] sm:max-w-[250px] cursor-pointer hover:text-[#0D4B3B]"
+              title={file.name}
+              onClick={(e) => { e.stopPropagation(); setShowPreview(true); }}
+            >
+              {file.name.length > 25 
+                ? file.name.substring(0, 12) + '...' + file.name.slice(-8) 
+                : file.name}
+            </span>
             <span className="text-[12px] text-[#6B7280]">({(file.size / 1024).toFixed(1)} KB)</span>
+            <span className="text-[10px] text-[#0D4B3B] ml-1">(tap untuk preview)</span>
           </div>
           <button
             type="button"
@@ -2162,6 +2180,55 @@ function DocumentSlot({ badge, badgeColor, title, description, file, onFileSelec
           <div className="flex items-center justify-center gap-2">
             <ArrowUpTrayIcon className="h-5 w-5 text-[#0D4B3B]" />
             <span className="text-[14px] text-[#6B7280]">Pilih file atau drag & drop</span>
+          </div>
+        </div>
+      )}
+      
+      {showPreview && previewUrl && (
+        <div 
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowPreview(false)}
+        >
+          <div 
+            className="bg-white rounded-xl p-4 max-w-[90vw] max-h-[85vh] flex flex-col gap-3 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[13px] font-semibold text-[#0F1A16]">Preview Dokumen</p>
+                <p className="text-[11px] text-[#6B7280] truncate max-w-[250px]">{file.name}</p>
+              </div>
+              <button 
+                onClick={() => setShowPreview(false)}
+                className="text-[#6B7280] hover:text-[#0F1A16] p-1"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            
+            {/* Preview content */}
+            <div className="overflow-auto flex-1 flex items-center justify-center">
+              {file.type === 'application/pdf' ? (
+                <iframe 
+                  src={previewUrl} 
+                  className="w-full"
+                  style={{ height: '70vh', minWidth: '60vw' }}
+                  title="PDF Preview"
+                />
+              ) : (
+                <img 
+                  src={previewUrl} 
+                  alt="Preview" 
+                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                />
+              )}
+            </div>
+            
+            {/* Size info */}
+            <p className="text-[11px] text-[#9CA3AF] text-center">
+              {(file.size / 1024).toFixed(1)} KB — Klik di luar untuk menutup
+            </p>
           </div>
         </div>
       )}
