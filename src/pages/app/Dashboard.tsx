@@ -1677,20 +1677,25 @@ const Dashboard = () => {
                   
                   {dokumenLain.length > 0 && (
                     <div style={{marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px'}}>
-                      {/* box buat nama file */}
                       {dokumenLain.map((file, index) => (
-                        <div key={index} className="bg-[#DCFCE7] border border-[#16A34A] rounded-lg px-4 py-3 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <DocumentIcon className="h-4 w-4 text-[#16A34A]" />
-                            <span className="text-[13px] text-[#0F1A16]">{file.name}</span>
-                            <span className="text-[11px] text-[#6B7280]">({(file.size / 1024).toFixed(1)} KB)</span>
+                        <div key={index} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          background: '#DCFCE7', border: '1px solid #16A34A', borderRadius: '8px',
+                          padding: '8px 12px'
+                        }}>
+                          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                            <DocumentIcon style={{height: '16px', width: '16px', color: '#16A34A'}} />
+                            <span style={{fontSize: '13px', color: '#0F1A16'}}>{file.name}</span>
+                            <span style={{fontSize: '11px', color: '#6B7280'}}>({(file.size / 1024).toFixed(1)} KB)</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => removeDokumenLain(index)}
-                            className="text-[#DC2626] hover:text-[#991B1B]"
+                            style={{background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', padding: 0}}
+                            onMouseEnter={(e) => e.currentTarget.style.color = '#991B1B'}
+                            onMouseLeave={(e) => e.currentTarget.style.color = '#DC2626'}
                           >
-                            <XMarkIcon className="h-4 w-4" />
+                            <XMarkIcon style={{height: '16px', width: '16px'}} />
                           </button>
                         </div>
                       ))}
