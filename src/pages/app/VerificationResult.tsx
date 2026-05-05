@@ -248,12 +248,12 @@ const VerificationResult = () => {
   const StatusIcon = config.icon;
 
   return (
-    <div className="min-h-screen bg-[#F7F8F6]">
+    <div className="min-h-screen bg-[#F7F8F6] overflow-x-hidden">
       <div className="no-print">
         <AppNavbar />
       </div>
       
-      <div className="max-w-[800px] mx-auto px-6 py-8 no-print">
+      <div className="max-w-[800px] mx-auto px-3 sm:px-6 py-6 sm:py-8 no-print">
         {/* Back Button */}
         <button
           onClick={() => navigate("/verify")}
@@ -263,7 +263,7 @@ const VerificationResult = () => {
         </button>
 
         {/* Result Card */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8">
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-4 sm:p-8 overflow-hidden">
           {/* Summary Banner */}
           <div
             className="rounded-xl p-6 mb-6"
@@ -282,7 +282,7 @@ const VerificationResult = () => {
           </div>
 
           {/* Info Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 overflow-hidden">
             {[
               { label: 'Nomor Referensi', value: data.reference_number || data.po_number },
               { label: 'Nama Vendor', value: data.vendor_name },
@@ -298,7 +298,7 @@ const VerificationResult = () => {
               { label: 'Session ID', value: data.session_id, mono: true, truncate: true },
             ].map((item, idx) => (
               item.value ? (
-                <div key={idx} className="bg-[#F9FAFB] rounded-xl p-4 border border-[#F3F4F6]">
+                <div key={idx} className="bg-[#F9FAFB] rounded-xl p-3 sm:p-4 border border-[#F3F4F6] overflow-hidden min-w-0">
                   <p className="text-[11px] text-[#9CA3AF] uppercase tracking-wider font-medium mb-1.5">
                     {item.label}
                   </p>
@@ -307,7 +307,7 @@ const VerificationResult = () => {
                       {item.value}
                     </span>
                   ) : (
-                    <p className={`text-[15px] font-medium text-[#0F1A16] ${item.mono ? 'font-mono' : ''} ${item.truncate ? 'truncate' : ''} ${item.highlight ? 'text-[#0D4B3B]' : ''}`}>
+                    <p className={`text-[14px] sm:text-[15px] font-medium text-[#0F1A16] ${item.mono ? 'font-mono' : ''} ${item.truncate ? 'truncate max-w-full' : ''} ${item.highlight ? 'text-[#0D4B3B]' : ''}`}>
                       {item.format ? formatDate(String(item.value)) : String(item.value)}
                     </p>
                   )}
