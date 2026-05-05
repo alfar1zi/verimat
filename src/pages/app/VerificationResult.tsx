@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, CheckIcon, XMarkIcon, PrinterIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, CheckIcon, XMarkIcon, PrinterIcon, DocumentTextIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import AppNavbar from "../../components/app/AppNavbar";
 import { apiFetch } from "../../lib/api";
 
@@ -84,6 +84,107 @@ const VerificationResult = () => {
       halal: "Dokumen Halal",
     };
     return labels[type] || type;
+  };
+
+  const translateFieldName = (fieldName: string): string => {
+    const map: Record<string, string> = {
+      'vendor_name': 'Nama Vendor/Supplier',
+      'material_name': 'Nama Bahan Baku',
+      'material_code': 'Kode Bahan',
+      'batch_number': 'Nomor Batch',
+      'quantity': 'Jumlah',
+      'unit': 'Satuan',
+      'expiry_date': 'Expired Date',
+      'storage_condition': 'Kondisi Penyimpanan',
+      'packaging_condition': 'Kondisi Kemasan',
+      'document_date': 'Tanggal Dokumen',
+      'po_number': 'Nomor PO',
+      'reference_number': 'Nomor Referensi',
+      'summary': 'Ringkasan Verifikasi',
+    };
+    return map[fieldName] || fieldName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
+
+  const handlePrint = () => {
+    const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tanda Terima - ${data.reference_number || data.po_number}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #000; padding: 20mm; }
+    .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 16px; }
+    .header h1 { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+    .header h2 { font-size: 13px; margin-top: 4px; }
+    .status-badge { display: inline-block; padding: 4px 16px; border-radius: 4px; 
+                    font-weight: bold; font-size: 14px; margin: 12px 0;
+                    background: #D1FAE5; color: #065F46; border: 1px solid #065F46; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th { background: #f5f5f5; font-size: 11px; text-transform: uppercase; padding: 8px; text-align: left; border: 1px solid #ccc; }
+    td { padding: 8px; border: 1px solid #ccc; font-size: 12px; }
+    .footer { margin-top: 32px; display: flex; justify-content: space-between; }
+    .signature-box { width: 45%; }
+    .signature-line { border-top: 1px solid #000; margin-top: 48px; padding-top: 4px; font-size: 11px; }
+    .note { font-size: 10px; color: #666; margin-top: 16px; border-top: 1px solid #ccc; padding-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>TANDA TERIMA BAHAN BAKU</h1>
+    <h2>VeriMat — Sistem Verifikasi Dokumen Farmasi</h2>
+    <p style="font-size:11px;margin-top:4px;">Diterbitkan: ${new Date().toLocaleDateString('id-ID', {weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+  </div>
+  
+  <div style="text-align:center">
+    <div class="status-badge">✓ DOKUMEN LOLOS VERIFIKASI (PASS)</div>
+  </div>
+  
+  <table>
+    <tr><th>Field</th><th>Keterangan</th></tr>
+    <tr><td>Nomor Referensi</td><td>${data.reference_number || data.po_number || '-'}</td></tr>
+    <tr><td>Nama Vendor</td><td>${data.vendor_name || '-'}</td></tr>
+    <tr><td>Kode Bahan</td><td>${data.material_code || '-'}</td></tr>
+    <tr><td>Nama Bahan Baku</td><td>${data.material_name || '-'}</td></tr>
+    <tr><td>Nomor Batch</td><td>${data.batch_number || '-'}</td></tr>
+    <tr><td>Jumlah</td><td>${data.quantity ? data.quantity + ' ' + (data.unit || '') : '-'}</td></tr>
+    <tr><td>Expired Date</td><td>${data.expiry_date || '-'}</td></tr>
+    <tr><td>Kondisi Kemasan</td><td>${data.packaging_condition || '-'}</td></tr>
+    <tr><td>Kondisi Penyimpanan</td><td>${data.storage_condition || '-'}</td></tr>
+    <tr><td>Tanggal Verifikasi</td><td>${new Date().toLocaleDateString('id-ID')}</td></tr>
+    <tr><td>ID Verifikasi</td><td style="font-family:monospace;font-size:10px">${data.session_id || '-'}</td></tr>
+  </table>
+  
+  <div class="footer">
+    <div class="signature-box">
+      <p>Diterima oleh (Staf Gudang):</p>
+      <div class="signature-line">Nama & Tanda Tangan</div>
+    </div>
+    <div class="signature-box" style="text-align:right">
+      <p>Disetujui oleh (QC):</p>
+      <div class="signature-line">Nama & Tanda Tangan</div>
+    </div>
+  </div>
+  
+  <div class="note">
+    Dokumen ini diverifikasi secara otomatis oleh sistem VeriMat sesuai standar CPOB. 
+    ID Sesi: ${data.session_id || '-'}. Cetak dokumen ini sebagai arsip fisik.
+  </div>
+</body>
+</html>
+`;
+  
+  const printWindow = window.open('', '_blank', 'width=800,height=600');
+  if (printWindow) {
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  }
   };
 
   if (isLoading) {
@@ -219,22 +320,23 @@ const VerificationResult = () => {
           <div className="mt-6 bg-[#F9FAFB] rounded-xl p-5">
             <h3 className="font-semibold text-[#0F1A16] mb-4 text-[16px]">Detail Per Field</h3>
             
-            {data.validation_result?.validation_results && data.validation_result.validation_results.length > 0 ? (
+            {data.status === "PASS" ? (
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0]">
+                <CheckCircleIcon className="h-6 w-6 text-[#16A34A] flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[14px] font-semibold text-[#15803D]">Semua data sesuai dengan Purchase Order</p>
+                  <p className="text-[13px] text-[#4A5568] mt-1">
+                    Nama vendor, kode bahan, nomor batch, jumlah, dan kondisi penyimpanan telah dicocokkan 
+                    dengan data PO internal. Bahan baku dapat diterima dan diproses lebih lanjut.
+                  </p>
+                </div>
+              </div>
+            ) : data.validation_result?.validation_results && data.validation_result.validation_results.length > 0 ? (
               <div className="space-y-3">
-                {data.validation_result.validation_results.map((log, index) => {
-                  const fieldNameMap: Record<string, string> = {
-                    reference_number: "Nomor Referensi",
-                    vendor_name: "Nama Vendor",
-                    material_name: "Nama Bahan",
-                    material_code: "Kode Bahan",
-                    batch_number: "Nomor Batch",
-                    quantity: "Jumlah",
-                    expiry_date: "Tanggal Kedaluwarsa",
-                    document_date: "Tanggal Dokumen",
-                    packaging_condition: "Kondisi Kemasan",
-                    storage_condition: "Kondisi Penyimpanan",
-                  };
-                  const displayName = fieldNameMap[log.field_name] || log.field_name.replace(/_/g, ' ');
+                {data.validation_result.validation_results
+                  .filter(log => log.field_name !== 'summary')
+                  .map((log, index) => {
+                  const displayName = translateFieldName(log.field_name);
                   
                   const isMatch = log.status === 'MATCH';
                   const isMismatch = log.status === 'MISMATCH';
@@ -295,28 +397,36 @@ const VerificationResult = () => {
                   );
                 })}
               </div>
-            ) : data.status === "PASS" ? (
-              <div className="flex items-center gap-2 text-[15px] text-[#374151]">
-                <CheckIcon className="h-5 w-5 text-[#16A34A] flex-shrink-0" />
-                <span>Semua field dokumen telah diverifikasi dan sesuai dengan data Purchase Order internal.</span>
-              </div>
             ) : (
-              <p className="text-[15px] text-[#374151]">{data.explanation || 'Tidak ada detail tersedia.'}</p>
+              <p className="text-[15px] text-[#374151]">{data.explanation || 'Detail verifikasi tidak tersedia.'}</p>
             )}
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-7 flex gap-3">
+          <div className="mt-7 flex flex-col sm:flex-row gap-3">
+            {/* Tombol 1: Verifikasi Baru */}
             <button
               onClick={() => navigate("/verify")}
-              className="flex-1 bg-[#0D4B3B] text-white rounded-lg px-6 py-3 font-semibold text-[15px] hover:bg-[#0a3d30] transition"
+              className="flex-1 bg-[#0D4B3B] text-white rounded-lg px-6 py-3 font-semibold text-[15px] hover:bg-[#0a3d30] transition flex items-center justify-center gap-2"
             >
-              ← Verifikasi Baru
+              <ArrowLeftIcon className="h-5 w-5" />
+              Verifikasi Baru
             </button>
+
+            {/* Tombol 2: Lihat Audit Trail */}
+            <button
+              onClick={() => navigate("/audit")}
+              className="flex-1 border-[1.5px] border-[#0D4B3B] text-[#0D4B3B] rounded-lg px-6 py-3 font-semibold text-[15px] hover:bg-[#F0FAF7] transition flex items-center justify-center gap-2"
+            >
+              <DocumentTextIcon className="h-5 w-5" />
+              Lihat Audit Trail
+            </button>
+
+            {/* Tombol 3: Cetak Tanda Terima - hanya muncul saat PASS */}
             {data.status === "PASS" && (
               <button
-                onClick={() => window.print()}
-                className="flex-1 border-[1.5px] border-[#0D4B3B] text-[#0D4B3B] rounded-lg px-6 py-3 font-semibold text-[15px] hover:bg-[#F7F8F6] transition flex items-center justify-center gap-2"
+                onClick={handlePrint}
+                className="flex-1 border-[1.5px] border-[#4B5563] text-[#4B5563] rounded-lg px-6 py-3 font-semibold text-[15px] hover:bg-[#F9FAFB] transition flex items-center justify-center gap-2"
               >
                 <PrinterIcon className="h-5 w-5" />
                 Cetak Tanda Terima
@@ -324,77 +434,7 @@ const VerificationResult = () => {
             )}
           </div>
         </div>
-
-        {/* Print Receipt Section - Only visible when printing */}
-        <div className="print-only hidden">
-          <div className="p-8 border-2 border-black">
-            {/* Header */}
-            <div className="text-center mb-6 border-b-2 border-black pb-4">
-              <h1 className="text-2xl font-bold">TANDA TERIMA BAHAN BAKU</h1>
-              <p className="text-sm mt-1">VeriMat - Sistem Verifikasi Dokumen Farmasi</p>
-              <p className="text-xs mt-2">{formatDate(data.verification_time || data.created_at || '')}</p>
-            </div>
-
-            {/* Summary Table */}
-            <table className="w-full mb-6">
-              <tbody>
-                <tr>
-                  <td className="py-2 font-semibold">Nama Bahan:</td>
-                  <td className="py-2">{data.material_name || '-'}</td>
-                </tr>
-                <tr>
-                  <td className="py-2 font-semibold">Kode Bahan:</td>
-                  <td className="py-2">{data.material_code || '-'}</td>
-                </tr>
-                <tr>
-                  <td className="py-2 font-semibold">Nomor Batch:</td>
-                  <td className="py-2">{data.batch_number || '-'}</td>
-                </tr>
-                <tr>
-                  <td className="py-2 font-semibold">Jumlah:</td>
-                  <td className="py-2">{data.quantity ? `${data.quantity} ${data.unit || ''}` : '-'}</td>
-                </tr>
-                <tr>
-                  <td className="py-2 font-semibold">Status:</td>
-                  <td className="py-2 font-bold text-green-600">{data.status}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            {/* Footer */}
-            <div className="mt-8 pt-4 border-t-2 border-black">
-              <div className="flex justify-between mb-4">
-                <div>
-                  <p className="text-sm font-semibold">Diterima oleh:</p>
-                  <div className="border-b border-black w-48 mt-2"></div>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">Tanggal:</p>
-                  <div className="border-b border-black w-32 mt-2"></div>
-                </div>
-              </div>
-              <p className="text-xs text-center mt-4">
-                Dokumen ini diverifikasi secara otomatis oleh sistem VeriMat. ID Verifikasi: {data.session_id}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
-
-      {/* Print CSS */}
-      <style>{`
-        @media print {
-          .no-print {
-            display: none !important;
-          }
-          .print-only {
-            display: block !important;
-          }
-          body {
-            background: white !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };
