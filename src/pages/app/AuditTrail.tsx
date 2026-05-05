@@ -336,146 +336,118 @@ const AuditTrail = () => {
             {/* Row 1: Pencarian teks */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {/* Nomor Referensi */}
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Nomor referensi..."
-                  value={filters.po_number}
-                  onChange={(e) => setFilters({ ...filters, po_number: e.target.value })}
-                  className="w-full pl-9 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                />
+              <div>
+                <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">
+                  Nomor Referensi
+                </label>
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Nomor referensi..."
+                    value={filters.po_number}
+                    onChange={(e) => setFilters({ ...filters, po_number: e.target.value })}
+                    className="w-full pl-9 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                  />
+                </div>
               </div>
               {/* Nama Bahan Baku */}
-              <input
-                type="text"
-                placeholder="Nama bahan baku..."
-                value={filters.material_name}
-                onChange={(e) => setFilters({ ...filters, material_name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-              />
+              <div>
+                <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">
+                  Nama Bahan Baku
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nama bahan baku..."
+                  value={filters.material_name}
+                  onChange={(e) => setFilters({ ...filters, material_name: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                />
+              </div>
               {/* Kode Bahan (e.g. P1) */}
-              <input
-                type="text"
-                placeholder="Kode bahan (P1, A1...)"
-                value={filters.material_code}
-                onChange={(e) => setFilters({ ...filters, material_code: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-              />
+              <div>
+                <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">
+                  Kode Bahan
+                </label>
+                <input
+                  type="text"
+                  placeholder="Kode bahan (P1, A1...)"
+                  value={filters.material_code}
+                  onChange={(e) => setFilters({ ...filters, material_code: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                />
+              </div>
             </div>
 
             {/* Row 2: Filter lanjutan */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {/* Nama Vendor */}
-              <input
-                type="text"
-                placeholder="Nama vendor/supplier..."
-                value={filters.vendor_name}
-                onChange={(e) => setFilters({ ...filters, vendor_name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-              />
-              {/* Nomor Batch */}
-              <input
-                type="text"
-                placeholder="Nomor batch..."
-                value={filters.batch_number}
-                onChange={(e) => setFilters({ ...filters, batch_number: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-              />
-              {/* Jenis Dokumen */}
-              <select
-                value={filters.doc_type}
-                onChange={(e) => setFilters({ ...filters, doc_type: e.target.value })}
-                className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white"
-              >
-                <option value="">Semua Jenis Dokumen</option>
-                <option value="surat_jalan">Surat Jalan</option>
-                <option value="coa">Certificate of Analysis (CoA)</option>
-                <option value="faktur_pajak">Faktur Pajak</option>
-                <option value="invoice">Invoice / Faktur Penjualan</option>
-                <option value="kwitansi">Kwitansi</option>
-                <option value="halal">Sertifikat Halal</option>
-                <option value="tanda_terima">Tanda Terima / Delivery Order</option>
-                <option value="lainnya">Dokumen Lainnya</option>
-                <option value="multi">Multi-Dokumen</option>
-              </select>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">Nama Vendor / Supplier</label>
+                <input type="text" placeholder="Nama vendor/supplier..." value={filters.vendor_name} onChange={(e) => setFilters({ ...filters, vendor_name: e.target.value })} className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">Nomor Batch</label>
+                <input type="text" placeholder="Nomor batch..." value={filters.batch_number} onChange={(e) => setFilters({ ...filters, batch_number: e.target.value })} className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">Jenis Dokumen</label>
+                <select value={filters.doc_type} onChange={(e) => setFilters({ ...filters, doc_type: e.target.value })} className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white">
+                  <option value="">Semua Jenis Dokumen</option>
+                  <option value="surat_jalan">Surat Jalan</option>
+                  <option value="coa">Certificate of Analysis (CoA)</option>
+                  <option value="faktur_pajak">Faktur Pajak</option>
+                  <option value="invoice">Invoice / Faktur Penjualan</option>
+                  <option value="kwitansi">Kwitansi</option>
+                  <option value="halal">Sertifikat Halal</option>
+                  <option value="tanda_terima">Tanda Terima / Delivery Order</option>
+                  <option value="lainnya">Dokumen Lainnya</option>
+                  <option value="multi">Multi-Dokumen</option>
+                </select>
+              </div>
             </div>
 
-            {/* Row 3: Status + Date Range + Action Buttons */}
-            <div className="flex flex-col gap-3 w-full">
-              {/* Status filter - full width di mobile */}
-              <select
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full sm:w-auto px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white"
-              >
-                <option value="">Semua Status</option>
-                <option value="PASS">PASS</option>
-                <option value="MISMATCH">MISMATCH</option>
-                <option value="INCOMPLETE">INCOMPLETE</option>
-                <option value="QUARANTINE">KARANTINA</option>
-              </select>
-
-              {/* Date range - 2 kolom di mobile (Dari | Sampai) */}
-              <div className="flex items-center gap-1.5 sm:gap-2 w-full">
-                <div className="flex items-center gap-1 flex-1 min-w-0">
-                  <span className="text-[12px] sm:text-[13px] text-[#6B7280] whitespace-nowrap">Dari</span>
-                  <input
-                    type="date"
-                    value={filters.date_from}
-                    onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
-                    className="flex-1 min-w-0 px-1.5 sm:px-2 py-2 border border-[#E5E7EB] rounded-lg text-[12px] sm:text-[13px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                  />
-                </div>
-                <div className="flex items-center gap-1 flex-1 min-w-0">
-                  <span className="text-[12px] sm:text-[13px] text-[#6B7280] whitespace-nowrap">Sampai</span>
-                  <input
-                    type="date"
-                    value={filters.date_to}
-                    onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
-                    className="flex-1 min-w-0 px-1.5 sm:px-2 py-2 border border-[#E5E7EB] rounded-lg text-[12px] sm:text-[13px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
-                  />
-                </div>
+            {/* Row 3: Status + Date Range */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">Status Verifikasi</label>
+                <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white">
+                  <option value="">Semua Status</option>
+                  <option value="PASS">PASS</option>
+                  <option value="MISMATCH">MISMATCH</option>
+                  <option value="INCOMPLETE">INCOMPLETE</option>
+                  <option value="QUARANTINE">KARANTINA</option>
+                </select>
               </div>
-
-              {/* Action buttons - full width row di mobile */}
-              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                <button
-                  onClick={handleExportToExcel}
-                  disabled={records.length === 0}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-[#0D4B3B] rounded-lg bg-white text-[13px] text-[#0D4B3B] font-medium hover:bg-[#F0FAF7] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <DocumentArrowDownIcon className="h-4 w-4" />
-                  Export ke Excel
-                </button>
-                <button
-                  onClick={fetchAuditData}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#4A5568] font-medium hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
-                >
-                  <ArrowPathIcon className="h-4 w-4" />
-                  Refresh
-                </button>
-                {Object.values(filters).some(v => v) && (
-                  <button
-                    onClick={() => setFilters({
-                      po_number: '', material_name: '', material_code: '',
-                      batch_number: '', vendor_name: '', doc_type: '',
-                      status: '', date_from: '', date_to: ''
-                    })}
-                    className="px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#6B7280] font-medium hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
-                  >
-                    Reset
-                  </button>
-                )}
-                <button
-                  onClick={handleClearHistory}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[#FEE2E2] rounded-lg bg-white text-[13px] text-[#DC2626] font-medium hover:bg-[#FFF5F5] transition-colors whitespace-nowrap"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                  </svg>
-                </button>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">Tanggal Dari</label>
+                <input type="date" value={filters.date_from} onChange={(e) => setFilters({ ...filters, date_from: e.target.value })} className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all" />
               </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">Tanggal Sampai</label>
+                <input type="date" value={filters.date_to} onChange={(e) => setFilters({ ...filters, date_to: e.target.value })} className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all" />
+              </div>
+            </div>
+
+            {/* Row 4: Action Buttons */}
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <button onClick={handleExportToExcel} disabled={records.length === 0} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-[#0D4B3B] rounded-lg bg-white text-[13px] text-[#0D4B3B] font-medium hover:bg-[#F0FAF7] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                <DocumentArrowDownIcon className="h-4 w-4" />
+                Export ke Excel
+              </button>
+              <button onClick={fetchAuditData} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#4A5568] font-medium hover:bg-[#F9FAFB] transition-colors whitespace-nowrap">
+                <ArrowPathIcon className="h-4 w-4" />
+                Refresh
+              </button>
+              {Object.values(filters).some(v => v) && (
+                <button onClick={() => setFilters({ po_number: '', material_name: '', material_code: '', batch_number: '', vendor_name: '', doc_type: '', status: '', date_from: '', date_to: '' })} className="px-4 py-2.5 border border-[#E5E7EB] rounded-lg bg-white text-[13px] text-[#6B7280] font-medium hover:bg-[#F9FAFB] transition-colors whitespace-nowrap">
+                  Reset
+                </button>
+              )}
+              <button onClick={handleClearHistory} className="flex items-center gap-2 px-4 py-2.5 border border-[#FEE2E2] rounded-lg bg-white text-[13px] text-[#DC2626] font-medium hover:bg-[#FFF5F5] transition-colors whitespace-nowrap">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
             </div>
 
             {/* Active filter summary - tampil jika ada filter aktif */}
