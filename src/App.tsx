@@ -43,6 +43,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/home" element={<Home />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/verify" element={<Dashboard />} />
               <Route path="/verification/:id" element={<VerificationResult />} />
               <Route path="/audit" element={<AuditTrail />} />

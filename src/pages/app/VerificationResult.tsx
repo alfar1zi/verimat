@@ -155,7 +155,7 @@ const VerificationResult = () => {
       <div className="max-w-[800px] mx-auto px-6 py-8 no-print">
         {/* Back Button */}
         <button
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/verify")}
           className="text-[#0D4B3B] text-[14px] mb-6 hover:underline"
         >
           ← Verifikasi Lain
