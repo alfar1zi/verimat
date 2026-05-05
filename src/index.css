@@ -233,6 +233,9 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 @media (min-width: 640px) {
   .form-grid-2 {

@@ -1112,7 +1112,7 @@ const Dashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {items.map((item, index) => (
-                      <div key={item.id} className="bg-[#F8FFFE] border border-[#E5E7EB] rounded-xl p-4" style={{ animation: 'fadeInUp 0.3s ease forwards' }}>
+                      <div key={item.id} className="bg-[#F8FFFE] border border-[#E5E7EB] rounded-xl p-4" style={{ animation: 'fadeInUp 0.3s ease forwards', overflow: 'hidden', boxSizing: 'border-box', width: '100%', maxWidth: '100%' }}>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[13px] font-semibold text-[#0D4B3B]">Item #{index + 1}</span>
                           <button
@@ -1130,11 +1130,11 @@ const Dashboard = () => {
                           </div>
                         )}
 
-                        <div className="form-grid-2 gap-3">
+                        <div className="form-grid-2 gap-3 w-full overflow-hidden">
                           {/* Material Code with Autocomplete */}
                           <div
                             ref={activeMaterialItemId === item.id ? materialSearchRef : null}
-                            style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
+                            style={{ display: 'flex', flexDirection: 'column', position: 'relative', minWidth: 0, overflow: 'hidden' }}
                           >
                             <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
                               Kode Bahan
@@ -1215,7 +1215,7 @@ const Dashboard = () => {
                           </div>
 
                           {/* Material Name */}
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
                             <label className="text-[11px] font-medium text-[#374151] mb-1">Nama Bahan <span className="text-[#DC2626]">*</span></label>
                             <input
                               type="text"
@@ -1227,7 +1227,7 @@ const Dashboard = () => {
                           </div>
 
                           {/* Batch */}
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
                             <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
                               Batch <span className="text-[#DC2626]">*</span>
                               <FieldTooltip text="Kode produksi unik dari supplier untuk membedakan setiap kelompok produksi bahan baku ini." />
@@ -1242,24 +1242,24 @@ const Dashboard = () => {
                           </div>
 
                           {/* Quantity + Unit */}
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
                             <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
                               Jumlah <span className="text-[#DC2626]">*</span>
                               <FieldTooltip text="Jumlah bahan baku yang diterima sesuai Surat Jalan. Akan dicocokkan dengan jumlah di PO." />
                             </label>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 min-w-0">
                               <input
                                 type="number"
                                 min="0"
                                 value={item.quantity}
                                 onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
                                 placeholder="0"
-                                className="flex-1 px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                                className="flex-1 min-w-0 px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
                               />
                               <select
                                 value={item.unit}
                                 onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                                className="w-24 px-2 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none bg-white"
+                                className="w-20 flex-shrink-0 px-2 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none bg-white"
                               >
                                 <option value="kg">kg</option>
                                 <option value="gram">gram</option>
@@ -1275,7 +1275,7 @@ const Dashboard = () => {
                           </div>
 
                           {/* Expiry Date */}
-                          <div className="col-span-2 sm:col-span-1" style={{ display: 'flex', flexDirection: 'column' }}>
+                          <div className="col-span-2 sm:col-span-1" style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                             <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
                               Expired Date <span className="text-[#DC2626]">*</span>
                               <FieldTooltip text="Tanggal kedaluwarsa bahan baku. Sistem akan otomatis memperingatkan jika kurang dari 6 bulan." />
@@ -1285,6 +1285,7 @@ const Dashboard = () => {
                               value={item.expiryDate}
                               onChange={(e) => updateItem(item.id, 'expiryDate', e.target.value)}
                               className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                              style={{ width: '100%', minWidth: 0 }}
                             />
                             {item.expiryDate && (() => {
                               const status = getExpiryStatus(item.expiryDate);
