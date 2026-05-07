@@ -61,18 +61,18 @@ def map_extracted_to_fields(extracted, doc_type, po_number):
     if doc_type == 'surat_jalan':
         return {
             'doc_type': 'surat_jalan',
-            'supplier_name': extracted.get('supplier', extracted.get('nama supplier', po['supplier_name'] if po else '')),
-            'material_name': extracted.get('material', extracted.get('nama barang', po['material_name'] if po else '')),
+            'supplier_name': extracted.get('supplier', extracted.get('nama supplier', '')),
+            'material_name': extracted.get('material', extracted.get('nama barang', '')),
             'batch_number': extracted.get('batch no', extracted.get('no batch', extracted.get('batch', ''))),
-            'quantity': extracted.get('quantity', extracted.get('jumlah', str(po['quantity']) if po else '0')),
-            'unit': extracted.get('unit', po['unit'] if po else 'kg'),
+            'quantity': extracted.get('quantity', extracted.get('jumlah', '')),
+            'unit': extracted.get('unit', ''),
             'po_number': extracted.get('po number', extracted.get('no po', po_number)),
             'delivery_date': extracted.get('date', extracted.get('tanggal', ''))
         }
     elif doc_type == 'coa':
         return {
             'doc_type': 'coa',
-            'material_name': extracted.get('product name', extracted.get('nama produk', po['material_name'] if po else '')),
+            'material_name': extracted.get('product name', extracted.get('nama produk', '')),
             'batch_number': extracted.get('batch no', extracted.get('no batch', '')),
             'expiry_date': extracted.get('expiry date', extracted.get('exp date', extracted.get('kadaluarsa', ''))),
             'manufacture_date': extracted.get('manufacture date', extracted.get('tanggal produksi', '')),
@@ -81,7 +81,7 @@ def map_extracted_to_fields(extracted, doc_type, po_number):
     elif doc_type == 'halal':
         return {
             'doc_type': 'halal',
-            'material_name': extracted.get('product', extracted.get('produk', po['material_name'] if po else '')),
+            'material_name': extracted.get('product', extracted.get('produk', '')),
             'certificate_number': extracted.get('certificate no', extracted.get('no sertifikat', '')),
             'valid_until': extracted.get('valid until', extracted.get('berlaku hingga', extracted.get('expire', '')))
         }
@@ -89,35 +89,38 @@ def map_extracted_to_fields(extracted, doc_type, po_number):
 
 def get_mock_extraction(doc_type, po_number):
     """
-    Fallback mock extraction when Azure is not available
+    Fallback ketika Azure tidak tersedia.
+    Return empty extraction — jangan isi dengan PO data.
+    Form data dari user akan menjadi fallback melalui upload.py.
     """
-    po = get_purchase_order_by_number(po_number)
-    
     if doc_type == 'surat_jalan':
         return {
             'doc_type': 'surat_jalan',
-            'supplier_name': po['supplier_name'] if po else 'PT Kimia Farma',
-            'material_name': po['material_name'] if po else 'Paracetamol',
-            'batch_number': 'BTX-2024-001',
-            'quantity': str(po['quantity']) if po else '100',
-            'unit': po['unit'] if po else 'kg',
-            'po_number': po_number,
-            'delivery_date': '2026-04-23'
+            'supplier_name': '',   # kosong — biarkan form_data mengisi
+            'material_name': '',
+            'batch_number': '',
+            'quantity': '',
+            'unit': '',
+            'po_number': '',
+            'delivery_date': '',
+            '_source': 'mock'      # flag: Azure tidak aktif
         }
     elif doc_type == 'coa':
         return {
             'doc_type': 'coa',
-            'material_name': po['material_name'] if po else 'Paracetamol',
-            'batch_number': 'BTX-2024-001',
-            'expiry_date': '2028-01-15',
-            'manufacture_date': '2026-01-15',
-            'test_result': 'Sesuai Spesifikasi'
+            'material_name': '',
+            'batch_number': '',
+            'expiry_date': '',
+            'manufacture_date': '',
+            'test_result': '',
+            '_source': 'mock'
         }
     elif doc_type == 'halal':
         return {
             'doc_type': 'halal',
-            'material_name': po['material_name'] if po else 'Paracetamol',
-            'certificate_number': 'ID12345678901234',
-            'valid_until': '2027-12-31'
+            'material_name': '',
+            'certificate_number': '',
+            'valid_until': '',
+            '_source': 'mock'
         }
-    return {}
+    return {'_source': 'mock'}
