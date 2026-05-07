@@ -39,7 +39,7 @@ export default function Home() {
   const [username, setUsername] = useState("User");
   const [stats, setStats] = useState<Stats>({ todayTotal: 0, weekTotal: 0, passRate: 0, chartData: { pass: 0, mismatch: 0, incomplete: 0, total: 0 } });
   const [recentLogs, setRecentLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dataReady, setDataReady] = useState(false);
 
   // Format date in Indonesian
   const formatDateIndo = () => {
@@ -82,7 +82,7 @@ export default function Home() {
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
-        setLoading(false);
+        setDataReady(true);
       }
     };
 
@@ -180,32 +180,6 @@ export default function Home() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F7F8F6]">
-        <AppNavbar />
-        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              border: "3px solid #E5E7EB",
-              borderTop: "3px solid #0D4B3B",
-              borderRadius: "50%",
-              animation: "spin 0.8s linear infinite",
-            }}
-          />
-        </div>
-        <style>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#F7F8F6]">
       <AppNavbar />
@@ -222,7 +196,7 @@ export default function Home() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 animate-fade-in-up">
           {/* Verifikasi Hari Ini */}
           <div
             className="bg-white rounded-xl p-6 shadow-sm border border-[#E5E7EB]"
@@ -232,7 +206,11 @@ export default function Home() {
               <p className="text-[13px] font-medium text-[#6B7280]">Verifikasi Hari Ini</p>
               <DocumentIcon className="h-5 w-5 text-[#0D4B3B]" />
             </div>
-            <p className="text-[32px] font-bold text-[#0F1A16] mb-1">{stats.todayTotal}</p>
+            {!dataReady ? (
+              <div className="h-8 w-16 bg-gray-100 rounded animate-pulse mt-1" />
+            ) : (
+              <p className="text-[32px] font-bold text-[#0F1A16] mb-1">{stats.todayTotal}</p>
+            )}
             <p className="text-[12px] text-[#6B7280]">Total verifikasi hari ini</p>
           </div>
 
@@ -245,7 +223,11 @@ export default function Home() {
               <p className="text-[13px] font-medium text-[#6B7280]">Total Minggu Ini</p>
               <ClockIcon className="h-5 w-5 text-[#3B82F6]" />
             </div>
-            <p className="text-[32px] font-bold text-[#0F1A16] mb-1">{stats.weekTotal}</p>
+            {!dataReady ? (
+              <div className="h-8 w-16 bg-gray-100 rounded animate-pulse mt-1" />
+            ) : (
+              <p className="text-[32px] font-bold text-[#0F1A16] mb-1">{stats.weekTotal}</p>
+            )}
             <p className="text-[12px] text-[#6B7280]">Total verifikasi minggu ini</p>
           </div>
 
@@ -258,16 +240,20 @@ export default function Home() {
               <p className="text-[13px] font-medium text-[#6B7280]">Tingkat Kelulusan</p>
               <CheckCircleIcon className="h-5 w-5" style={{ color: passRateColor }} />
             </div>
-            <p className="text-[32px] font-bold text-[#0F1A16] mb-1" style={{ color: passRateColor }}>
-              {stats.passRate}%
-            </p>
+            {!dataReady ? (
+              <div className="h-8 w-16 bg-gray-100 rounded animate-pulse mt-1" />
+            ) : (
+              <p className="text-[32px] font-bold text-[#0F1A16] mb-1" style={{ color: passRateColor }}>
+                {stats.passRate}%
+              </p>
+            )}
             <p className="text-[12px] text-[#6B7280]">Persentase PASS dari total</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* BAGIAN 2 — Status Verifikasi Terakhir */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E5E7EB]">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E5E7EB] animate-fade-in-up">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[18px] font-bold text-[#0F1A16]">Verifikasi Terakhir</h2>
               <button
@@ -278,7 +264,11 @@ export default function Home() {
               </button>
             </div>
             
-            {recentLogs.length === 0 ? (
+            {!dataReady ? (
+              Array(3).fill(0).map((_, i) => (
+                <div key={i} className="h-12 bg-gray-50 rounded-lg animate-pulse" />
+              ))
+            ) : recentLogs.length === 0 ? (
               <div className="text-center py-8">
                 <DocumentIcon className="h-12 w-12 text-[#E5E7EB] mx-auto mb-3" />
                 <p className="text-[14px] text-[#6B7280]">Belum ada verifikasi</p>
@@ -315,7 +305,8 @@ export default function Home() {
           </div>
 
           {/* BAGIAN 4 — Grafik Donut */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E5E7EB]">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E5E7EB] animate-fade-in-up" 
+               style={{ animationDelay: '80ms' }}>
             <h2 className="text-[18px] font-bold text-[#0F1A16] mb-4">Statistik 30 Hari Terakhir</h2>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
