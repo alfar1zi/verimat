@@ -221,26 +221,75 @@ def verify_document():
         # Extract document data from Surat Jalan
         extracted_data = extract_document_data(surat_jalan_path, 'surat_jalan', reference_number)
         
-        # Merge form data as fallback for fields Azure couldn't extract
-        # If Azure extracted a field: use Azure's result (document is authoritative)
-        # If Azure returned empty for a field: use form data (user manually verified from document)
-        form_fallback = {
+        # Build form_data for validation engine (what user claims is in document)
+        form_data = {
             'supplier_name': vendor_name,
             'material_name': material_name,
             'batch_number': batch_number,
             'quantity': quantity,
+            'unit': unit,
             'po_number': reference_number,
         }
-
-        for field, form_value in form_fallback.items():
-            if form_value and (field not in extracted_data or not extracted_data.get(field)):
-                extracted_data[field] = form_value
-
+        
         # Ensure doc_type is always set
         extracted_data['doc_type'] = 'surat_jalan'
         
-        # Validate against PO/reference
-        validation_result = validate_document(extracted_data, reference_number)
+        # Validate against PO/reference with form_data
+        validation_result = validate_document(extracted_data, reference_number, form_data=form_data)
+        
+        # Cross-validate CoA dengan form data jika CoA diupload
+        if coa and coa.filename and 'coa' in saved_files:
+            coa_extracted = extract_document_data(saved_files['coa'], 'coa', reference_number)
+            
+            cross_issues = []
+            
+            # Batch number CoA harus sama dengan yang ada di form
+            coa_batch = coa_extracted.get('batch_number', '').strip()
+            if coa_batch and batch_number:
+                from utils.validation_engine import _strings_match
+                if not _strings_match(coa_batch, batch_number):
+                    cross_issues.append({
+                        'field': 'batch_number_cross',
+                        'status': 'MISMATCH',
+                        'message': f"Nomor batch di CoA '{coa_batch}' tidak sama dengan Surat Jalan '{batch_number}'",
+                        'expected': batch_number,
+                        'actual': coa_batch
+                    })
+            
+            # Expiry date: jika CoA ada expiry, cocokkan dengan form expiry_date
+            coa_expiry = coa_extracted.get('expiry_date', '').strip()
+            if coa_expiry and expiry_date:
+                if not _strings_match(coa_expiry, expiry_date):
+                    cross_issues.append({
+                        'field': 'expiry_date_cross',
+                        'status': 'MISMATCH', 
+                        'message': f"Expired date di CoA '{coa_expiry}' tidak sama dengan form '{expiry_date}'",
+                        'expected': expiry_date,
+                        'actual': coa_expiry
+                    })
+            
+            # Jika ada cross issues, ubah status jadi MISMATCH
+            if cross_issues:
+                existing_results = validation_result.get('validation_results', [])
+                existing_results.extend(cross_issues)
+                validation_result['validation_results'] = existing_results
+                validation_result['status'] = 'MISMATCH'
+                
+                # Update explanation
+                validation_result['explanation'] = (
+                    validation_result.get('explanation', '') + 
+                    ' Ditemukan ketidaksesuaian antara CoA dan Surat Jalan.'
+                )
+        
+        # Build uploaded_doc_types list for database
+        uploaded_doc_types = ['surat_jalan']  # selalu ada
+        if coa and coa.filename:
+            uploaded_doc_types.append('coa')
+        if faktur and faktur.filename:
+            uploaded_doc_types.append('faktur')
+        if dokumen_lain_paths:
+            uploaded_doc_types.append('dokumen_lain')
+        uploaded_doc_types_str = ','.join(uploaded_doc_types)
         
         # Create verification session with new fields
         from utils.database import get_db_connection
@@ -258,7 +307,7 @@ def verify_document():
                 expiry_date, items_json, material_code
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            session_id, reference_number, 'surat_jalan', surat_jalan_path,
+            session_id, reference_number, uploaded_doc_types_str, surat_jalan_path,
             validation_result['status'], datetime.now().isoformat(),
             reference_number, vendor_name, material_name, batch_number,
             float(quantity) if quantity else 0, unit, document_date,
