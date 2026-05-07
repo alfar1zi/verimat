@@ -32,7 +32,26 @@ def _safe_float(val):
         except ValueError:
             return None
 
-def validate_document(extracted_data, po_number):
+def _get_comparison_value(extracted_data, form_data, field_key):
+    """
+    Priority:
+    1. Jika Azure mengekstrak nilai (non-empty, non-None): pakai Azure
+    2. Jika Azure kosong tapi form_data ada: pakai form_data
+    3. Jika keduanya kosong: return None (akan menjadi INCOMPLETE)
+    
+    Jangan pernah pakai PO data sebagai fallback —
+    PO data hanya untuk dibandingkan, bukan sebagai sumber extracted.
+    """
+    azure_val = extracted_data.get(field_key)
+    if azure_val and str(azure_val).strip():
+        return str(azure_val).strip()
+    if form_data:
+        form_val = form_data.get(field_key)
+        if form_val and str(form_val).strip():
+            return str(form_val).strip()
+    return None
+
+def validate_document(extracted_data, po_number, form_data=None):
     """
     Deterministic rules engine for document validation
     Returns: PASS, MISMATCH, or INCOMPLETE
@@ -53,80 +72,92 @@ def validate_document(extracted_data, po_number):
     doc_type = extracted_data.get('doc_type', '')
     
     if doc_type == 'surat_jalan':
-        # Validate Surat Jalan fields
-        if 'supplier_name' not in extracted_data or not extracted_data['supplier_name']:
+        # Ambil nilai dari dokumen (Azure > form fallback > None)
+        doc_supplier   = _get_comparison_value(extracted_data, form_data, 'supplier_name')
+        doc_material   = _get_comparison_value(extracted_data, form_data, 'material_name')
+        doc_batch      = _get_comparison_value(extracted_data, form_data, 'batch_number')
+        doc_quantity   = _get_comparison_value(extracted_data, form_data, 'quantity')
+        doc_po_number  = _get_comparison_value(extracted_data, form_data, 'po_number')
+
+        # Validasi supplier_name
+        if not doc_supplier:
             all_fields_present = False
             validation_results.append({
                 'field': 'supplier_name',
                 'status': 'INCOMPLETE',
-                'message': 'Supplier name not found in document'
+                'message': 'Nama supplier tidak ditemukan di dokumen.'
             })
-        elif not _strings_match(extracted_data['supplier_name'], po['supplier_name']):
+        elif not _strings_match(doc_supplier, po['supplier_name']):
             validation_results.append({
                 'field': 'supplier_name',
                 'status': 'MISMATCH',
-                'message': f"Supplier mismatch: expected '{po['supplier_name']}', got '{extracted_data['supplier_name']}'",
+                'message': f"Nama vendor tidak sesuai: dokumen '{doc_supplier}' ≠ PO '{po['supplier_name']}'",
                 'expected': po['supplier_name'],
-                'actual': extracted_data['supplier_name']
+                'actual': doc_supplier
             })
-        
-        if 'material_name' not in extracted_data or not extracted_data['material_name']:
+
+        # Validasi material_name
+        if not doc_material:
             all_fields_present = False
             validation_results.append({
                 'field': 'material_name',
                 'status': 'INCOMPLETE',
-                'message': 'Material name not found in document'
+                'message': 'Nama bahan baku tidak ditemukan di dokumen.'
             })
-        elif not _strings_match(extracted_data['material_name'], po['material_name']):
+        elif not _strings_match(doc_material, po['material_name']):
             validation_results.append({
                 'field': 'material_name',
                 'status': 'MISMATCH',
-                'message': f"Material mismatch: expected '{po['material_name']}', got '{extracted_data['material_name']}'",
+                'message': f"Nama bahan tidak sesuai: dokumen '{doc_material}' ≠ PO '{po['material_name']}'",
                 'expected': po['material_name'],
-                'actual': extracted_data['material_name']
+                'actual': doc_material
             })
-        
-        if 'batch_number' not in extracted_data or not extracted_data['batch_number']:
+
+        # Validasi batch_number — hanya cek keberadaan, tidak cocokkan dengan PO
+        if not doc_batch:
             all_fields_present = False
             validation_results.append({
                 'field': 'batch_number',
                 'status': 'INCOMPLETE',
-                'message': 'Batch number not found in document'
+                'message': 'Nomor batch tidak ditemukan di dokumen.'
             })
-        
-        if 'quantity' not in extracted_data or not extracted_data['quantity']:
+
+        # Validasi quantity
+        if not doc_quantity:
             all_fields_present = False
             validation_results.append({
                 'field': 'quantity',
                 'status': 'INCOMPLETE',
-                'message': 'Quantity not found in document'
+                'message': 'Jumlah tidak ditemukan di dokumen.'
             })
         else:
-            extracted_qty = _safe_float(extracted_data['quantity'])
+            extracted_qty = _safe_float(doc_quantity)
             po_qty = _safe_float(po['quantity'])
-            if extracted_qty is not None and po_qty is not None and abs(extracted_qty - po_qty) > 0.01:
-                validation_results.append({
-                    'field': 'quantity',
-                    'status': 'MISMATCH',
-                    'message': f"Quantity mismatch: expected {po['quantity']}, got {extracted_data['quantity']}",
-                    'expected': str(po['quantity']),
-                    'actual': str(extracted_data['quantity'])
-                })
-        
-        if 'po_number' not in extracted_data or not extracted_data['po_number']:
+            if extracted_qty is not None and po_qty is not None:
+                if abs(extracted_qty - po_qty) > 0.01:
+                    validation_results.append({
+                        'field': 'quantity',
+                        'status': 'MISMATCH',
+                        'message': f"Jumlah tidak sesuai: dokumen '{doc_quantity}' ≠ PO '{po['quantity']}'",
+                        'expected': str(po['quantity']),
+                        'actual': str(doc_quantity)
+                    })
+
+        # Validasi po_number
+        if not doc_po_number:
             all_fields_present = False
             validation_results.append({
                 'field': 'po_number',
                 'status': 'INCOMPLETE',
-                'message': 'PO number not found in document'
+                'message': 'Nomor PO tidak ditemukan di dokumen.'
             })
-        elif not _strings_match(extracted_data['po_number'], po_number):
+        elif not _strings_match(doc_po_number, po_number):
             validation_results.append({
                 'field': 'po_number',
                 'status': 'MISMATCH',
-                'message': f"PO number mismatch: expected '{po_number}', got '{extracted_data['po_number']}'",
+                'message': f"Nomor PO tidak sesuai: dokumen '{doc_po_number}' ≠ sistem '{po_number}'",
                 'expected': po_number,
-                'actual': extracted_data['po_number']
+                'actual': doc_po_number
             })
     
     elif doc_type == 'coa':
