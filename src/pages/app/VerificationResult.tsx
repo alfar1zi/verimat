@@ -187,6 +187,81 @@ const VerificationResult = () => {
   }
   };
 
+  const FieldResultCard = ({ result }: { result: any }) => {
+    const fieldNameMap: Record<string, string> = {
+      'supplier_name': 'Nama Vendor / Supplier',
+      'material_name': 'Nama Bahan Baku',
+      'material_code': 'Kode Bahan',
+      'batch_number': 'Nomor Batch',
+      'quantity': 'Jumlah',
+      'unit': 'Satuan',
+      'expiry_date': 'Expired Date',
+      'storage_condition': 'Kondisi Penyimpanan',
+      'packaging_condition': 'Kondisi Kemasan',
+      'po_number': 'Nomor Referensi / PO',
+      'batch_number_cross': 'Batch (Cross-check CoA)',
+      'expiry_date_cross': 'Expired Date (Cross-check CoA)',
+    };
+
+    const isMismatch = result.status === 'MISMATCH';
+    const isIncomplete = result.status === 'INCOMPLETE';
+    const isMatch = result.status === 'MATCH' || result.status === 'PASS';
+
+    return (
+      <div style={{
+        border: `1px solid ${isMismatch ? '#FCA5A5' : isIncomplete ? '#FCD34D' : '#BBF7D0'}`,
+        borderRadius: '10px',
+        padding: '14px',
+        marginBottom: '10px',
+        background: isMismatch ? '#FFF5F5' : isIncomplete ? '#FFFBEB' : '#F0FDF4',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>{isMismatch ? '✗' : isIncomplete ? '⚠' : '✓'}</span>
+            <span style={{ fontWeight: '600', fontSize: '14px' }}>
+              {fieldNameMap[result.field] || result.field}
+            </span>
+          </div>
+          <span style={{
+            fontSize: '11px', fontWeight: '600', padding: '2px 8px',
+            borderRadius: '4px',
+            background: isMismatch ? '#FEE2E2' : isIncomplete ? '#FEF3C7' : '#D1FAE5',
+            color: isMismatch ? '#DC2626' : isIncomplete ? '#D97706' : '#16A34A',
+          }}>
+            {isMismatch ? '✗ Tidak Sesuai' : isIncomplete ? '⚠ Tidak Lengkap' : '✓ Sesuai'}
+          </span>
+        </div>
+        
+        {(result.expected || result.actual) && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px' }}>
+            <div style={{ background: 'rgba(0,0,0,0.04)', borderRadius: '6px', padding: '8px' }}>
+              <p style={{ fontSize: '10px', color: '#6B7280', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                NILAI DOKUMEN
+              </p>
+              <p style={{ fontSize: '13px', fontWeight: '500', wordBreak: 'break-word' }}>
+                {result.actual || '-'}
+              </p>
+            </div>
+            <div style={{ background: 'rgba(0,0,0,0.04)', borderRadius: '6px', padding: '8px' }}>
+              <p style={{ fontSize: '10px', color: '#6B7280', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                NILAI PO
+              </p>
+              <p style={{ fontSize: '13px', fontWeight: '500', wordBreak: 'break-word' }}>
+                {result.expected || '-'}
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {result.message && (
+          <p style={{ fontSize: '12px', color: isMismatch ? '#DC2626' : isIncomplete ? '#D97706' : '#6B7280', marginTop: '8px' }}>
+            {result.message}
+          </p>
+        )}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F7F8F6]">
@@ -321,84 +396,59 @@ const VerificationResult = () => {
             <h3 className="font-semibold text-[#0F1A16] mb-4 text-[16px]">Detail Per Field</h3>
             
             {data.status === "PASS" ? (
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0]">
-                <CheckCircleIcon className="h-6 w-6 text-[#16A34A] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[14px] font-semibold text-[#15803D]">Semua data sesuai dengan Purchase Order</p>
-                  <p className="text-[13px] text-[#4A5568] mt-1">
-                    Nama vendor, kode bahan, nomor batch, jumlah, dan kondisi penyimpanan telah dicocokkan 
-                    dengan data PO internal. Bahan baku dapat diterima dan diproses lebih lanjut.
-                  </p>
-                </div>
-              </div>
-            ) : data.validation_result?.validation_results && data.validation_result.validation_results.length > 0 ? (
-              <div className="space-y-3">
-                {data.validation_result.validation_results
-                  .filter(log => log.field_name !== 'summary')
-                  .map((log, index) => {
-                  const displayName = translateFieldName(log.field_name);
-                  
-                  const isMatch = log.status === 'MATCH';
-                  const isMismatch = log.status === 'MISMATCH';
-                  const isNotFound = log.status === 'INCOMPLETE' || log.status === 'NOT_FOUND';
-                  
-                  return (
-                    <div
-                      key={index}
-                      className="bg-white rounded-lg p-4 border"
-                      style={{
-                        borderColor: isMismatch ? '#FECACA' : isNotFound ? '#FDE68A' : '#BBF7D0',
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          {isMatch ? (
-                            <CheckIcon className="h-5 w-5 text-[#16A34A]" />
-                          ) : isMismatch ? (
-                            <XMarkIcon className="h-5 w-5 text-[#DC2626]" />
-                          ) : (
-                            <ExclamationTriangleIcon className="h-5 w-5 text-[#D97706]" />
-                          )}
-                          <span className="font-medium text-[#0F1A16] text-[14px]">{displayName}</span>
-                        </div>
-                        <span
-                          className="px-2 py-0.5 rounded text-[11px] font-semibold"
-                          style={{
-                            background: isMatch ? '#DCFCE7' : isMismatch ? '#FEE2E2' : '#FEF3C7',
-                            color: isMatch ? '#166534' : isMismatch ? '#991B1B' : '#854D0E',
-                          }}
-                        >
-                          {isMatch ? '✓ Sesuai' : isMismatch ? '✗ Tidak Sesuai' : '⚠ Tidak Ditemukan'}
-                        </span>
-                      </div>
-                      
-                      {(log.actual_value || log.expected_value) && (
-                        <div className="grid grid-cols-2 gap-3 mb-2">
-                          <div>
-                            <p className="text-[11px] text-[#9CA3AF] uppercase tracking-wider mb-1">Nilai Dokumen</p>
-                            <p className="text-[13px] font-medium text-[#0F1A16]">{log.actual_value || '-'}</p>
-                          </div>
-                          <div>
-                            <p className="text-[11px] text-[#9CA3AF] uppercase tracking-wider mb-1">Nilai PO</p>
-                            <p className="text-[13px] font-medium text-[#0F1A16]">{log.expected_value || '-'}</p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {log.explanation && (
-                        <p
-                          className="text-[12px] mt-2"
-                          style={{ color: isMismatch ? '#DC2626' : isNotFound ? '#D97706' : '#6B7280' }}
-                        >
-                          {log.explanation}
-                        </p>
-                      )}
+              <div>
+                {/* Tampilkan field results jika ada */}
+                {data.validation_result?.validation_results && data.validation_result.validation_results.filter(
+                  (log: any) => log.field_name !== 'summary'
+                ).length > 0 ? (
+                  data.validation_result.validation_results
+                    .filter((log: any) => log.field_name !== 'summary')
+                    .map((log: any, idx: number) => (
+                      <FieldResultCard key={idx} result={{
+                        field: log.field_name,
+                        status: log.status === 'MATCH' ? 'PASS' : log.status,
+                        message: log.explanation,
+                        actual: log.actual_value,
+                        expected: log.expected_value
+                      }} />
+                    ))
+                ) : (
+                  // hanya tampilkan success message jika tidak ada field results
+                  <div style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '12px',
+                    padding: '16px', borderRadius: '8px',
+                    background: '#F0FDF4', border: '1px solid #BBF7D0'
+                  }}>
+                    <CheckCircleIcon style={{ width: '24px', color: '#16A34A', flexShrink: 0 }} />
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: '600', color: '#15803D' }}>
+                        Semua data sesuai dengan Purchase Order
+                      </p>
+                      <p style={{ fontSize: '13px', color: '#4A5568', marginTop: '4px' }}>
+                        Nama vendor, kode bahan, nomor batch, jumlah telah dicocokkan 
+                        dengan data PO internal.
+                      </p>
                     </div>
-                  );
-                })}
+                  </div>
+                )}
               </div>
             ) : (
-              <p className="text-[15px] text-[#374151]">{data.explanation || 'Detail verifikasi tidak tersedia.'}</p>
+              // MISMATCH / INCOMPLETE — tampilkan per-field results
+              data.validation_result?.validation_results && data.validation_result.validation_results.length > 0 ? (
+                data.validation_result.validation_results
+                  .filter((log: any) => log.field_name !== 'summary')
+                  .map((log: any, idx: number) => (
+                    <FieldResultCard key={idx} result={{
+                      field: log.field_name,
+                      status: log.status,
+                      message: log.explanation,
+                      actual: log.actual_value,
+                      expected: log.expected_value
+                    }} />
+                  ))
+              ) : (
+                <p className="text-[15px] text-[#374151]">{data.explanation || 'Detail verifikasi tidak tersedia.'}</p>
+              )
             )}
           </div>
 

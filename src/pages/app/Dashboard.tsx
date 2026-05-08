@@ -1510,6 +1510,25 @@ const Dashboard = () => {
                 Upload minimal Surat Jalan. Tambahkan dokumen lain untuk verifikasi lebih lengkap.
               </p>
 
+              {/* Info Banner */}
+              <div style={{
+                background: '#EFF6FF',
+                border: '1px solid #BFDBFE',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#1E40AF" style={{ flexShrink: 0, marginTop: '1px' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                <p style={{ fontSize: '12px', color: '#1E40AF', lineHeight: '1.5', margin: 0 }}>
+                  <strong>Azure AI Document Intelligence</strong> membaca isi dokumen yang Anda upload secara otomatis dan mengekstrak data seperti nama vendor, batch number, dan jumlah. Jika field tertentu tidak berhasil diekstrak, data dari formulir digunakan sebagai cadangan.
+                </p>
+              </div>
+
               {/* Document Slots */}
               <div className="space-y-4">
                 {/* Slot 1 - Surat Jalan */}
