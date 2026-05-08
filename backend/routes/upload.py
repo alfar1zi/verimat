@@ -169,6 +169,7 @@ def verify_document():
         expiry_date      = _sanitize(request.form.get('expiry_date', ''), 10)
         material_code    = _sanitize(request.form.get('material_code', ''), 20)
         items_json = request.form.get('items', '') or request.form.get('items_json', '')
+        dokumen_lain_subtype = request.form.get('dokumen_lain_subtype', 'lainnya')
 
         # Jika items ada, ekstrak field dari item pertama sebagai fallback
         if items_json and not material_name:
@@ -288,7 +289,7 @@ def verify_document():
         if faktur and faktur.filename:
             uploaded_doc_types.append('faktur')
         if dokumen_lain_paths:
-            uploaded_doc_types.append('dokumen_lain')
+            uploaded_doc_types.append(f'dokumen_lain:{dokumen_lain_subtype}')
         uploaded_doc_types_str = ','.join(uploaded_doc_types)
         
         # Create verification session with new fields

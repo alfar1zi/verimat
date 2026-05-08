@@ -19,6 +19,31 @@ interface AuditRecord {
   verification_time: string;
 }
 
+const formatDocType = (docType: string): string => {
+  if (!docType) return '-';
+  
+  const typeMap: Record<string, string> = {
+    'surat_jalan': 'Surat Jalan',
+    'coa': 'CoA',
+    'faktur': 'Faktur/Invoice',
+    'dokumen_lain': 'Dok. Lain',
+    'dokumen_lain:halal': 'Sertifikat Halal',
+    'dokumen_lain:msds': 'MSDS',
+    'dokumen_lain:kwitansi': 'Kwitansi',
+    'dokumen_lain:tanda_terima': 'Tanda Terima',
+    'dokumen_lain:lainnya': 'Dok. Lainnya',
+  };
+  
+  // Handle comma-separated multi-doc
+  const types = docType.split(',');
+  if (types.length > 1) {
+    const labels = types.map(t => typeMap[t.trim()] || t.trim()).join(' + ');
+    return labels;
+  }
+  
+  return typeMap[docType] || docType;
+};
+
 const AuditTrail = () => {
   const navigate = useNavigate();
   const [records, setRecords] = useState<AuditRecord[]>([]);
@@ -393,15 +418,10 @@ const AuditTrail = () => {
                 <label className="block text-[11px] font-semibold text-[#374151] mb-1 uppercase tracking-wide">Jenis Dokumen</label>
                 <select value={filters.doc_type} onChange={(e) => setFilters({ ...filters, doc_type: e.target.value })} className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all bg-white">
                   <option value="">Semua Jenis Dokumen</option>
-                  <option value="surat_jalan">Surat Jalan</option>
+                  <option value="surat_jalan">Surat Jalan / Delivery Note</option>
                   <option value="coa">Certificate of Analysis (CoA)</option>
-                  <option value="faktur_pajak">Faktur Pajak</option>
-                  <option value="invoice">Invoice / Faktur Penjualan</option>
-                  <option value="kwitansi">Kwitansi</option>
-                  <option value="halal">Sertifikat Halal</option>
-                  <option value="tanda_terima">Tanda Terima / Delivery Order</option>
-                  <option value="lainnya">Dokumen Lainnya</option>
-                  <option value="multi">Multi-Dokumen</option>
+                  <option value="faktur">Faktur Pajak / Invoice</option>
+                  <option value="dokumen_lain">Dokumen Lain (Halal/MSDS/dll)</option>
                 </select>
               </div>
             </div>
@@ -467,6 +487,10 @@ const AuditTrail = () => {
             )}
           </div>
         </div>
+
+        <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '4px' }}>
+          💡 Filter berdasarkan slot dokumen yang diupload, bukan isi file.
+        </p>
 
         {/* Table Card */}
         <div className="bg-white rounded-2xl border border-[#E5E7EB] mt-4 overflow-x-auto animate-fade-in-up delay-100">
@@ -572,8 +596,14 @@ const AuditTrail = () => {
                         : <span className="text-[#9CA3AF]">-</span>
                       }
                     </td>
-                    <td className="px-4 py-3.5 text-[13px] text-[#4A5568]">
-                      {getDocTypeLabel(record.doc_type)}
+                    <td className="px-4 py-3.5 text-[13px]">
+                      <span
+                        className="inline-block px-2 py-1 rounded text-[11px] font-medium"
+                        style={{ background: '#F0FAF7', color: '#0D4B3B' }}
+                        title={record.doc_type}
+                      >
+                        {formatDocType(record.doc_type)}
+                      </span>
                     </td>
                     <td className="px-4 py-3.5">
                       <span className={`px-2.5 py-1 rounded-full text-[12px] font-semibold ${getStatusBadge(record.status)}`}>

@@ -234,6 +234,7 @@ const Dashboard = () => {
   const [coa, setCoa] = useState<File | null>(null);
   const [faktur, setFaktur] = useState<File | null>(null);
   const [dokumenLain, setDokumenLain] = useState<File[]>([]);
+  const [dokumenLainSubtype, setDokumenLainSubtype] = useState('halal');
   
   // Search suggestions
   const [poSuggestions, setPoSuggestions] = useState<POSuggestion[]>([]);
@@ -705,6 +706,7 @@ const Dashboard = () => {
     if (coa) formData.append("coa", coa);
     if (faktur) formData.append("faktur", faktur);
     dokumenLain.forEach((file) => formData.append("dokumen_lain", file));
+    formData.append("dokumen_lain_subtype", dokumenLainSubtype);
     
     formData.append("reference_number", formState.referenceNumber);
     formData.append("vendor_name", formState.vendorName);
@@ -1624,6 +1626,39 @@ const Dashboard = () => {
                     <h3 style={{fontSize: '15px', fontWeight: '600', color: '#0F1A16'}}>Sertifikat Halal / MSDS / Dokumen Lain</h3>
                   </div>
                   <p style={{fontSize: '13px', color: '#6B7280', marginBottom: '12px'}}>Sertifikat halal, MSDS untuk B3, atau dokumen pendukung lainnya (max 3 file)</p>
+                  
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      color: '#374151',
+                      marginBottom: '6px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      Jenis Dokumen Ini
+                    </label>
+                    <select
+                      value={dokumenLainSubtype}
+                      onChange={(e) => setDokumenLainSubtype(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        color: '#374151',
+                        background: 'white',
+                      }}
+                    >
+                      <option value="halal">Sertifikat Halal</option>
+                      <option value="msds">MSDS / Lembar Data Keselamatan</option>
+                      <option value="kwitansi">Kwitansi</option>
+                      <option value="tanda_terima">Tanda Terima / Delivery Order</option>
+                      <option value="lainnya">Dokumen Lainnya</option>
+                    </select>
+                  </div>
                   
                   <input
                     type="file"
