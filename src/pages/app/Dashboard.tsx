@@ -106,6 +106,68 @@ function getExpiryStatus(expiryDate: string): {
   return { isExpired: false, isNearExpiry: false, label: '', color: '' };
 }
 
+function useVendorSuggestions() {
+  const [vendorSuggestions, setVendorSuggestions] = useState<string[]>([]);
+  const fetchedRef = useRef(false);
+  
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    
+    apiFetch('/api/vendors/list')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setVendorSuggestions(data.map((v: any) => 
+            typeof v === 'string' ? v : (v.name || v.vendor_name || '')
+          ).filter(Boolean));
+        }
+      })
+      .catch(() => {});
+  }, []);
+  
+  return vendorSuggestions;
+}
+
+function useMaterialCodes() {
+  const [materials, setMaterials] = useState<Array<{code: string, name: string}>>([]);
+  const fetchedRef = useRef(false);
+  
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    
+    // Coba endpoint materials
+    apiFetch('/api/materials/list')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setMaterials(data.map((m: any) => ({
+            code: m.material_code || m.code || '',
+            name: m.material_name || m.name || '',
+          })).filter(m => m.code));
+        }
+      })
+      .catch(() => {
+        // Fallback: hardcode material codes yang ada di seed data
+        setMaterials([
+          { code: 'P1', name: 'Paracetamol' },
+          { code: 'P2', name: 'Paracetamol 500mg Tablet' },
+          { code: 'C1', name: 'Caffeine' },
+          { code: 'C2', name: 'Chloramphenicol' },
+          { code: 'A1', name: 'Amoxicillin' },
+          { code: 'A2', name: 'Aspirin' },
+          { code: 'I1', name: 'Ibuprofen' },
+          { code: 'M1', name: 'Metformin' },
+          { code: 'D1', name: 'Diclofenac Sodium' },
+          { code: 'E1', name: 'Erythromycin' },
+        ]);
+      });
+  }, []);
+  
+  return materials;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   
@@ -241,20 +303,13 @@ const Dashboard = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   
-  // Vendor autocomplete
+  // Vendor autocomplete - keep local state for search functionality
   const [vendorSuggestions, setVendorSuggestions] = useState<string[]>([]);
   const [showVendorSuggestions, setShowVendorSuggestions] = useState(false);
   const vendorSearchRef = useRef<HTMLDivElement>(null);
   
-  // Material autocomplete
-  interface MaterialSuggestion {
-    code: string;
-    name: string;
-    display: string;
-  }
-  const [materialSuggestions, setMaterialSuggestions] = useState<MaterialSuggestion[]>([]);
-  const [showMaterialSuggestions, setShowMaterialSuggestions] = useState(false);
-  const materialSearchRef = useRef<HTMLDivElement>(null);
+  // Material autocomplete - use custom hook
+  const materialCodes = useMaterialCodes();
   
   // Camera capture
   const [showCamera, setShowCamera] = useState(false);
@@ -347,74 +402,10 @@ const Dashboard = () => {
       if (vendorSearchRef.current && !vendorSearchRef.current.contains(event.target as Node)) {
         setShowVendorSuggestions(false);
       }
-      if (materialSearchRef.current && !materialSearchRef.current.contains(event.target as Node)) {
-        setShowMaterialSuggestions(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Track which item is actively searching for material
-  const [activeMaterialItemId, setActiveMaterialItemId] = useState<string | null>(null);
-  const [activeMaterialQuery, setActiveMaterialQuery] = useState('');
-
-  // Fetch vendor suggestions
-  useEffect(() => {
-    const query = formState.vendorName;
-
-    if (query.length < 1) {
-      setVendorSuggestions([]);
-      setShowVendorSuggestions(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const res = await apiFetch(`/api/vendor/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        // Guard: hanya update jika vendor input masih sama
-        setVendorSuggestions(prev => {
-          // Cek apakah query masih relevan sebelum show
-          setShowVendorSuggestions(data.length > 0);
-          return data;
-        });
-      } catch {
-        setVendorSuggestions([]);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [formState.vendorName]);
-
-  // Fetch material suggestions for active item
-  useEffect(() => {
-    if (!activeMaterialItemId || activeMaterialQuery.length < 1) {
-      setMaterialSuggestions([]);
-      setShowMaterialSuggestions(false);
-      return;
-    }
-
-    const query = activeMaterialQuery;
-    const timer = setTimeout(async () => {
-      try {
-        const res = await apiFetch(
-          `/api/material/search?q=${encodeURIComponent(query)}`
-        );
-        const data = await res.json();
-        // Guard: hanya tampilkan jika query masih sama dengan yang diketik
-        if (activeMaterialQuery === query) {
-          setMaterialSuggestions(data);
-          setShowMaterialSuggestions(data.length > 0);
-        }
-      } catch {
-        setMaterialSuggestions([]);
-      }
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [activeMaterialQuery, activeMaterialItemId]);
-
 
   const fetchStats = async () => {
     try {
@@ -1134,86 +1125,89 @@ const Dashboard = () => {
 
                         <div className="form-grid-2 gap-3 w-full overflow-hidden">
                           {/* Material Code with Autocomplete */}
-                          <div
-                            ref={activeMaterialItemId === item.id ? materialSearchRef : null}
-                            style={{ display: 'flex', flexDirection: 'column', position: 'relative', minWidth: 0, overflow: 'hidden' }}
-                          >
+                          <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', minWidth: 0, overflow: 'hidden' }}>
                             <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
                               Kode Bahan
                               <FieldTooltip text="Kode internal bahan baku. Ketik kode (contoh: P1, C2) dan nama bahan akan otomatis terisi." />
                             </label>
-                            <input
-                              type="text"
-                              value={item.materialCode}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                updateItem(item.id, 'materialCode', val);
-                                setActiveMaterialItemId(item.id);
-                                setActiveMaterialQuery(val);
-                              }}
-                              onFocus={() => {
-                                setActiveMaterialItemId(item.id);
-                                setActiveMaterialQuery(item.materialCode);
-                              }}
-                              onBlur={() => setTimeout(() => {
-                                setShowMaterialSuggestions(false);
-                                setActiveMaterialItemId(null);
-                                setActiveMaterialQuery('');
-                              }, 150)}
-                              placeholder="Contoh: P1"
-                              className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
-                              autoComplete="off"
-                            />
-                            {/* Material suggestion dropdown */}
-                            {activeMaterialItemId === item.id && showMaterialSuggestions && materialSuggestions.length > 0 && (
-                              <div className="suggestion-dropdown" style={{
-                                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 60,
-                                background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px',
-                                boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden', marginTop: '4px'
-                              }}>
-                                {materialSuggestions.map((mat, idx) => (
-                                  <div
-                                    key={idx}
-                                    onMouseDown={(e) => {
-                                      e.preventDefault();
-                                      // Update kedua field sekaligus dalam satu setState untuk hindari race condition
-                                      setItems(prev => prev.map(it =>
-                                        it.id === item.id
-                                          ? { ...it, materialCode: mat.code, materialName: mat.name }
-                                          : it
-                                      ));
-                                      setActiveMaterialQuery('');
-                                      setMaterialSuggestions([]);
-                                      setShowMaterialSuggestions(false);
-                                      setActiveMaterialItemId(null);
-                                    }}
-                                    style={{
-                                      padding: '10px 14px', cursor: 'pointer',
-                                      borderBottom: idx < materialSuggestions.length - 1 ? '1px solid #F3F4F6' : 'none',
-                                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                      transition: 'background 0.1s'
-                                    }}
-                                    onMouseOver={(e) => (e.currentTarget.style.background = '#F0FAF7')}
-                                    onMouseOut={(e) => (e.currentTarget.style.background = 'white')}
-                                  >
-                                    <span style={{ fontWeight: '600', color: '#0D4B3B', fontSize: '13px' }}>{mat.code}</span>
-                                    <span style={{ color: '#4A5568', fontSize: '13px' }}>{mat.name}</span>
+                            <div style={{ position: 'relative' }}>
+                              <input
+                                type="text"
+                                value={item.materialCode || ''}
+                                onChange={(e) => {
+                                  updateItem(item.id, 'materialCode', e.target.value);
+                                  // Saat kode berubah, cek apakah ada exact match untuk auto-fill nama
+                                  const exact = materialCodes.find(
+                                    m => m.code.toLowerCase() === e.target.value.toLowerCase()
+                                  );
+                                  if (exact) {
+                                    updateItem(item.id, 'materialName', exact.name);
+                                  }
+                                }}
+                                placeholder="Contoh: P1"
+                                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                                autoComplete="off"
+                              />
+                              
+                              {/* Dropdown suggestions */}
+                              {(item.materialCode || '').length > 0 && (() => {
+                                const filteredCodes = materialCodes.filter(m =>
+                                  m.code.toLowerCase().includes((item.materialCode || '').toLowerCase()) ||
+                                  m.name.toLowerCase().includes((item.materialCode || '').toLowerCase())
+                                ).slice(0, 8);
+                                
+                                return filteredCodes.length > 0 ? (
+                                  <div style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: 0,
+                                    right: 0,
+                                    background: 'white',
+                                    border: '1px solid #E5E7EB',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                                    zIndex: 50,
+                                    maxHeight: '200px',
+                                    overflowY: 'auto',
+                                    marginTop: '2px',
+                                  }}>
+                                    {filteredCodes.map(m => (
+                                      <button
+                                        key={m.code}
+                                        type="button"
+                                        onClick={() => {
+                                          updateItem(item.id, 'materialCode', m.code);
+                                          updateItem(item.id, 'materialName', m.name);
+                                        }}
+                                        style={{
+                                          width: '100%',
+                                          textAlign: 'left',
+                                          padding: '8px 12px',
+                                          border: 'none',
+                                          background: 'none',
+                                          cursor: 'pointer',
+                                          fontSize: '13px',
+                                          display: 'flex',
+                                          gap: '8px',
+                                          alignItems: 'center',
+                                        }}
+                                        onMouseEnter={(e) => (e.currentTarget.style.background = '#F0FAF7')}
+                                        onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                                      >
+                                        <span style={{ 
+                                          fontWeight: '600', color: '#0D4B3B',
+                                          fontFamily: 'monospace', fontSize: '12px',
+                                          background: '#F0FAF7', padding: '1px 6px', borderRadius: '4px'
+                                        }}>
+                                          {m.code}
+                                        </span>
+                                        <span style={{ color: '#374151' }}>{m.name}</span>
+                                      </button>
+                                    ))}
                                   </div>
-                                ))}
-                                <div style={{
-                                  padding: '6px 14px', fontSize: '11px', color: '#9CA3AF',
-                                  borderTop: '1px solid #F3F4F6', background: '#FAFAFA'
-                                }}>
-                                  Kode baru? Isi nama bahan secara manual
-                                </div>
-                              </div>
-                            )}
-                            {/* Auto-fill indicator */}
-                            {item.materialCode && item.materialName && (
-                              <p style={{ fontSize: '10px', color: '#0D4B3B', marginTop: '2px' }}>
-                                Auto-fill aktif
-                              </p>
-                            )}
+                                ) : null;
+                              })()}
+                            </div>
                           </div>
 
                           {/* Material Name */}
