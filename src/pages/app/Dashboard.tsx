@@ -317,6 +317,27 @@ const Dashboard = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
+  // Preview for dokumen_lain files
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  
+  const openPreview = (file: File) => {
+    setPreviewFile(file);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setShowPreview(true);
+  };
+  
+  const closePreview = () => {
+    setShowPreview(false);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setPreviewFile(null);
+  };
+  
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1123,12 +1144,16 @@ const Dashboard = () => {
                           </div>
                         )}
 
-                        <div className="form-grid-2 gap-3 w-full overflow-hidden">
-                          {/* Material Code with Autocomplete */}
-                          <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', minWidth: 0, overflow: 'hidden' }}>
-                            <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
-                              Kode Bahan
-                              <FieldTooltip text="Kode internal bahan baku. Ketik kode (contoh: P1, C2) dan nama bahan akan otomatis terisi." />
+                        {/* Baris 1: Kode Bahan + Nama Bahan */}
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 2fr',
+                          gap: '10px',
+                          marginBottom: '12px',
+                        }}>
+                          <div>
+                            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                              Kode Bahan <FieldTooltip text="Kode internal bahan baku. Ketik kode (contoh: P1, C2) dan nama bahan akan otomatis terisi." />
                             </label>
                             <div style={{ position: 'relative' }}>
                               <input
@@ -1145,7 +1170,8 @@ const Dashboard = () => {
                                   }
                                 }}
                                 placeholder="Contoh: P1"
-                                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-[14px] focus:border-[#0D4B3B] focus:outline-none focus:shadow-[0_0_0_3px_rgba(13,75,59,0.1)] transition-all"
+                                style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', 
+                                         borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
                                 autoComplete="off"
                               />
                               
@@ -1209,107 +1235,114 @@ const Dashboard = () => {
                               })()}
                             </div>
                           </div>
-
-                          {/* Material Name */}
-                          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-                            <label className="text-[11px] font-medium text-[#374151] mb-1">Nama Bahan <span className="text-[#DC2626]">*</span></label>
+                          <div>
+                            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                              Nama Bahan <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <input
                               type="text"
                               value={item.materialName}
                               onChange={(e) => updateItem(item.id, 'materialName', e.target.value)}
                               placeholder="Paracetamol"
-                              className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                              style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', 
+                                       borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
                             />
                           </div>
+                        </div>
 
-                          {/* Batch */}
-                          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-                            <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
-                              Batch <span className="text-[#DC2626]">*</span>
+                        {/* Baris 2: Batch + Jumlah (full width masing-masing, di mobile stack) */}
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                          gap: '10px',
+                          marginBottom: '12px',
+                        }}>
+                          <div>
+                            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                              Nomor Batch <span style={{ color: 'red' }}>*</span>
                               <FieldTooltip text="Kode produksi unik dari supplier untuk membedakan setiap kelompok produksi bahan baku ini." />
                             </label>
                             <input
                               type="text"
                               value={item.batchNumber}
                               onChange={(e) => updateItem(item.id, 'batchNumber', e.target.value)}
-                              placeholder="BTX-2024-091"
-                              className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                              placeholder="BTX-2024-..."
+                              style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', 
+                                       borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
                             />
                           </div>
-
-                          {/* Quantity + Unit */}
-                          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-                            <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
-                              Jumlah <span className="text-[#DC2626]">*</span>
+                          <div>
+                            <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                              Jumlah <span style={{ color: 'red' }}>*</span>
                               <FieldTooltip text="Jumlah bahan baku yang diterima sesuai Surat Jalan. Akan dicocokkan dengan jumlah di PO." />
                             </label>
-                            <div className="flex gap-2 min-w-0">
+                            <div style={{ display: 'flex', gap: '6px' }}>
                               <input
                                 type="number"
                                 min="0"
                                 value={item.quantity}
                                 onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
                                 placeholder="0"
-                                className="flex-1 min-w-0 px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
+                                style={{ flex: 1, padding: '10px 12px', border: '1px solid #E5E7EB', 
+                                         borderRadius: '8px', fontSize: '14px', minWidth: 0, boxSizing: 'border-box' }}
                               />
                               <select
                                 value={item.unit}
                                 onChange={(e) => updateItem(item.id, 'unit', e.target.value)}
-                                className="w-20 flex-shrink-0 px-2 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none bg-white"
+                                style={{ width: '72px', padding: '10px 4px', border: '1px solid #E5E7EB',
+                                         borderRadius: '8px', fontSize: '13px', flexShrink: 0 }}
                               >
                                 <option value="kg">kg</option>
-                                <option value="gram">gram</option>
-                                <option value="liter">liter</option>
-                                <option value="mL">mL</option>
+                                <option value="g">g</option>
+                                <option value="L">L</option>
+                                <option value="ml">ml</option>
                                 <option value="pcs">pcs</option>
-                                <option value="karton">karton</option>
+                                <option value="box">box</option>
                                 <option value="drum">drum</option>
-                                <option value="sak">sak</option>
-                                <option value="lainnya">lainnya</option>
                               </select>
                             </div>
                           </div>
+                        </div>
 
-                          {/* Expiry Date */}
-                          <div className="col-span-2 sm:col-span-1" style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                            <label className="text-[11px] font-medium text-[#374151] mb-1 flex items-center gap-1">
-                              Expired Date <span className="text-[#DC2626]">*</span>
-                              <FieldTooltip text="Tanggal kedaluwarsa bahan baku. Sistem akan otomatis memperingatkan jika kurang dari 6 bulan." />
-                            </label>
-                            <input
-                              type="date"
-                              value={item.expiryDate}
-                              onChange={(e) => updateItem(item.id, 'expiryDate', e.target.value)}
-                              className="w-full px-3 py-2 text-[13px] border border-[#E5E7EB] rounded-lg focus:border-[#0D4B3B] focus:outline-none"
-                              style={{ width: '100%', minWidth: 0 }}
-                            />
-                            {item.expiryDate && (() => {
-                              const status = getExpiryStatus(item.expiryDate);
-                              if (!status.label) return null;
-                              return (
-                                <div style={{
-                                  marginTop: '6px',
-                                  padding: '8px 12px',
-                                  background: status.isExpired ? '#FEF2F2' : '#FFFBEB',
-                                  border: `1px solid ${status.isExpired ? '#FECACA' : '#FDE68A'}`,
-                                  borderRadius: '6px',
-                                  fontSize: '12px',
-                                  color: status.color,
-                                  display: 'flex',
-                                  alignItems: 'flex-start',
-                                  gap: '6px'
-                                }}>
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
-                                       viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
-                                       style={{ flexShrink: 0, marginTop: '1px' }}>
-                                    <path strokeLinecap="round" strokeLinejoin="round"
-                                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        {/* Baris 3: Expired Date — full width */}
+                        <div style={{ marginBottom: '12px' }}>
+                          <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                            Expired Date <span style={{ color: 'red' }}>*</span>
+                            <FieldTooltip text="Tanggal kedaluwarsa bahan baku. Sistem akan otomatis memperingatkan jika kurang dari 6 bulan." />
+                          </label>
+                          <input
+                            type="date"
+                            value={item.expiryDate}
+                            onChange={(e) => updateItem(item.id, 'expiryDate', e.target.value)}
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB',
+                                     borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                          />
+                          {item.expiryDate && (() => {
+                            const status = getExpiryStatus(item.expiryDate);
+                            if (!status.label) return null;
+                            return (
+                              <div style={{
+                                marginTop: '6px',
+                                padding: '8px 12px',
+                                background: status.isExpired ? '#FEF2F2' : '#FFFBEB',
+                                border: `1px solid ${status.isExpired ? '#FECACA' : '#FDE68A'}`,
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                color: status.color,
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '6px'
+                              }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+                                     viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                                     style={{ flexShrink: 0, marginTop: '1px' }}>
+                                  <path strokeLinecap="round" strokeLinejoin="round"
+                                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                                   </svg>
                                   {status.label}
                                 </div>
                               );
                             })()}
-                          </div>
                         </div>
                       </div>
                     ))}
@@ -1537,7 +1570,7 @@ const Dashboard = () => {
                   accept=".pdf,.jpg,.jpeg,.png"
                   tooltip="Dokumen wajib dari supplier yang berisi daftar barang yang dikirim. Bisa berupa PDF atau foto."
                 />
-                {!suratJalan && typeof navigator !== 'undefined' && navigator.mediaDevices && (
+                {!suratJalan && typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod|Touch/i.test(navigator.userAgent) && typeof navigator !== 'undefined' && navigator.mediaDevices && (
                   <button
                     type="button"
                     onClick={() => openCamera('surat_jalan')}
@@ -1569,7 +1602,7 @@ const Dashboard = () => {
                   accept=".pdf,.jpg,.jpeg,.png"
                   tooltip="Certificate of Analysis — laporan hasil uji kualitas dari supplier. Sangat disarankan untuk bahan aktif."
                 />
-                {!coa && typeof navigator !== 'undefined' && navigator.mediaDevices && (
+                {!coa && typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod|Touch/i.test(navigator.userAgent) && typeof navigator !== 'undefined' && navigator.mediaDevices && (
                   <button
                     type="button"
                     onClick={() => openCamera('coa')}
@@ -1601,7 +1634,7 @@ const Dashboard = () => {
                   accept=".pdf,.jpg,.jpeg,.png"
                   tooltip="Dokumen tagihan dari supplier. Opsional, namun diperlukan untuk rekonsiliasi keuangan."
                 />
-                {!faktur && typeof navigator !== 'undefined' && navigator.mediaDevices && (
+                {!faktur && typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod|Touch/i.test(navigator.userAgent) && typeof navigator !== 'undefined' && navigator.mediaDevices && (
                   <button
                     type="button"
                     onClick={() => openCamera('faktur')}
@@ -1704,7 +1737,7 @@ const Dashboard = () => {
                     <span style={{fontSize: '14px', color: '#6B7280'}}>Pilih file atau drag & drop</span>
                   </label>
                   
-                  {dokumenLain.length < 3 && typeof navigator !== 'undefined' && navigator.mediaDevices && (
+                  {dokumenLain.length < 3 && typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod|Touch/i.test(navigator.userAgent) && typeof navigator !== 'undefined' && navigator.mediaDevices && (
                     <button
                       type="button"
                       onClick={() => openCamera('dokumen_lain')}
@@ -1726,25 +1759,54 @@ const Dashboard = () => {
                   
                   {dokumenLain.length > 0 && (
                     <div style={{marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px'}}>
-                      {dokumenLain.map((file, index) => (
-                        <div key={index} style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          background: '#DCFCE7', border: '1px solid #16A34A', borderRadius: '8px',
-                          padding: '8px 12px'
+                      {dokumenLain.map((file, fileIdx) => (
+                        <div key={fileIdx} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 14px',
+                          background: '#F0FDF4',
+                          border: '1px solid #A7F3D0',
+                          borderRadius: '8px',
+                          marginTop: '8px',
                         }}>
-                          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                            <DocumentIcon style={{height: '16px', width: '16px', color: '#16A34A'}} />
-                            <span style={{fontSize: '13px', color: '#0F1A16'}}>{file.name}</span>
-                            <span style={{fontSize: '11px', color: '#6B7280'}}>({(file.size / 1024).toFixed(1)} KB)</span>
+                          {/* Icon + nama file */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                            <span style={{ fontSize: '16px', flexShrink: 0 }}>📄</span>
+                            <div style={{ minWidth: 0 }}>
+                              <button
+                                type="button"
+                                onClick={() => openPreview(file)}
+                                style={{
+                                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                                  textAlign: 'left',
+                                }}
+                              >
+                                <p style={{
+                                  fontSize: '13px', fontWeight: '500', color: '#0D4B3B',
+                                  margin: 0,
+                                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                  maxWidth: '180px',
+                                }} title={file.name}>
+                                  {file.name.length > 22 
+                                    ? file.name.substring(0, 10) + '...' + file.name.slice(-8) 
+                                    : file.name}
+                                </p>
+                                <p style={{ fontSize: '11px', color: '#6B7280', margin: 0 }}>
+                                  ({(file.size / 1024).toFixed(1)} KB) · tap untuk preview
+                                </p>
+                              </button>
+                            </div>
                           </div>
+                          
+                          {/* Hapus tombol */}
                           <button
                             type="button"
-                            onClick={() => removeDokumenLain(index)}
-                            style={{background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', padding: 0}}
-                            onMouseEnter={(e) => e.currentTarget.style.color = '#991B1B'}
-                            onMouseLeave={(e) => e.currentTarget.style.color = '#DC2626'}
+                            onClick={() => removeDokumenLain(fileIdx)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#DC2626' }}
+                            aria-label="Hapus file ini"
                           >
-                            <XMarkIcon style={{height: '16px', width: '16px'}} />
+                            ✕
                           </button>
                         </div>
                       ))}
@@ -2122,6 +2184,59 @@ const Dashboard = () => {
             >
               Batal
             </button>
+          </div>
+        </div>
+      )}
+      
+      {showPreview && previewUrl && previewFile && (
+        <div 
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.7)', zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+          }}
+          onClick={closePreview}
+        >
+          <div 
+            style={{
+              background: 'white', borderRadius: '12px', padding: '16px',
+              maxWidth: '90vw', maxHeight: '85vh', display: 'flex', flexDirection: 'column', gap: '12px',
+              overflow: 'hidden', width: '100%'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '14px', fontWeight: '600', color: '#0F1A16' }}>Preview Dokumen</p>
+                <p style={{ fontSize: '12px', color: '#6B7280', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {previewFile.name}
+                </p>
+              </div>
+              <button 
+                onClick={closePreview}
+                style={{ background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer', padding: '4px' }}
+              >
+                <XMarkIcon style={{ height: '20px', width: '20px' }} />
+              </button>
+            </div>
+            
+            {/* Preview content */}
+            <div style={{ overflow: 'auto', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {previewFile.type === 'application/pdf' ? (
+                <iframe 
+                  src={previewUrl} 
+                  style={{ width: '100%', height: '70vh', minWidth: '60vw' }}
+                  title="PDF Preview"
+                />
+              ) : (
+                <img 
+                  src={previewUrl} 
+                  alt="Preview" 
+                  style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
