@@ -106,78 +106,104 @@ function getExpiryStatus(expiryDate: string): {
   return { isExpired: false, isNearExpiry: false, label: '', color: '' };
 }
 
+const VENDOR_SEED_DATA = [
+  'PT Kimia Farma', 'PT Kalbe Farma', 'PT Dexa Medica',
+  'PT Sanbe Farma', 'PT Phapros', 'PT Bernofarm',
+  'PT Meprofarm', 'PT Ferron Par Pharmaceuticals',
+  'PT Novell Pharmaceutical Labs', 'PT Zenith Pharmaceutical',
+];
+
 function useVendorSuggestions() {
-  const [vendorSuggestions, setVendorSuggestions] = useState<string[]>([]);
+  // KRITIS: inisialisasi dengan seed data SYNCHRONOUS, bukan async
+  // Sehingga dropdown langsung tersedia saat user mulai mengetik
+  const [vendorSuggestions, setVendorSuggestions] = useState<string[]>(VENDOR_SEED_DATA);
   const fetchedRef = useRef(false);
   
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
     
-    apiFetch('/api/vendors/list')
-      .then(r => r.json())
+    // URL BENAR: /api/vendor/list (singular, sesuai blueprint di app.py)
+    // Backend: vendor_bp registered di /api/vendor, route /list
+    apiFetch('/api/vendor/list')
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          setVendorSuggestions(data.map((v: any) => 
+          // Merge API data dengan seed data, deduplicate
+          const apiVendors = data.map((v: any) => 
             typeof v === 'string' ? v : (v.name || v.vendor_name || '')
-          ).filter(Boolean));
-        } else {
-          // Fallback seed data jika endpoint return kosong
-          setVendorSuggestions([
-            'PT Kimia Farma', 'PT Kalbe Farma', 'PT Dexa Medica',
-            'PT Sanbe Farma', 'PT Phapros', 'PT Bernofarm',
-            'PT Meprofarm', 'PT Ferron Par Pharmaceuticals',
-            'PT Novell Pharmaceutical Labs', 'PT Zenith Pharmaceutical'
-          ]);
+          ).filter(Boolean);
+          
+          const merged = Array.from(new Set([...apiVendors, ...VENDOR_SEED_DATA]));
+          merged.sort();
+          setVendorSuggestions(merged);
         }
+        // Jika API return kosong atau error → seed data tetap dari useState awal
       })
       .catch(() => {
-        // Fallback seed data jika endpoint tidak ada
-        setVendorSuggestions([
-          'PT Kimia Farma', 'PT Kalbe Farma', 'PT Dexa Medica',
-          'PT Sanbe Farma', 'PT Phapros', 'PT Bernofarm',
-          'PT Meprofarm', 'PT Ferron Par Pharmaceuticals',
-          'PT Novell Pharmaceutical Labs', 'PT Zenith Pharmaceutical'
-        ]);
+        // API gagal → seed data tetap dari useState awal, tidak perlu set ulang
+        // Seed data sudah ada dari inisialisasi synchronous di atas
       });
   }, []);
   
   return vendorSuggestions;
 }
 
+const MATERIAL_SEED_DATA = [
+  { code: 'P1', name: 'Paracetamol' },
+  { code: 'P2', name: 'Paracetamol 500mg Tablet' },
+  { code: 'C1', name: 'Caffeine' },
+  { code: 'C2', name: 'Chloramphenicol' },
+  { code: 'A1', name: 'Amoxicillin' },
+  { code: 'A2', name: 'Aspirin' },
+  { code: 'I1', name: 'Ibuprofen' },
+  { code: 'M1', name: 'Metformin' },
+  { code: 'D1', name: 'Diclofenac Sodium' },
+  { code: 'E1', name: 'Erythromycin' },
+  { code: 'S1', name: 'Simvastatin' },
+  { code: 'A3', name: 'Ambroxol' },
+  { code: 'B1', name: 'Betamethasone' },
+  { code: 'C3', name: 'Cetirizine' },
+  { code: 'L1', name: 'Loratadine' },
+];
+
 function useMaterialCodes() {
-  const [materials, setMaterials] = useState<Array<{code: string, name: string}>>([]);
+  // KRITIS: inisialisasi SYNCHRONOUS dengan seed data
+  const [materials, setMaterials] = useState<Array<{code: string, name: string}>>(MATERIAL_SEED_DATA);
   const fetchedRef = useRef(false);
   
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
     
-    // Coba endpoint materials
-    apiFetch('/api/materials/list')
-      .then(r => r.json())
+    // URL BENAR: /api/material/list (singular, sesuai blueprint di app.py)
+    apiFetch('/api/material/list')
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
-        if (Array.isArray(data)) {
-          setMaterials(data.map((m: any) => ({
+        if (Array.isArray(data) && data.length > 0) {
+          const apiMaterials = data.map((m: any) => ({
             code: m.material_code || m.code || '',
             name: m.material_name || m.name || '',
-          })).filter(m => m.code));
+          })).filter(m => m.code);
+          
+          // Merge API + seed, deduplicate by code
+          const codeSet = new Set(apiMaterials.map(m => m.code));
+          const merged = [
+            ...apiMaterials,
+            ...MATERIAL_SEED_DATA.filter(m => !codeSet.has(m.code))
+          ];
+          merged.sort((a, b) => a.code.localeCompare(b.code));
+          setMaterials(merged);
         }
       })
       .catch(() => {
-        // Fallback: hardcode material codes yang ada di seed data
-        setMaterials([
-          { code: 'P1', name: 'Paracetamol' },
-          { code: 'P2', name: 'Paracetamol 500mg Tablet' },
-          { code: 'C1', name: 'Caffeine' },
-          { code: 'C2', name: 'Chloramphenicol' },
-          { code: 'A1', name: 'Amoxicillin' },
-          { code: 'A2', name: 'Aspirin' },
-          { code: 'I1', name: 'Ibuprofen' },
-          { code: 'M1', name: 'Metformin' },
-          { code: 'D1', name: 'Diclofenac Sodium' },
-          { code: 'E1', name: 'Erythromycin' },
-        ]);
+        // Seed data sudah ada dari inisialisasi — tidak perlu set ulang
       });
   }, []);
   
@@ -396,14 +422,28 @@ const Dashboard = () => {
   };
 
   const updateItem = (id: string, field: keyof MaterialItem, value: string) => {
-    setItems(items.map(item => 
+    setItems(prev => prev.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ));
-    // Clear error for this item if field is updated
     if (itemErrors[id]) {
-      const newErrors = { ...itemErrors };
-      delete newErrors[id];
-      setItemErrors(newErrors);
+      setItemErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[id];
+        return newErrors;
+      });
+    }
+  };
+
+  const updateItemFields = (id: string, updates: Partial<MaterialItem>) => {
+    setItems(prev => prev.map(item => 
+      item.id === id ? { ...item, ...updates } : item
+    ));
+    if (itemErrors[id]) {
+      setItemErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[id];
+        return newErrors;
+      });
     }
   };
 
@@ -1207,15 +1247,20 @@ const Dashboard = () => {
                                 value={item.materialCode || ''}
                                 onChange={(e) => {
                                   const val = e.target.value;
-                                  updateItem(item.id, 'materialCode', val);
                                   setOpenMaterialDropdown(val.trim().length > 0 ? item.id : null);
                                   
-                                  // Auto-fill nama jika exact match
                                   const exact = materialCodes.find(
                                     m => m.code.toLowerCase() === val.toLowerCase()
                                   );
+                                  
                                   if (exact) {
-                                    updateItem(item.id, 'materialName', exact.name);
+                                    // Update code DAN name sekaligus dalam satu call atomik
+                                    updateItemFields(item.id, {
+                                      materialCode: val,
+                                      materialName: exact.name,
+                                    });
+                                  } else {
+                                    updateItem(item.id, 'materialCode', val);
                                   }
                                 }}
                                 onFocus={() => {
@@ -1264,9 +1309,12 @@ const Dashboard = () => {
                                         onMouseDown={(e) => {
                                           // mouseDown bukan onClick agar tidak kalah dengan onBlur
                                           e.preventDefault();
-                                          updateItem(item.id, 'materialCode', m.code);
-                                          updateItem(item.id, 'materialName', m.name);
-                                          setOpenMaterialDropdown(null); // tutup dropdown
+                                          // Atomic update: code dan name sekaligus
+                                          updateItemFields(item.id, {
+                                            materialCode: m.code,
+                                            materialName: m.name,
+                                          });
+                                          setOpenMaterialDropdown(null);
                                         }}
                                         style={{
                                           width: '100%', textAlign: 'left',
