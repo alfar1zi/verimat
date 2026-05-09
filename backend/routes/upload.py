@@ -9,6 +9,7 @@ from models.verification_session import create_verification_session
 from models.verification_log import create_verification_log
 from utils.validation_engine import validate_document
 from utils.auth_middleware import require_auth
+from utils.ai_explainer import generate_ai_explanation
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -291,6 +292,16 @@ def verify_document():
         if dokumen_lain_paths:
             uploaded_doc_types.append(f'dokumen_lain:{dokumen_lain_subtype}')
         uploaded_doc_types_str = ','.join(uploaded_doc_types)
+        
+        # Generate AI explanation jika belum ada
+        if not validation_result.get('explanation'):
+            validation_result['explanation'] = generate_ai_explanation(
+                status=validation_result.get('status', 'INCOMPLETE'),
+                validation_results=validation_result.get('validation_results', []),
+                vendor_name=vendor_name or '',
+                material_name=material_name or '',
+                reference_number=reference_number or ''
+            )
         
         # Create verification session with new fields
         from utils.database import get_db_connection
