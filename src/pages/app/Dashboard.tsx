@@ -303,9 +303,10 @@ const Dashboard = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   
-  // Vendor autocomplete - keep local state for search functionality
-  const [vendorSuggestions, setVendorSuggestions] = useState<string[]>([]);
+  // Vendor autocomplete - use hook as data source
+  const allVendorSuggestions = useVendorSuggestions();
   const [showVendorSuggestions, setShowVendorSuggestions] = useState(false);
+  const [vendorSuggestions, setVendorSuggestions] = useState<string[]>([]);
   const vendorSearchRef = useRef<HTMLDivElement>(null);
   
   // Material autocomplete - use custom hook
@@ -321,6 +322,9 @@ const Dashboard = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
+  
+  // Material dropdown state - track which item's dropdown is open
+  const [openMaterialDropdown, setOpenMaterialDropdown] = useState<string | null>(null);
   
   const openPreview = (file: File) => {
     setPreviewFile(file);
@@ -1022,65 +1026,83 @@ const Dashboard = () => {
                     </div>
                   )}
                 </div>
-                <div
-                  ref={vendorSearchRef}
-                  data-error={fieldErrors.vendorName ? 'true' : undefined}
-                  style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}
-                >
-                  <label style={{ fontSize: '13px', fontWeight: '500', color: '#374151', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                    Nama Vendor / Supplier
-                    <span style={{ color: '#DC2626' }}>*</span>
-                    <FieldTooltip text="Nama perusahaan supplier sesuai yang tertera di dokumen. Sistem akan mencocokkan dengan database PO internal." />
+                {/* Vendor Name Input */}
+                <div ref={vendorSearchRef} style={{ position: 'relative' }}>
+                  <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                    Nama Vendor / Supplier <span style={{ color: '#DC2626' }}>*</span>
                   </label>
-                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>Nama perusahaan supplier pengirim</p>
+                  <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>
+                    Nama perusahaan supplier pengirim
+                  </p>
                   <input
                     type="text"
                     placeholder="Nama perusahaan supplier"
                     value={formState.vendorName}
                     onChange={(e) => {
-                      setFormState({ ...formState, vendorName: e.target.value });
+                      const val = e.target.value;
+                      setFormState({ ...formState, vendorName: val });
                       if (fieldErrors.vendorName) setFieldErrors({ ...fieldErrors, vendorName: '' });
+                      
+                      // Filter dari cached data (tidak perlu fetch setiap ketik)
+                      if (val.trim().length >= 1) {
+                        const filtered = allVendorSuggestions.filter(v =>
+                          v.toLowerCase().includes(val.toLowerCase())
+                        ).slice(0, 8);
+                        setVendorSuggestions(filtered);
+                        setShowVendorSuggestions(filtered.length > 0);
+                      } else {
+                        setShowVendorSuggestions(false);
+                        setVendorSuggestions([]);
+                      }
                     }}
                     onFocus={(e) => {
                       e.target.style.borderColor = '#0D4B3B';
                       e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)';
-                      if (formState.vendorName.length >= 1) {
-                        // Re-trigger vendor search on focus
-                        apiFetch(`/api/vendor/search?q=${encodeURIComponent(formState.vendorName)}`)
-                          .then(r => r.json())
-                          .then(data => {
-                            setVendorSuggestions(data);
-                            setShowVendorSuggestions(data.length > 0);
-                          })
-                          .catch(() => {});
+                      // Tampilkan suggestions saat focus jika sudah ada input
+                      if (formState.vendorName.trim().length >= 1) {
+                        const filtered = allVendorSuggestions.filter(v =>
+                          v.toLowerCase().includes(formState.vendorName.toLowerCase())
+                        ).slice(0, 8);
+                        setVendorSuggestions(filtered);
+                        setShowVendorSuggestions(filtered.length > 0);
                       }
                     }}
-                    onBlur={(e) => { e.target.style.borderColor = fieldErrors.vendorName ? '#DC2626' : '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = fieldErrors.vendorName ? '#DC2626' : '#E5E7EB';
+                      e.target.style.boxShadow = 'none';
+                      // Delay hide agar click pada suggestion sempat diproses
+                      setTimeout(() => setShowVendorSuggestions(false), 200);
+                    }}
                     style={{
                       width: '100%', padding: '10px 14px',
                       border: fieldErrors.vendorName ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
                       borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
                       backgroundColor: 'white', outline: 'none', boxSizing: 'border-box' as const
                     }}
+                    autoComplete="off"
                   />
-                  {/* Vendor Suggestion Dropdown */}
+
+                  {/* Vendor Dropdown */}
                   {showVendorSuggestions && vendorSuggestions.length > 0 && (
-                    <div className="suggestion-dropdown" style={{
-                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
                       background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', marginTop: '4px'
                     }}>
                       {vendorSuggestions.map((vendor, index) => (
                         <div
                           key={index}
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            // mouseDown bukan onClick agar tidak kalah dengan onBlur
+                            e.preventDefault();
                             setFormState({ ...formState, vendorName: vendor });
                             setShowVendorSuggestions(false);
                             setVendorSuggestions([]);
                           }}
                           style={{
                             padding: '10px 14px', fontSize: '14px', color: '#0F1A16',
-                            cursor: 'pointer', borderBottom: index < vendorSuggestions.length - 1 ? '1px solid #F3F4F6' : 'none'
+                            cursor: 'pointer',
+                            borderBottom: index < vendorSuggestions.length - 1 ? '1px solid #F3F4F6' : 'none'
                           }}
                           onMouseOver={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#F0FAF7'; }}
                           onMouseOut={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'white'; }}
@@ -1088,12 +1110,20 @@ const Dashboard = () => {
                           {vendor}
                         </div>
                       ))}
-                      <div style={{ padding: '6px 14px', fontSize: '11px', color: '#9CA3AF', borderTop: '1px solid #F3F4F6', background: '#FAFAFA' }}>
+                      <div style={{
+                        padding: '6px 14px', fontSize: '11px', color: '#9CA3AF',
+                        borderTop: '1px solid #F3F4F6', background: '#FAFAFA'
+                      }}>
                         Tidak ada? Ketik nama vendor baru secara manual
                       </div>
                     </div>
                   )}
-                  {fieldErrors.vendorName && <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '2px' }}>{fieldErrors.vendorName}</p>}
+
+                  {fieldErrors.vendorName && (
+                    <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '4px' }}>
+                      {fieldErrors.vendorName}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1160,67 +1190,79 @@ const Dashboard = () => {
                                 type="text"
                                 value={item.materialCode || ''}
                                 onChange={(e) => {
-                                  updateItem(item.id, 'materialCode', e.target.value);
-                                  // Saat kode berubah, cek apakah ada exact match untuk auto-fill nama
+                                  const val = e.target.value;
+                                  updateItem(item.id, 'materialCode', val);
+                                  setOpenMaterialDropdown(val.trim().length > 0 ? item.id : null);
+                                  
+                                  // Auto-fill nama jika exact match
                                   const exact = materialCodes.find(
-                                    m => m.code.toLowerCase() === e.target.value.toLowerCase()
+                                    m => m.code.toLowerCase() === val.toLowerCase()
                                   );
                                   if (exact) {
                                     updateItem(item.id, 'materialName', exact.name);
                                   }
                                 }}
+                                onFocus={() => {
+                                  if ((item.materialCode || '').trim().length > 0) {
+                                    setOpenMaterialDropdown(item.id);
+                                  }
+                                }}
+                                onBlur={() => {
+                                  // Delay agar click suggestion sempat diproses
+                                  setTimeout(() => setOpenMaterialDropdown(null), 200);
+                                }}
                                 placeholder="Contoh: P1"
-                                style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', 
-                                         borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
+                                style={{
+                                  width: '100%', padding: '10px 12px',
+                                  border: '1px solid #E5E7EB',
+                                  borderRadius: '8px', fontSize: '14px',
+                                  boxSizing: 'border-box' as const
+                                }}
                                 autoComplete="off"
                               />
-                              
-                              {/* Dropdown suggestions */}
-                              {(item.materialCode || '').length > 0 && (() => {
+
+                              {/* Dropdown — hanya tampil jika item ini yang aktif */}
+                              {openMaterialDropdown === item.id && (() => {
+                                // FIX: filter HANYA berdasarkan code, bukan name
                                 const filteredCodes = materialCodes.filter(m =>
-                                  m.code.toLowerCase().includes((item.materialCode || '').toLowerCase()) ||
-                                  m.name.toLowerCase().includes((item.materialCode || '').toLowerCase())
+                                  m.code.toLowerCase().startsWith((item.materialCode || '').toLowerCase())
                                 ).slice(0, 8);
-                                
-                                return filteredCodes.length > 0 ? (
+
+                                // Fallback ke includes jika startsWith tidak menghasilkan hasil
+                                const displayCodes = filteredCodes.length > 0 ? filteredCodes :
+                                  materialCodes.filter(m =>
+                                    m.code.toLowerCase().includes((item.materialCode || '').toLowerCase())
+                                  ).slice(0, 8);
+
+                                return displayCodes.length > 0 ? (
                                   <div style={{
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: 0,
-                                    right: 0,
-                                    background: 'white',
-                                    border: '1px solid #E5E7EB',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                                    zIndex: 50,
-                                    maxHeight: '200px',
-                                    overflowY: 'auto',
-                                    marginTop: '2px',
+                                    position: 'absolute', top: '100%', left: 0, right: 0,
+                                    background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px',
+                                    boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100,
+                                    maxHeight: '200px', overflowY: 'auto', marginTop: '2px',
                                   }}>
-                                    {filteredCodes.map(m => (
+                                    {displayCodes.map(m => (
                                       <button
                                         key={m.code}
                                         type="button"
-                                        onClick={() => {
+                                        onMouseDown={(e) => {
+                                          // mouseDown bukan onClick agar tidak kalah dengan onBlur
+                                          e.preventDefault();
                                           updateItem(item.id, 'materialCode', m.code);
                                           updateItem(item.id, 'materialName', m.name);
+                                          setOpenMaterialDropdown(null); // tutup dropdown
                                         }}
                                         style={{
-                                          width: '100%',
-                                          textAlign: 'left',
-                                          padding: '8px 12px',
-                                          border: 'none',
-                                          background: 'none',
-                                          cursor: 'pointer',
-                                          fontSize: '13px',
-                                          display: 'flex',
-                                          gap: '8px',
-                                          alignItems: 'center',
+                                          width: '100%', textAlign: 'left',
+                                          padding: '8px 12px', border: 'none',
+                                          background: 'none', cursor: 'pointer',
+                                          fontSize: '13px', display: 'flex',
+                                          gap: '8px', alignItems: 'center',
                                         }}
                                         onMouseEnter={(e) => (e.currentTarget.style.background = '#F0FAF7')}
                                         onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
                                       >
-                                        <span style={{ 
+                                        <span style={{
                                           fontWeight: '600', color: '#0D4B3B',
                                           fontFamily: 'monospace', fontSize: '12px',
                                           background: '#F0FAF7', padding: '1px 6px', borderRadius: '4px'

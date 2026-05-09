@@ -293,15 +293,14 @@ def verify_document():
             uploaded_doc_types.append(f'dokumen_lain:{dokumen_lain_subtype}')
         uploaded_doc_types_str = ','.join(uploaded_doc_types)
         
-        # Generate AI explanation jika belum ada
-        if not validation_result.get('explanation'):
-            validation_result['explanation'] = generate_ai_explanation(
-                status=validation_result.get('status', 'INCOMPLETE'),
-                validation_results=validation_result.get('validation_results', []),
-                vendor_name=vendor_name or '',
-                material_name=material_name or '',
-                reference_number=reference_number or ''
-            )
+        # Generate AI explanation
+        validation_result['explanation'] = generate_ai_explanation(
+            status=validation_result.get('status', 'INCOMPLETE'),
+            validation_results=validation_result.get('validation_results', []),
+            vendor_name=vendor_name or '',
+            material_name=material_name or '',
+            reference_number=reference_number or ''
+        )
         
         # Create verification session with new fields
         from utils.database import get_db_connection
