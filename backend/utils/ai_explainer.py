@@ -14,7 +14,7 @@ AZURE_OPENAI_DEPLOYMENT = os.environ.get('AZURE_OPENAI_DEPLOYMENT', 'gpt-4o')
 
 # Google Gemini (primary)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-GEMINI_MODEL = 'gemini-2.0-flash'
+GEMINI_MODEL = 'gemini-1.5-flash'
 GEMINI_URL = f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent'
 
 
@@ -110,16 +110,19 @@ def _call_gemini(status, validation_results, vendor_name,
         headers={'Content-Type': 'application/json'}
     )
 
-    for attempt in range(2):
+    for attempt in range(3):
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 result = json.loads(resp.read().decode())
                 return result['candidates'][0]['content']['parts'][0]['text'].strip()
         except urllib.error.HTTPError as e:
-            if e.code == 429 and attempt == 0:
-                time.sleep(3)
+            if e.code == 429 and attempt < 2:
+                wait_time = (attempt + 1) * 8  # 8s, 16s
+                logger.warning(f"Gemini rate limit, retrying in {wait_time}s...")
+                time.sleep(wait_time)
                 continue
             raise
+    raise Exception("Gemini API failed after 3 attempts")
 
 
 def _call_azure_openai(status, validation_results, vendor_name,
