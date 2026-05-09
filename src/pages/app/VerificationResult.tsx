@@ -395,6 +395,29 @@ const VerificationResult = () => {
           <div className="mt-6 bg-[#F9FAFB] rounded-xl p-5">
             <h3 className="font-semibold text-[#0F1A16] mb-4 text-[16px]">Detail Per Field</h3>
             
+            {/* Penjelasan AI / Rules-based */}
+            {data.explanation && (
+              <div style={{
+                background: data.status === 'PASS' ? '#F0FDF4' : 
+                            data.status === 'MISMATCH' ? '#FFF5F5' : '#FFFBEB',
+                border: `1px solid ${data.status === 'PASS' ? '#BBF7D0' : 
+                         data.status === 'MISMATCH' ? '#FCA5A5' : '#FCD34D'}`,
+                borderRadius: '10px',
+                padding: '14px 16px',
+                marginBottom: '16px',
+              }}>
+                <p style={{
+                  fontSize: '14px',
+                  color: data.status === 'PASS' ? '#15803D' : 
+                         data.status === 'MISMATCH' ? '#B91C1C' : '#92400E',
+                  lineHeight: '1.65',
+                  margin: 0,
+                }}>
+                  {data.explanation}
+                </p>
+              </div>
+            )}
+            
             {data.status === "PASS" ? (
               <div>
                 {/* Tampilkan field results jika ada */}

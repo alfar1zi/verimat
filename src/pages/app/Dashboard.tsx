@@ -117,13 +117,29 @@ function useVendorSuggestions() {
     apiFetch('/api/vendors/list')
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setVendorSuggestions(data.map((v: any) => 
             typeof v === 'string' ? v : (v.name || v.vendor_name || '')
           ).filter(Boolean));
+        } else {
+          // Fallback seed data jika endpoint return kosong
+          setVendorSuggestions([
+            'PT Kimia Farma', 'PT Kalbe Farma', 'PT Dexa Medica',
+            'PT Sanbe Farma', 'PT Phapros', 'PT Bernofarm',
+            'PT Meprofarm', 'PT Ferron Par Pharmaceuticals',
+            'PT Novell Pharmaceutical Labs', 'PT Zenith Pharmaceutical'
+          ]);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Fallback seed data jika endpoint tidak ada
+        setVendorSuggestions([
+          'PT Kimia Farma', 'PT Kalbe Farma', 'PT Dexa Medica',
+          'PT Sanbe Farma', 'PT Phapros', 'PT Bernofarm',
+          'PT Meprofarm', 'PT Ferron Par Pharmaceuticals',
+          'PT Novell Pharmaceutical Labs', 'PT Zenith Pharmaceutical'
+        ]);
+      });
   }, []);
   
   return vendorSuggestions;
