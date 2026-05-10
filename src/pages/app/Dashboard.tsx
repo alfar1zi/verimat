@@ -186,26 +186,39 @@ function useVendorSuggestions(): string[] {
   const [vendors, setVendors] = useState<string[]>(VENDOR_SEED);
   const fetchedRef = useRef(false);
 
+  console.log('[useVendorSuggestions] Init with seed data:', VENDOR_SEED.length, 'vendors');
+
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
+    console.log('[useVendorSuggestions] Fetching from /api/vendor/list');
     apiFetch('/api/vendor/list')
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
       .then((data: any[]) => {
-        if (!Array.isArray(data) || data.length === 0) return;
+        console.log('[useVendorSuggestions] API response:', data);
+        if (!Array.isArray(data) || data.length === 0) {
+          console.log('[useVendorSuggestions] API returned empty or invalid, keeping seed data');
+          return;
+        }
         const api = data
           .map(v => (typeof v === 'string' ? v : v.name || v.vendor_name || ''))
           .filter(Boolean);
+        console.log('[useVendorSuggestions] Mapped API data:', api.length, 'vendors');
         // Merge API + seed, deduplicate case-insensitive
         const seen = new Set(api.map(v => v.toLowerCase()));
         const merged = [...api, ...VENDOR_SEED.filter(v => !seen.has(v.toLowerCase()))];
         merged.sort();
+        console.log('[useVendorSuggestions] Merged vendors:', merged.length, 'total');
         setVendors(merged);
       })
-      .catch(() => { /* seed data sudah ada dari init sync */ });
+      .catch((err) => {
+        console.error('[useVendorSuggestions] API error:', err);
+        /* seed data sudah ada dari init sync */
+      });
   }, []);
 
+  console.log('[useVendorSuggestions] Returning vendors:', vendors.length);
   return vendors;
 }
 
@@ -1126,12 +1139,16 @@ const Dashboard = () => {
                     autoComplete="off"
                     onChange={(e) => {
                       const val = e.target.value;
+                      console.log('[Vendor Input] onChange:', { val, valLength: val.trim().length });
                       setFormState(prev => ({ ...prev, vendorName: val }));
                       setVendorQuery(val);
+                      console.log('[Vendor Input] Set vendorQuery:', val);
                       if (fieldErrors.vendorName) {
                         setFieldErrors(prev => ({ ...prev, vendorName: '' }));
                       }
-                      setShowVendorSuggestions(val.trim().length >= 1);
+                      const shouldShow = val.trim().length >= 1;
+                      setShowVendorSuggestions(shouldShow);
+                      console.log('[Vendor Input] Set showVendorSuggestions:', shouldShow);
                     }}
                     onFocus={() => {
                       if (formState.vendorName.trim().length >= 1) {
@@ -1169,14 +1186,35 @@ const Dashboard = () => {
 
                   {/* Vendor Dropdown — computed inline, tidak pakai state terpisah */}
                   {(() => {
-                    if (!showVendorSuggestions || vendorQuery.trim().length < 1) return null;
+                    console.log('[Vendor Dropdown] Render check:', {
+                      showVendorSuggestions,
+                      vendorQuery,
+                      queryLength: vendorQuery?.trim().length,
+                      allVendorSuggestionsLength: allVendorSuggestions?.length
+                    });
+                    
+                    if (!showVendorSuggestions || vendorQuery.trim().length < 1) {
+                      console.log('[Vendor Dropdown] Skipping: showVendorSuggestions=', showVendorSuggestions, 'queryLength=', vendorQuery.trim().length);
+                      return null;
+                    }
+                    
+                    if (!allVendorSuggestions || allVendorSuggestions.length === 0) {
+                      console.log('[Vendor Dropdown] Skipping: allVendorSuggestions is empty');
+                      return null;
+                    }
                     
                     const filtered = allVendorSuggestions.filter(v =>
                       v.toLowerCase().includes(vendorQuery.toLowerCase())
                     ).slice(0, 10);
                     
-                    if (filtered.length === 0) return null;
+                    console.log('[Vendor Dropdown] Filtered results:', filtered.length, 'vendors:', filtered);
                     
+                    if (filtered.length === 0) {
+                      console.log('[Vendor Dropdown] No filtered results');
+                      return null;
+                    }
+                    
+                    console.log('[Vendor Dropdown] Rendering dropdown with', filtered.length, 'items');
                     return (
                       <div style={{
                         position: 'absolute',
