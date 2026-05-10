@@ -106,107 +106,84 @@ function getExpiryStatus(expiryDate: string): {
   return { isExpired: false, isNearExpiry: false, label: '', color: '' };
 }
 
-const VENDOR_SEED_DATA = [
-  'PT Kimia Farma', 'PT Kalbe Farma', 'PT Dexa Medica',
-  'PT Sanbe Farma', 'PT Phapros', 'PT Bernofarm',
+const VENDOR_SEED: string[] = [
+  'PT Kimia Farma', 'PT Kimia Farma Trading', 'PT Kalbe Farma',
+  'PT Dexa Medica', 'PT Sanbe Farma', 'PT Phapros', 'PT Bernofarm',
   'PT Meprofarm', 'PT Ferron Par Pharmaceuticals',
   'PT Novell Pharmaceutical Labs', 'PT Zenith Pharmaceutical',
+  'PT Merck Indonesia', 'PT Pfizer Indonesia', 'PT Abbott Indonesia',
 ];
 
-function useVendorSuggestions() {
-  // KRITIS: inisialisasi dengan seed data SYNCHRONOUS, bukan async
-  // Sehingga dropdown langsung tersedia saat user mulai mengetik
-  const [vendorSuggestions, setVendorSuggestions] = useState<string[]>(VENDOR_SEED_DATA);
-  const fetchedRef = useRef(false);
-  
-  useEffect(() => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-    
-    // URL BENAR: /api/vendor/list (singular, sesuai blueprint di app.py)
-    // Backend: vendor_bp registered di /api/vendor, route /list
-    apiFetch('/api/vendor/list')
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          // Merge API data dengan seed data, deduplicate
-          const apiVendors = data.map((v: any) => 
-            typeof v === 'string' ? v : (v.name || v.vendor_name || '')
-          ).filter(Boolean);
-          
-          const merged = Array.from(new Set([...apiVendors, ...VENDOR_SEED_DATA]));
-          merged.sort();
-          setVendorSuggestions(merged);
-        }
-        // Jika API return kosong atau error → seed data tetap dari useState awal
-      })
-      .catch(() => {
-        // API gagal → seed data tetap dari useState awal, tidak perlu set ulang
-        // Seed data sudah ada dari inisialisasi synchronous di atas
-      });
-  }, []);
-  
-  return vendorSuggestions;
-}
-
-const MATERIAL_SEED_DATA = [
-  { code: 'P1', name: 'Paracetamol' },
-  { code: 'P2', name: 'Paracetamol 500mg Tablet' },
-  { code: 'C1', name: 'Caffeine' },
-  { code: 'C2', name: 'Chloramphenicol' },
+const MATERIAL_SEED: Array<{code: string; name: string}> = [
   { code: 'A1', name: 'Amoxicillin' },
   { code: 'A2', name: 'Aspirin' },
-  { code: 'I1', name: 'Ibuprofen' },
-  { code: 'M1', name: 'Metformin' },
-  { code: 'D1', name: 'Diclofenac Sodium' },
-  { code: 'E1', name: 'Erythromycin' },
-  { code: 'S1', name: 'Simvastatin' },
   { code: 'A3', name: 'Ambroxol' },
   { code: 'B1', name: 'Betamethasone' },
+  { code: 'C1', name: 'Caffeine' },
+  { code: 'C2', name: 'Chloramphenicol' },
   { code: 'C3', name: 'Cetirizine' },
+  { code: 'D1', name: 'Diclofenac Sodium' },
+  { code: 'E1', name: 'Erythromycin' },
+  { code: 'I1', name: 'Ibuprofen' },
   { code: 'L1', name: 'Loratadine' },
+  { code: 'M1', name: 'Metformin' },
+  { code: 'P1', name: 'Paracetamol' },
+  { code: 'P2', name: 'Paracetamol 500mg Tablet' },
+  { code: 'S1', name: 'Simvastatin' },
 ];
 
-function useMaterialCodes() {
-  // KRITIS: inisialisasi SYNCHRONOUS dengan seed data
-  const [materials, setMaterials] = useState<Array<{code: string, name: string}>>(MATERIAL_SEED_DATA);
+function useVendorSuggestions(): string[] {
+  // Sync init — data tersedia SEBELUM user mengetik huruf pertama
+  const [vendors, setVendors] = useState<string[]>(VENDOR_SEED);
   const fetchedRef = useRef(false);
-  
+
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
-    
-    // URL BENAR: /api/material/list (singular, sesuai blueprint di app.py)
-    apiFetch('/api/material/list')
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
+
+    apiFetch('/api/vendor/list')
+      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
+      .then((data: any[]) => {
+        if (!Array.isArray(data) || data.length === 0) return;
+        const api = data
+          .map(v => (typeof v === 'string' ? v : v.name || v.vendor_name || ''))
+          .filter(Boolean);
+        // Merge API + seed, deduplicate case-insensitive
+        const seen = new Set(api.map(v => v.toLowerCase()));
+        const merged = [...api, ...VENDOR_SEED.filter(v => !seen.has(v.toLowerCase()))];
+        merged.sort();
+        setVendors(merged);
       })
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          const apiMaterials = data.map((m: any) => ({
-            code: m.material_code || m.code || '',
-            name: m.material_name || m.name || '',
-          })).filter(m => m.code);
-          
-          // Merge API + seed, deduplicate by code
-          const codeSet = new Set(apiMaterials.map(m => m.code));
-          const merged = [
-            ...apiMaterials,
-            ...MATERIAL_SEED_DATA.filter(m => !codeSet.has(m.code))
-          ];
-          merged.sort((a, b) => a.code.localeCompare(b.code));
-          setMaterials(merged);
-        }
-      })
-      .catch(() => {
-        // Seed data sudah ada dari inisialisasi — tidak perlu set ulang
-      });
+      .catch(() => { /* seed data sudah ada dari init sync */ });
   }, []);
-  
+
+  return vendors;
+}
+
+function useMaterialCodes(): Array<{code: string; name: string}> {
+  // Sync init — data tersedia SEBELUM user mengetik huruf pertama
+  const [materials, setMaterials] = useState(MATERIAL_SEED);
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    apiFetch('/api/material/list')
+      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
+      .then((data: any[]) => {
+        if (!Array.isArray(data) || data.length === 0) return;
+        const api = data
+          .map(m => ({ code: m.code || m.material_code || '', name: m.name || m.material_name || '' }))
+          .filter(m => m.code);
+        const apiCodes = new Set(api.map(m => m.code.toUpperCase()));
+        const merged = [...api, ...MATERIAL_SEED.filter(m => !apiCodes.has(m.code.toUpperCase()))];
+        merged.sort((a, b) => a.code.localeCompare(b.code));
+        setMaterials(merged);
+      })
+      .catch(() => { /* seed data sudah ada dari init sync */ });
+  }, []);
+
   return materials;
 }
 

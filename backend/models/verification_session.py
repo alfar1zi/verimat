@@ -81,8 +81,8 @@ def get_all_verification_sessions(
             query += " AND batch_number LIKE ?"
             params.append(f'%{batch_number}%')
         if doc_type:
-            query += " AND doc_type = ?"
-            params.append(doc_type)
+            query += " AND doc_type LIKE ?"
+            params.append(f'%{doc_type}%')
         if status:
             query += " AND validation_status = ?"
             params.append(status)
