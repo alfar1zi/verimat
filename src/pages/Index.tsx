@@ -1,4 +1,6 @@
 import { useReveal } from "@/hooks/useReveal";
+import SmoothScroll from "@/components/SmoothScroll";
+import SplashIntro from "@/components/SplashIntro";
 import Navbar from "@/components/verimat/Navbar";
 import Hero from "@/components/verimat/Hero";
 import ScanningSection from "@/components/verimat/ScanningSection";
@@ -14,6 +16,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SmoothScroll />
+      <SplashIntro />
       <Navbar />
       <main>
         <Hero />
