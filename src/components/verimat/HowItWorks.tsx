@@ -1,68 +1,76 @@
+import { useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChartIcon, CpuIcon, ShieldCheckIcon, UploadIcon, CheckIcon, XIcon, AlertIcon } from "./icons";
 
+gsap.registerPlugin(ScrollTrigger);
+
 const steps = [
-  { icon: UploadIcon, title: "Upload Dokumen", body: "Staf upload foto atau scan Surat Jalan, CoA, dan dokumen halal" },
-  { icon: CpuIcon, title: "Ekstraksi AI", body: "Azure AI Document Intelligence membaca dan mengekstrak field kunci" },
-  { icon: ShieldCheckIcon, title: "Validasi Rules Engine", body: "Rules engine deterministik bandingkan dengan data PO internal" },
-  { icon: ChartIcon, title: "Hasil & Audit Trail", body: "Status PASS/MISMATCH/INCOMPLETE instan + log otomatis tersimpan" },
+  { icon: UploadIcon, title: "Upload Dokumen", body: "Staf upload foto atau scan Surat Jalan, CoA, dan dokumen halal." },
+  { icon: CpuIcon, title: "Ekstraksi AI", body: "Azure AI Document Intelligence membaca dan mengekstrak field kunci." },
+  { icon: ShieldCheckIcon, title: "Validasi Rules Engine", body: "Rules engine deterministik bandingkan dengan data PO internal." },
+  { icon: ChartIcon, title: "Hasil & Audit Trail", body: "Status PASS / MISMATCH / INCOMPLETE instan + log otomatis tersimpan." },
 ];
 
-// Total cycle duration & per-step timing
-const CYCLE = 16; // seconds (slowed down by 2x)
-const STEP_COUNT = steps.length;
-const STEP_WINDOW = CYCLE / STEP_COUNT; // 4s per step
-
 export default function HowItWorks() {
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(".hiw-head > *", { y: 40, opacity: 0 }, {
+        y: 0, opacity: 1, duration: 0.9, stagger: 0.1, ease: "expo.out",
+        scrollTrigger: { trigger: root.current, start: "top 70%" },
+      });
+
+      gsap.fromTo(".hiw-step", { y: 60, opacity: 0, scale: 0.9 }, {
+        y: 0, opacity: 1, scale: 1, duration: 0.9, stagger: 0.18, ease: "back.out(1.4)",
+        scrollTrigger: { trigger: ".hiw-grid", start: "top 75%" },
+      });
+
+      gsap.fromTo(".hiw-progress", { scaleX: 0 }, {
+        scaleX: 1, duration: 1.6, ease: "power3.inOut",
+        scrollTrigger: { trigger: ".hiw-grid", start: "top 70%" },
+      });
+
+      gsap.fromTo(".hiw-pill", { y: 20, opacity: 0 }, {
+        y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: "expo.out",
+        scrollTrigger: { trigger: ".hiw-pills", start: "top 90%" },
+      });
+    }, root);
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section id="cara-kerja" className="relative py-24 sm:py-32 overflow-hidden">
+    <section id="cara-kerja" ref={root} className="relative py-24 sm:py-32 overflow-hidden">
       <div className="container">
-        <div className="reveal max-w-3xl mx-auto text-center">
-          <span className="inline-block rounded-full bg-primary/8 px-3 py-1 text-xs font-semibold tracking-wider text-primary uppercase">
+        <div className="hiw-head max-w-3xl mx-auto text-center">
+          <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold tracking-wider text-primary uppercase">
             CARA KERJA
           </span>
           <h2 className="mt-5 font-display text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground">
-            Dari Dokumen ke Keputusan dalam <span className="text-primary">4 Langkah</span>
+            Dari Dokumen ke Keputusan dalam <span className="font-serif-display italic font-normal text-primary">4 Langkah</span>
           </h2>
         </div>
 
-        {/* Stepper */}
-        <div className="reveal relative mt-20 mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-4">
-          {/* Connector line (desktop) */}
-          <div
-            aria-hidden
-            className="hidden md:block absolute left-[12.5%] right-[12.5%] top-7 h-[2px] pointer-events-none rounded-full bg-primary/15"
-            style={{ borderTop: '2px dashed #2DD4BF' }}
-          >
-            <div className="hiw-progress h-full w-full rounded-full bg-primary" />
+        <div className="hiw-grid relative mt-20 mx-auto max-w-5xl grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-4">
+          <div aria-hidden className="hidden md:block absolute left-[12.5%] right-[12.5%] top-7 h-[2px] pointer-events-none"
+               style={{ borderTop: '2px dashed hsl(var(--primary) / 0.25)' }}>
+            <div className="hiw-progress h-full origin-left rounded-full bg-primary" />
           </div>
 
           {steps.map((s, i) => {
             const Icon = s.icon;
-            const stepDelay = `${i * STEP_WINDOW}s`;
             return (
-              <div key={i} className="relative flex flex-col items-center text-center">
-                {/* Icon with splash */}
+              <div key={i} className="hiw-step relative flex flex-col items-center text-center">
                 <div className="relative h-14 w-14">
-                  {/* Splash ring */}
-                  <span
-                    className="hiw-splash absolute inset-0 rounded-2xl bg-primary/30"
-                    style={{ animationDelay: stepDelay }}
-                  />
-                  {/* Icon container */}
-                  <div
-                    className="hiw-icon relative grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lift z-10"
-                    style={{ animationDelay: stepDelay }}
-                  >
+                  <span className="absolute -inset-2 rounded-3xl bg-primary/10 blur-md" />
+                  <div className="relative grid h-14 w-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lift">
                     <Icon className="h-6 w-6" />
-                    {/* Active pulse dot */}
-                    <span
-                      className="hiw-pulse absolute -bottom-1 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-accent-teal"
-                      style={{ animationDelay: stepDelay }}
-                    />
                   </div>
+                  <span className="absolute -top-2 -right-2 grid h-6 w-6 place-items-center rounded-full bg-teal text-[11px] font-extrabold text-surface-deep ring-2 ring-background">
+                    {i + 1}
+                  </span>
                 </div>
-
-                {/* Text — tampil permanen, tidak ikut loop */}
                 <div className="mt-5">
                   <h3 className="font-display text-lg font-bold text-foreground">{s.title}</h3>
                   <p className="mt-2 text-sm text-muted-foreground max-w-[220px] mx-auto">{s.body}</p>
@@ -72,91 +80,25 @@ export default function HowItWorks() {
           })}
         </div>
 
-        {/* Status badges */}
-        <div className="reveal-stagger mt-20 flex flex-wrap items-center justify-center gap-3">
-          <StatusPill tone="success" icon={<CheckIcon className="h-4 w-4" strokeWidth={3} />} label="PASS" />
-          <StatusPill tone="destructive" icon={<XIcon className="h-4 w-4" strokeWidth={3} />} label="MISMATCH" />
-          <StatusPill tone="warning" icon={<AlertIcon className="h-4 w-4" strokeWidth={2.5} />} label="INCOMPLETE" />
+        <div className="hiw-pills mt-20 flex flex-wrap items-center justify-center gap-3">
+          <Pill tone="success" icon={<CheckIcon className="h-4 w-4" strokeWidth={3} />} label="PASS" />
+          <Pill tone="destructive" icon={<XIcon className="h-4 w-4" strokeWidth={3} />} label="MISMATCH" />
+          <Pill tone="warning" icon={<AlertIcon className="h-4 w-4" strokeWidth={2.5} />} label="INCOMPLETE" />
         </div>
       </div>
-
-      <style>{`
-        /* Icon pop with splash */
-        @keyframes hiw-icon-pop {
-          0%, 2%       { opacity: 0.35; transform: scale(0.7); }
-          5%           { opacity: 1; transform: scale(1.15); }
-          9%           { transform: scale(1); }
-          85%, 100%    { opacity: 1; transform: scale(1); }
-        }
-        .hiw-icon {
-          opacity: 0;
-          transform: scale(0.7);
-          animation: hiw-icon-pop ${CYCLE}s var(--ease-out) infinite both;
-        }
-
-        @keyframes hiw-splash-ring {
-          0%, 2%   { opacity: 0; transform: scale(0.7); }
-          6%       { opacity: 0.8; transform: scale(1); }
-          18%      { opacity: 0; transform: scale(1.8); }
-          100%     { opacity: 0; transform: scale(1.8); }
-        }
-        .hiw-splash {
-          opacity: 0;
-          animation: hiw-splash-ring ${CYCLE}s var(--ease-out) infinite both;
-        }
-
-        /* Description fade-in after icon pop */
-        @keyframes hiw-text-rise {
-          0%, 5%    { opacity: 0; transform: translateY(10px); }
-          12%, 100% { opacity: 1; transform: translateY(0); }
-        }
-        .hiw-text {
-          opacity: 0;
-          transform: translateY(10px);
-          animation: hiw-text-rise ${CYCLE}s var(--ease-out) infinite both;
-        }
-
-        /* Active pulse on the currently-processing step */
-        @keyframes hiw-active-pulse {
-          0%, 3%   { opacity: 0; transform: translateX(-50%) scale(0.6); }
-          8%, 22%  { opacity: 1; transform: translateX(-50%) scale(1); }
-          28%, 100%{ opacity: 0; transform: translateX(-50%) scale(0.6); }
-        }
-        .hiw-pulse {
-          opacity: 0;
-          animation: hiw-active-pulse ${CYCLE}s var(--ease-in-out) infinite both;
-          box-shadow: 0 0 0 0 hsl(var(--accent-teal) / 0.6);
-        }
-
-        /* Connector progress line fills step-by-step across the row */
-        @keyframes hiw-progress-fill {
-          0%   { transform: scaleX(0); }
-          12%  { transform: scaleX(0); }      /* step 1 popping */
-          25%  { transform: scaleX(0.3333); }  /* moves to step 2 */
-          50%  { transform: scaleX(0.6666); }  /* step 3 */
-          75%  { transform: scaleX(1); }    /* step 4 */
-          100% { transform: scaleX(1); }
-        }
-        .hiw-progress {
-          transform-origin: left center;
-          animation: hiw-progress-fill ${CYCLE}s var(--ease-in-out) infinite both;
-        }
-      `}</style>
     </section>
   );
 }
 
-function StatusPill({ tone, icon, label }: { tone: "success" | "destructive" | "warning"; icon: React.ReactNode; label: string }) {
+function Pill({ tone, icon, label }: { tone: "success" | "destructive" | "warning"; icon: React.ReactNode; label: string }) {
   const styles = {
     success: "bg-success/12 text-[hsl(142_70%_32%)] border-success/30",
     destructive: "bg-destructive/12 text-[hsl(0_75%_45%)] border-destructive/30",
     warning: "bg-warning/15 text-[hsl(28_90%_32%)] border-warning/30",
   }[tone];
-
   return (
-    <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${styles}`}>
-      {icon}
-      {label}
+    <div className={`hiw-pill inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${styles}`}>
+      {icon}{label}
     </div>
   );
 }

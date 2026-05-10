@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import MedicineLogo from "../app/MedicineLogo";
+import { gsap } from "gsap";
+import MedicineLogo from "@/components/MedicineLogo";
 
 const links = [
   { href: "#cara-kerja", label: "Cara Kerja" },
@@ -10,7 +11,6 @@ const links = [
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -20,84 +20,46 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handleResize = () => {
-      requestAnimationFrame(() => {
-        setIsMobile(window.innerWidth <= 768);
-      });
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    gsap.fromTo(
+      ".nav-shell",
+      { y: -32, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.9, delay: 3.6, ease: "expo.out" }
+    );
   }, []);
 
-  const handleNavClick = (e: React.MouseEvent, targetId: string) => {
-    e.preventDefault();
-    const target = document.getElementById(targetId);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   return (
-    <header className="fixed top-4 left-0 right-0 z-50 flex justify-center px-3 animate-slide-down">
+    <header className="fixed top-2 sm:top-5 left-0 right-0 z-50 flex justify-center px-2 sm:px-3">
       <nav
-        className={`glass flex items-center rounded-full border border-white/5 transition-all duration-500 ${
-          scrolled
-            ? "bg-surface-dark/80 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.4)]"
-            : "bg-surface-dark"
+        className={`nav-shell glass flex items-center gap-0.5 sm:gap-2 rounded-full border border-white/10 px-1.5 py-1.5 sm:px-3 sm:py-2 max-w-[calc(100vw-1rem)] transition-all duration-500 ${
+          scrolled ? "bg-surface-dark/85 shadow-lift" : "bg-surface-dark/95"
         }`}
-        style={{
-          gap: isMobile ? '4px' : '8px',
-          padding: isMobile ? '6px 8px' : '8px 12px',
-        }}
       >
-        {/* Logo */}
-        <a
-          href="#top"
-          onClick={(e) => handleNavClick(e, 'top')}
-          className="flex items-center gap-1.5 pl-1 pr-1"
-          aria-label="Kunjungi halaman beranda VeriMat"
-        >
-          <span className="grid h-6 w-6 place-items-center rounded-lg bg-teal/15 text-teal flex-shrink-0">
+        <a href="#top" className="flex items-center gap-1.5 sm:gap-2 pl-1 pr-1 sm:pr-2 shrink-0" aria-label="VeriMat">
+          <span className="grid h-6 w-6 sm:h-7 sm:w-7 place-items-center rounded-lg bg-teal/15 text-teal">
             <MedicineLogo size={14} color="#2DD4BF" />
           </span>
-          {/* Sembunyikan teks "VeriMat" di layar sangat kecil agar nav links muat */}
-          <span
-            className="font-bold tracking-tight text-white"
-            style={{ display: isMobile ? 'none' : 'inline', fontSize: '14px' }}
-          >
+          <span className="hidden [@media(min-width:380px)]:inline font-bold tracking-tight text-white text-xs sm:text-sm">
             VeriMat
           </span>
         </a>
 
-        {/* Nav links — desktop: flex dengan gap besar, mobile: flex dengan gap kecil */}
-        <div className="flex items-center" style={{ gap: isMobile ? '2px' : '4px' }}>
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              onClick={(e) => handleNavClick(e, l.href.substring(1))}
-              className="rounded-full text-white/70 transition-colors hover:text-white hover:bg-white/5 whitespace-nowrap"
-              style={{
-                padding: isMobile ? '4px 8px' : '6px 12px',
-                fontSize: isMobile ? '11px' : '14px',
-              }}
+              className="rounded-full px-1.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-sm text-white/70 transition-colors hover:text-white hover:bg-white/5 whitespace-nowrap"
             >
               {l.label}
             </a>
           ))}
         </div>
 
-        {/* CTA Button */}
         <Link
           to="/login"
-          className="rounded-full bg-teal font-semibold text-surface-deep transition-all duration-300 hover:brightness-110 hover:scale-[1.03] active:scale-[0.98] flex-shrink-0"
-          style={{
-            padding: isMobile ? '5px 10px' : '8px 18px',
-            fontSize: isMobile ? '12px' : '14px',
-            marginLeft: isMobile ? '2px' : '4px',
-          }}
+          className="ml-0.5 sm:ml-1 rounded-full bg-teal px-2.5 sm:px-4 py-1 sm:py-2 text-[10px] sm:text-sm font-semibold text-surface-deep transition-all duration-300 hover:brightness-110 hover:scale-[1.03] shrink-0"
         >
-          {isMobile ? 'Masuk' : 'Masuk ke Sistem'}
+          Masuk
         </Link>
       </nav>
     </header>

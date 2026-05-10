@@ -1,4 +1,9 @@
+import { useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { BrainIcon, ChatIcon, CloudIcon, DatabaseIcon } from "./icons";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const stack = [
   { icon: BrainIcon, name: "Azure AI Document Intelligence", desc: "Ekstraksi field dari dokumen tidak terstruktur" },
@@ -7,35 +12,49 @@ const stack = [
   { icon: CloudIcon, name: "Azure App Service", desc: "Hosting cloud yang scalable & high-availability" },
 ];
 
+const logos = ["Azure AI", "GPT-4o", "Azure SQL", "App Service", "Document Intelligence", "BPOM Compliant", "CPOB Ready"];
+
 export default function Technology() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(".tech-head > *", { y: 40, opacity: 0 }, {
+        y: 0, opacity: 1, duration: 0.3, stagger: 0.03, ease: "expo.out",
+        scrollTrigger: { trigger: root.current, start: "top 70%" },
+      });
+      gsap.fromTo(".tech-card", { y: 50, opacity: 0 }, {
+        y: 0, opacity: 1, duration: 0.3, stagger: 0.03, ease: "expo.out",
+        scrollTrigger: { trigger: ".tech-grid", start: "top 80%" },
+      });
+    }, root);
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section id="teknologi" className="relative bg-surface-deep text-primary-foreground py-24 sm:py-32 overflow-hidden">
+    <section id="teknologi" ref={root} className="relative bg-surface-deep text-primary-foreground py-24 sm:py-32 overflow-hidden">
       <div aria-hidden className="absolute inset-0 opacity-60"
            style={{ background: "radial-gradient(ellipse at 50% 100%, hsl(172 66% 50% / 0.18), transparent 60%)" }} />
 
       <div className="container relative">
-        <div className="reveal max-w-3xl">
+        <div className="tech-head max-w-3xl">
           <span className="inline-block rounded-full bg-teal/15 px-3 py-1 text-xs font-semibold tracking-wider text-teal uppercase">
             TEKNOLOGI
           </span>
           <h2 className="mt-5 font-display text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
-            Ditenagai <span className="text-gradient-teal">Microsoft Azure</span>
+            Ditenagai <span className="font-serif-display italic font-normal text-gradient-teal">Microsoft Azure</span>
           </h2>
           <p className="mt-4 text-white/60 max-w-xl">
-            Stack enterprise-grade yang siap menangani volume produksi pharma, mulai dari ekstraksi hingga audit trail.
+            Stack enterprise-grade yang siap menangani volume produksi pharma — mulai dari ekstraksi hingga audit trail.
           </p>
         </div>
 
-        <div className="reveal-stagger mt-14 grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl">
+        <div className="tech-grid mt-14 grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl">
           {stack.map((s, i) => {
             const Icon = s.icon;
             return (
-              <div
-                key={i}
-                className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-all duration-500 hover:border-teal/50 hover:bg-white/[0.05] hover:shadow-[0_0_0_1px_hsl(172_66%_50%_/_0.4),0_20px_40px_-12px_hsl(172_66%_50%_/_0.3)]"
-              >
+              <div key={i} className="tech-card group relative rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-all duration-500 hover:border-teal/50 hover:bg-white/[0.05] hover:shadow-[0_0_0_1px_hsl(172_66%_50%_/_0.4),0_20px_40px_-12px_hsl(172_66%_50%_/_0.3)]">
                 <div className="flex items-start gap-4">
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-teal/15 text-teal transition-transform duration-300 group-hover:scale-110">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-teal/15 text-teal transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
@@ -46,6 +65,17 @@ export default function Technology() {
               </div>
             );
           })}
+        </div>
+
+        {/* Marquee */}
+        <div className="relative mt-20 overflow-hidden marquee-mask">
+          <div className="flex w-max animate-marquee gap-12 whitespace-nowrap text-white/40">
+            {[...logos, ...logos].map((l, i) => (
+              <span key={i} className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
+                {l} <span className="text-teal/60">·</span>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </section>
