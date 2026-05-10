@@ -107,11 +107,60 @@ function getExpiryStatus(expiryDate: string): {
 }
 
 const VENDOR_SEED: string[] = [
-  'PT Kimia Farma', 'PT Kimia Farma Trading', 'PT Kalbe Farma',
-  'PT Dexa Medica', 'PT Sanbe Farma', 'PT Phapros', 'PT Bernofarm',
-  'PT Meprofarm', 'PT Ferron Par Pharmaceuticals',
-  'PT Novell Pharmaceutical Labs', 'PT Zenith Pharmaceutical',
-  'PT Merck Indonesia', 'PT Pfizer Indonesia', 'PT Abbott Indonesia',
+  // Produsen Farmasi Nasional
+  'PT Biofarma (Persero)',
+  'PT Kimia Farma Tbk',
+  'PT Kimia Farma Trading & Distribution',
+  'PT Indofarma Tbk',
+  'PT Kalbe Farma Tbk',
+  'PT Dexa Medica',
+  'PT Sanbe Farma',
+  'PT Phapros Tbk',
+  'PT Bernofarm',
+  'PT Meprofarm',
+  'PT Novell Pharmaceutical Labs',
+  'PT Pyridam Farma Tbk',
+  'PT Soho Industri Pharmasi',
+  'PT Tempo Scan Pacific Tbk',
+  'PT Combiphar',
+  'PT Hexpharm Jaya Laboratories',
+  'PT Dankos Farma',
+  'PT Interbat',
+  'PT Pratapa Nirmala Farma',
+  'PT Ferron Par Pharmaceuticals',
+  'PT Zenith Pharmaceutical',
+  'PT Landson',
+  'PT Caprifarmindo Laboratories',
+  'PT Erela',
+  'PT Gracia Pharmindo',
+  'PT Molex Ayus',
+  'PT Otto Pharmaceutical Industries',
+  'PT Pharos Indonesia',
+  'PT Sanovel Industrial Products',
+  'PT Transfarma Medica Indah',
+  // Distributor Farmasi Utama
+  'PT Anugrah Pharmindo Lestari',
+  'PT Enseval Putera Megatrading Tbk',
+  'PT Parit Padang Global',
+  'PT Tri Sapta Jaya',
+  'PT Merapi Utama Pharma',
+  'PT Anugerah Pharmindo Lestari',
+  'PT Millenium Pharmacon International Tbk',
+  // Perusahaan Farmasi Multinasional
+  'PT AstraZeneca Indonesia',
+  'PT Bayer Indonesia',
+  'PT Boehringer Ingelheim Indonesia',
+  'PT GlaxoSmithKline Indonesia',
+  'PT Johnson & Johnson Indonesia',
+  'PT Merck Indonesia',
+  'PT Novartis Indonesia',
+  'PT Pfizer Indonesia',
+  'PT Roche Indonesia',
+  'PT Sanofi Indonesia',
+  'PT Abbott Indonesia',
+  // Pemasok Bahan Baku / API
+  'PT Brataco Chemika',
+  'PT Cognis Indonesia',
 ];
 
 const MATERIAL_SEED: Array<{code: string; name: string}> = [
@@ -325,7 +374,7 @@ const Dashboard = () => {
   // Vendor autocomplete - use hook as data source
   const allVendorSuggestions = useVendorSuggestions();
   const [showVendorSuggestions, setShowVendorSuggestions] = useState(false);
-  const [vendorSuggestions, setVendorSuggestions] = useState<string[]>([]);
+  const [vendorQuery, setVendorQuery] = useState('');
   const vendorSearchRef = useRef<HTMLDivElement>(null);
   
   // Material autocomplete - use custom hook
@@ -1061,7 +1110,10 @@ const Dashboard = () => {
                 </div>
                 {/* Vendor Name Input */}
                 <div ref={vendorSearchRef} style={{ position: 'relative' }}>
-                  <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '6px' }}>
+                  <label style={{
+                    fontSize: '12px', fontWeight: '600',
+                    display: 'block', marginBottom: '6px'
+                  }}>
                     Nama Vendor / Supplier <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '6px' }}>
@@ -1071,86 +1123,114 @@ const Dashboard = () => {
                     type="text"
                     placeholder="Nama perusahaan supplier"
                     value={formState.vendorName}
+                    autoComplete="off"
                     onChange={(e) => {
                       const val = e.target.value;
-                      setFormState({ ...formState, vendorName: val });
-                      if (fieldErrors.vendorName) setFieldErrors({ ...fieldErrors, vendorName: '' });
-                      
-                      // Filter dari cached data (tidak perlu fetch setiap ketik)
-                      if (val.trim().length >= 1) {
-                        const filtered = allVendorSuggestions.filter(v =>
-                          v.toLowerCase().includes(val.toLowerCase())
-                        ).slice(0, 8);
-                        setVendorSuggestions(filtered);
-                        setShowVendorSuggestions(filtered.length > 0);
-                      } else {
-                        setShowVendorSuggestions(false);
-                        setVendorSuggestions([]);
+                      setFormState(prev => ({ ...prev, vendorName: val }));
+                      setVendorQuery(val);
+                      if (fieldErrors.vendorName) {
+                        setFieldErrors(prev => ({ ...prev, vendorName: '' }));
                       }
+                      setShowVendorSuggestions(val.trim().length >= 1);
                     }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#0D4B3B';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)';
-                      // Tampilkan suggestions saat focus jika sudah ada input
+                    onFocus={() => {
                       if (formState.vendorName.trim().length >= 1) {
-                        const filtered = allVendorSuggestions.filter(v =>
-                          v.toLowerCase().includes(formState.vendorName.toLowerCase())
-                        ).slice(0, 8);
-                        setVendorSuggestions(filtered);
-                        setShowVendorSuggestions(filtered.length > 0);
+                        setVendorQuery(formState.vendorName);
+                        setShowVendorSuggestions(true);
                       }
                     }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = fieldErrors.vendorName ? '#DC2626' : '#E5E7EB';
-                      e.target.style.boxShadow = 'none';
-                      // Delay hide agar click pada suggestion sempat diproses
+                    onBlur={() => {
                       setTimeout(() => setShowVendorSuggestions(false), 200);
                     }}
                     style={{
-                      width: '100%', padding: '10px 14px',
-                      border: fieldErrors.vendorName ? '1.5px solid #DC2626' : '1.5px solid #E5E7EB',
-                      borderRadius: '8px', fontSize: '14px', color: '#0F1A16',
-                      backgroundColor: 'white', outline: 'none', boxSizing: 'border-box' as const
+                      width: '100%',
+                      padding: '10px 14px',
+                      border: fieldErrors.vendorName
+                        ? '1.5px solid #DC2626'
+                        : '1.5px solid #E5E7EB',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      color: '#0F1A16',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                      boxSizing: 'border-box' as const,
+                      transition: 'border-color 0.15s'
                     }}
-                    autoComplete="off"
+                    onFocusCapture={(e) => {
+                      e.target.style.borderColor = '#0D4B3B';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(13,75,59,0.1)';
+                    }}
+                    onBlurCapture={(e) => {
+                      e.target.style.borderColor = fieldErrors.vendorName
+                        ? '#DC2626' : '#E5E7EB';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   />
 
-                  {/* Vendor Dropdown */}
-                  {showVendorSuggestions && vendorSuggestions.length > 0 && (
-                    <div style={{
-                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
-                      background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)', overflow: 'hidden', marginTop: '4px'
-                    }}>
-                      {vendorSuggestions.map((vendor, index) => (
-                        <div
-                          key={index}
-                          onMouseDown={(e) => {
-                            // mouseDown bukan onClick agar tidak kalah dengan onBlur
-                            e.preventDefault();
-                            setFormState({ ...formState, vendorName: vendor });
-                            setShowVendorSuggestions(false);
-                            setVendorSuggestions([]);
-                          }}
-                          style={{
-                            padding: '10px 14px', fontSize: '14px', color: '#0F1A16',
-                            cursor: 'pointer',
-                            borderBottom: index < vendorSuggestions.length - 1 ? '1px solid #F3F4F6' : 'none'
-                          }}
-                          onMouseOver={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#F0FAF7'; }}
-                          onMouseOut={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'white'; }}
-                        >
-                          {vendor}
-                        </div>
-                      ))}
+                  {/* Vendor Dropdown — computed inline, tidak pakai state terpisah */}
+                  {(() => {
+                    if (!showVendorSuggestions || vendorQuery.trim().length < 1) return null;
+                    
+                    const filtered = allVendorSuggestions.filter(v =>
+                      v.toLowerCase().includes(vendorQuery.toLowerCase())
+                    ).slice(0, 10);
+                    
+                    if (filtered.length === 0) return null;
+                    
+                    return (
                       <div style={{
-                        padding: '6px 14px', fontSize: '11px', color: '#9CA3AF',
-                        borderTop: '1px solid #F3F4F6', background: '#FAFAFA'
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        zIndex: 200,
+                        background: 'white',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                        overflow: 'hidden',
+                        marginTop: '4px',
                       }}>
-                        Tidak ada? Ketik nama vendor baru secara manual
+                        {filtered.map((vendor, index) => (
+                          <div
+                            key={index}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation(); // cegah click-outside handler
+                              setFormState(prev => ({ ...prev, vendorName: vendor }));
+                              setVendorQuery(vendor);
+                              setShowVendorSuggestions(false);
+                            }}
+                            style={{
+                              padding: '10px 14px',
+                              fontSize: '14px',
+                              color: '#0F1A16',
+                              cursor: 'pointer',
+                              borderBottom: index < filtered.length - 1
+                                ? '1px solid #F3F4F6' : 'none',
+                            }}
+                            onMouseEnter={(e) => {
+                              (e.currentTarget as HTMLDivElement).style.background = '#F0FAF7';
+                            }}
+                            onMouseLeave={(e) => {
+                              (e.currentTarget as HTMLDivElement).style.background = 'white';
+                            }}
+                          >
+                            {vendor}
+                          </div>
+                        ))}
+                        <div style={{
+                          padding: '6px 14px',
+                          fontSize: '11px',
+                          color: '#9CA3AF',
+                          borderTop: '1px solid #F3F4F6',
+                          background: '#FAFAFA',
+                        }}>
+                          💡 Tidak ada? Ketik nama vendor baru secara manual
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {fieldErrors.vendorName && (
                     <p style={{ fontSize: '12px', color: '#DC2626', marginTop: '4px' }}>
