@@ -1,4 +1,3 @@
-import { useReveal } from "@/hooks/useReveal";
 import SmoothScroll from "@/components/SmoothScroll";
 import SplashIntro from "@/components/SplashIntro";
 import Navbar from "@/components/verimat/Navbar";
@@ -12,8 +11,6 @@ import CTASection from "@/components/verimat/CTASection";
 import Footer from "@/components/verimat/Footer";
 
 const Index = () => {
-  useReveal();
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SmoothScroll />
