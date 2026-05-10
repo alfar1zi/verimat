@@ -1216,19 +1216,7 @@ const Dashboard = () => {
                     
                     console.log('[Vendor Dropdown] Rendering dropdown with', filtered.length, 'items');
                     return (
-                      <div style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
-                        right: 0,
-                        zIndex: 200,
-                        background: 'white',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                        overflow: 'hidden',
-                        marginTop: '4px',
-                      }}>
+                      <div className="absolute top-[calc(100%+4px)] left-0 right-0 z-[9999] bg-white border border-[#E5E7EB] rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.15)] overflow-hidden max-h-[300px] overflow-y-auto min-w-fit">
                         {filtered.map((vendor, index) => (
                           <div
                             key={index}
@@ -1239,14 +1227,7 @@ const Dashboard = () => {
                               setVendorQuery(vendor);
                               setShowVendorSuggestions(false);
                             }}
-                            style={{
-                              padding: '10px 14px',
-                              fontSize: '14px',
-                              color: '#0F1A16',
-                              cursor: 'pointer',
-                              borderBottom: index < filtered.length - 1
-                                ? '1px solid #F3F4F6' : 'none',
-                            }}
+                            className="px-3 py-2.5 text-[13px] text-[#0F1A16] cursor-pointer border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F0FAF7] sm:px-4 sm:py-3 sm:text-[14px] md:px-4 md:py-3 md:text-[14px] lg:px-4 lg:py-3 lg:text-[14px]"
                             onMouseEnter={(e) => {
                               (e.currentTarget as HTMLDivElement).style.background = '#F0FAF7';
                             }}
@@ -1257,13 +1238,7 @@ const Dashboard = () => {
                             {vendor}
                           </div>
                         ))}
-                        <div style={{
-                          padding: '6px 14px',
-                          fontSize: '11px',
-                          color: '#9CA3AF',
-                          borderTop: '1px solid #F3F4F6',
-                          background: '#FAFAFA',
-                        }}>
+                        <div className="px-3 py-2 text-[10px] text-[#9CA3AF] border-t border-[#F3F4F6] bg-[#FAFAFA] sm:px-4 sm:py-2 sm:text-[11px] md:px-4 md:py-2 md:text-[11px]">
                           💡 Tidak ada? Ketik nama vendor baru secara manual
                         </div>
                       </div>
