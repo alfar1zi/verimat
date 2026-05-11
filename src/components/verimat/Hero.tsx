@@ -98,7 +98,7 @@ export default function Hero() {
 
         <p className="hero-sub mx-auto mt-7 max-w-2xl text-center text-base sm:text-lg text-muted-foreground">
           Verifikasi otomatis Surat Jalan, Certificate of Analysis, dan dokumen halal.
-          Ditenagai Microsoft Azure AI — dari <b>20 menit</b> menjadi <b>kurang dari 30 detik</b>.
+          Ditenagai Microsoft Azure AI, dari <b>20 menit</b> menjadi <b>kurang dari 30 detik</b>.
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">

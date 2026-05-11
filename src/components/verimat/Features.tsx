@@ -6,7 +6,7 @@ import { BoltIcon, FolderIcon, SearchIcon } from "./icons";
 gsap.registerPlugin(ScrollTrigger);
 
 const features = [
-  { icon: SearchIcon, title: "Ekstraksi Dokumen Otomatis", body: "Baca dan ekstrak field kunci dari Surat Jalan, CoA, dan sertifikat halal — termasuk dokumen scan dengan kualitas variatif.", tag: "Azure AI Document Intelligence" },
+  { icon: SearchIcon, title: "Ekstraksi Dokumen Otomatis", body: "Baca dan ekstrak field kunci dari Surat Jalan, CoA, dan sertifikat halal, termasuk dokumen scan dengan kualitas variatif.", tag: "Azure AI Document Intelligence" },
   { icon: BoltIcon, title: "Validasi Rules Engine", body: "Logika deterministik membandingkan data ekstraksi dengan PO internal. Hasil konsisten, dapat diaudit, tidak ada zona abu-abu.", tag: "Deterministic Logic" },
   { icon: FolderIcon, title: "Audit Trail Digital Otomatis", body: "Setiap verifikasi tersimpan lengkap dengan timestamp, dokumen sumber, dan keputusan. Siap audit BPOM kapan saja.", tag: "Azure SQL Database" },
 ];

@@ -44,7 +44,7 @@ export default function Technology() {
             Ditenagai <span className="font-serif-display italic font-normal text-gradient-teal">Microsoft Azure</span>
           </h2>
           <p className="mt-4 text-white/60 max-w-xl">
-            Stack enterprise-grade yang siap menangani volume produksi pharma — mulai dari ekstraksi hingga audit trail.
+            Stack enterprise-grade yang siap menangani volume produksi pharma, mulai dari ekstraksi hingga audit trail.
           </p>
         </div>
 
