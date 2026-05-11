@@ -1,11 +1,14 @@
 from flask import Blueprint, request, jsonify
+import logging
 from models.verification_session import get_verification_session
 from models.verification_log import get_verification_logs
 from utils.auth_middleware import require_auth
 
 verification_bp = Blueprint('verification', __name__)
+logger = logging.getLogger(__name__)
 
 @verification_bp.route('/result/<session_id>', methods=['GET'])
+@require_auth
 def get_verification_result(session_id):
     """Get verification result by session ID"""
     try:
@@ -15,7 +18,8 @@ def get_verification_result(session_id):
         
         return jsonify(session), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f'verification result error: {e}', exc_info=True)
+        return jsonify({'error': 'Terjadi kesalahan. Hubungi administrator.'}), 500
 
 @verification_bp.route('/<session_id>', methods=['GET'])
 @require_auth
@@ -25,6 +29,10 @@ def get_verification(session_id):
         session = get_verification_session(session_id)
         if not session:
             return jsonify({'error': 'Session not found'}), 404
+        
+        # Remove file_path from response for security
+        if 'file_path' in session:
+            del session['file_path']
         
         logs = get_verification_logs(session_id)
         
@@ -54,4 +62,5 @@ def get_verification(session_id):
             }
         }), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f'verification error: {e}', exc_info=True)
+        return jsonify({'error': 'Terjadi kesalahan. Hubungi administrator.'}), 500

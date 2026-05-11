@@ -23,6 +23,12 @@ app = Flask(__name__)
 # Secret key for JWT signing - MUST be set via environment variable in production
 app.config['SECRET_KEY'] = os.environ.get('VERIMAT_SECRET_KEY', 'verimat-dev-secret-2026-change-in-prod')
 
+# Protect uploads directory from direct access
+@app.route('/uploads/<path:filename>')
+def block_uploads(filename):
+    """Blokir akses langsung ke file upload - semua akses harus lewat autentikasi."""
+    return jsonify({'error': 'Akses ditolak.'}), 403
+
 # CORS - restrict to known origins only
 ALLOWED_ORIGINS = [
     'https://verimat.vercel.app',
@@ -51,6 +57,20 @@ app.register_blueprint(po_bp, url_prefix='/api/po')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(vendor_bp, url_prefix='/api/vendor')
 app.register_blueprint(material_bp, url_prefix='/api/material')
+
+# Add security headers
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to every response."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '0'  # CSP sudah handle ini
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Cache-Control'] = 'no-store'
+    # Jangan expose server info
+    response.headers.pop('Server', None)
+    response.headers.pop('X-Powered-By', None)
+    return response
 
 # Initialize database
 init_db()

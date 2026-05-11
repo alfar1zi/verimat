@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 import os
 import uuid
 import magic
+import time
+from collections import defaultdict
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from utils.document_extractor import extract_document_data
@@ -12,6 +14,22 @@ from utils.auth_middleware import require_auth
 from utils.ai_explainer import generate_ai_explanation
 
 upload_bp = Blueprint('upload', __name__)
+
+# Rate limiter: max 10 requests per IP per 60 detik
+_upload_attempts: dict = defaultdict(list)
+_UPLOAD_RATE_LIMIT = 10      # max requests
+_UPLOAD_RATE_WINDOW = 60     # per detik
+
+def _check_upload_rate_limit(ip: str) -> bool:
+    """Return True jika masih dalam batas, False jika exceeded."""
+    now = time.time()
+    window_start = now - _UPLOAD_RATE_WINDOW
+    # Hapus entri lama
+    _upload_attempts[ip] = [t for t in _upload_attempts[ip] if t > window_start]
+    if len(_upload_attempts[ip]) >= _UPLOAD_RATE_LIMIT:
+        return False
+    _upload_attempts[ip].append(now)
+    return True
 
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
@@ -72,6 +90,7 @@ def _sanitize(value: str, max_len: int = 255) -> str:
     return value[:max_len]
 
 @upload_bp.route('/document', methods=['POST'])
+@require_auth
 def upload_document():
     """Upload document and trigger verification process"""
     try:
@@ -133,7 +152,9 @@ def upload_document():
         }), 200
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        import logging as _log
+        _log.getLogger(__name__).error(f'upload_document error: {e}', exc_info=True)
+        return jsonify({'error': 'Upload gagal. Coba lagi atau hubungi administrator.'}), 500
 
 @upload_bp.route('/verify', methods=['POST', 'OPTIONS'])
 @require_auth
@@ -141,6 +162,14 @@ def verify_document():
     """Verify document with multiple files and new form fields"""
     if request.method == 'OPTIONS':
         return jsonify({}), 200
+    
+    # Rate limiting per IP
+    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr or 'unknown')
+    client_ip = client_ip.split(',')[0].strip()
+    if not _check_upload_rate_limit(client_ip):
+        return jsonify({
+            'error': 'Terlalu banyak permintaan. Tunggu 1 menit sebelum mencoba lagi.'
+        }), 429
     
     try:
         # Get required files
@@ -381,4 +410,6 @@ def verify_document():
         }), 200
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        import logging as _log
+        _log.getLogger(__name__).error(f'verify_document error: {e}', exc_info=True)
+        return jsonify({'error': 'Verifikasi gagal. Coba lagi atau hubungi administrator.'}), 500

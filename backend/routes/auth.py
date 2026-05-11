@@ -1,5 +1,6 @@
 import os
 import jwt
+import hmac
 import logging
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, request, jsonify, current_app
@@ -104,7 +105,10 @@ def login():
     valid_username = os.environ.get('VERIMAT_USERNAME', 'admin')
     valid_password = os.environ.get('VERIMAT_PASSWORD', 'admin')
 
-    if username == valid_username and password == valid_password:
+    # Gunakan hmac.compare_digest untuk mencegah timing attack
+    username_match = hmac.compare_digest(username, valid_username)
+    password_match = hmac.compare_digest(password, valid_password)
+    if username_match and password_match:
         _record_attempt(ip, success=True)
         token = generate_token(username)
         logger.info(f'Successful login: {username} from {ip}')
